@@ -61,9 +61,19 @@ html(lang="en")
 		data-token=token
 		data-wasm=wasm)
 		pony-town-app
-			#loading
-				img(src=loadingImage alt="")
-				div Loading
+			.card
+				.gif-container
+					img.gif-image(
+						src="assets/images/loading-pony.gif"  
+						alt="Loading animation"
+						style="max-width: 150px; margin: 0 auto 20px; display: block; z-index: 10000;"
+						onerror="this.style.display='none'; console.log('GIF failed to load')"
+						onload="console.log('GIF loaded successfully')")
+				.loader
+					p Loading
+					.words
+						each word in ['buttons', 'forms', 'magic', 'patterns', 'maps', 'guns', 'switches', 'ponies', 'canvas', 'objects', 'forms', 'assets', 'images', 'fonts', 'styles', 'scripts', 'files', 'data', 'icons', 'sprites', 'textures', 'models', 'shaders', 'sounds', 'music', 'animations', 'components', 'modules', 'widgets', 'features', 'buttons', 'forms']
+							span.word= word
 				p.loading-error
 					| Could not load the game, #[a.loading-error-btn(href="/reset.html") reload] to continue.
 

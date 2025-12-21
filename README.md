@@ -19,7 +19,7 @@ To discuss licensing, contact `ponytownhelp@gmail.com`.
 
 * [Node.js](https://nodejs.org/download/release/v9.11.2/) (version 9)
 * gulp `npm install -g gulp`
-* MongoDB: [download link](https://www.mongodb.com/download-center/community) and [installation instructions](https://docs.mongodb.com/manual/administration/install-community/)
+* MongoDB: [download link](https://www.mongodb.com/download-center/community) and [installation instructions](https://docs.mongodb.com/manual/administration/install-community/) (version 5.0.24)
 * [ImageMagick](https://imagemagick.org/script/download.php#windows) (optional, required for generating preview gifs in animation tool)
 * [Git LFS](https://git-lfs.github.com/)
 
