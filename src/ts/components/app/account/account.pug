@@ -6,16 +6,13 @@ h1(focusTitle) Account settings
 			.form-group
 				h3 Account details
 			.form-group
-				label(for="account-id") Account ID
-				input#account-id.form-control([value]="account?.id" readonly)
-			.form-group
 				label(for="account-name") Account Name
 				input#account-name.form-control(
 					type="text" name="name" [(ngModel)]="data.name" required [maxlength]="nameMaxLength")
 				small.form-text.text-warning This name will be visible to other players
 			.form-group
 				label(for="birthdate")
-					| Date of birth
+					| Date of birth. You must be over 18 years old to play.
 					fa-icon.ml-1.text-danger(*ngIf="showAccountAlert" [icon]="alertIcon" title="Missing field value")
 				date-picker([(date)]="data.birthdate")
 			.form-group(*ngIf="accountError")
@@ -27,6 +24,28 @@ h1(focusTitle) Account settings
 			.form-group.text-right
 				button.btn.btn-default(type="submit" [disabled]="!canSubmit" style="min-width: 100px;")
 					| {{saveButtonText}}
+
+		//- div(style="margin-bottom: 100px;")
+		//- 	.form-group
+		//- 		h3 Account info
+		//- 		label(for="account-info") Account ID:
+		//- 		input#account-info.form-control([value]="account?.id" readonly)
+
+		div(style="margin-bottom: 100px;")
+			.form-group
+				h3.mb-3(style="color: #fff;") Account info
+				div(
+					style="background-color: #222; padding: 15px; border-radius: 5px;"
+				)
+					.mb-2(style="color: #9c9c9c;")
+						strong Account ID: 
+						| {{account?.id || '-'}}
+					.mb-2(style="color: #9c9c9c;")
+						strong Creation date: 
+						| {{account?.creationDate || '-'}}
+					.mb-2(style="color: #9c9c9c")
+						strong Total playtime: 
+						| {{account?.playtime || '-'}} hours
 
 		div(style="margin-bottom: 100px;")
 			.form-group
@@ -85,13 +104,13 @@ h1(focusTitle) Account settings
 						| Previous page
 					button.btn.btn-sm.btn-outline-secondary.ml-1((click)="page = page + 1; pageChanged()" [disabled]="!hides || hides.length < hidesPerPage")
 						| Next page
-				h3 Hidden players
+				h3 Blocked  players
 
 			div(*ngIf="!hides")
 				.text-muted.text-center.p-4 loading...
 
 			ul.list-unstyled(*ngIf="hides")
-				.text-muted.text-center.p-4(*ngIf="!hides.length") no hidden players
+				.text-muted.text-center.p-4(*ngIf="!hides.length") no blocked  players
 				li.item-connected-account.d-flex.align-items-center(*ngFor="let h of hides")
 					b.flex-grow-1 {{h.name}}
 					span.text-muted.mr-2 hidden {{h.date}}
