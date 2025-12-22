@@ -33,7 +33,7 @@ export const CREDITS: Credit[] = [
 	{
 		name: 'GameOver1666',
 		title: 'Programmer',
-		avatarIndex: 2,
+		avatarIndex: 1,
 		links: ['']
 	},
 ];
