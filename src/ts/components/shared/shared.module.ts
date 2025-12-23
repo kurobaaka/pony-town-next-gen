@@ -47,6 +47,7 @@ import { InstallButton } from './install-button/install-button';
 import { KbdKey } from './kbd-key/kbd-key';
 import { PlayBox } from './play-box/play-box';
 import { ChatBox } from './chat-box/chat-box';
+import { BuildBox } from './build-box/build-box';
 import { ChatLog } from './chat-log/chat-log';
 import { SwapBox } from './swap-box/swap-box';
 import { SiteLinks } from './site-links/site-links';
@@ -121,6 +122,7 @@ const declarations = [
 	PlayNotice,
 	PageLoader,
 	ChatBox,
+	BuildBox,
 	ChatLog,
 	SiteLinks,
 	NotificationItem,
