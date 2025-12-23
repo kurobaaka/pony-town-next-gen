@@ -5,8 +5,10 @@ import {
 	EntityState, Pony, Notification, TileType, Action, IServerActions, Season, WorldState, Holiday,
 	TileSets, ChatMessage, PartyInfo, Entity, DrawOptions, Engine, defaultDrawOptions, PonyStateFlags,
 	DoAction, ChatType, WorldStateFlags, DebugFlags, MessageType, AccountSettings, Matrix4,
-	FakeEntity, SelectFlags, WorldMap, MapType, MapFlags, EntityFlags, houseTiles, isValidTile, GraphicsQuality
+	FakeEntity, SelectFlags, WorldMap, MapType, MapFlags, EntityFlags, houseTiles, isValidTile, GraphicsQuality,
+	Iris, Eye, Muzzle, ExpressionExtra, Expression
 } from '../common/interfaces';
+import { encodeExpression } from '../common/encoders/expressionEncoder';
 import {
 	clamp, lengthOfXY, setFlag, hasFlag, boundsIntersect, point, toInt, lerpColor, distanceXY
 } from '../common/utils';
@@ -766,10 +768,11 @@ export class PonyTownGame implements Game {
 			this.discordPony = createPony(0, 0, DISCORD_PONY, palettes.defaultPalette, this.paletteManager);
 			initializeToys(this.paletteManager);
 		} catch (e) {
-			this.errorReporter.captureEvent({ name: 'failed game.initWebGL', error: e.message, stack: e.stack });
+			const err: any = e as any;
+			this.errorReporter.captureEvent({ name: 'failed game.initWebGL', error: err.message, stack: err.stack });
 			this.releaseWebGL();
-			DEVELOPMENT && console.error(e);
-			throw new Error(`Failed to initialize graphics device (${e.message})`);
+			DEVELOPMENT && console.error(err);
+			throw new Error(`Failed to initialize graphics device (${err.message})`);
 		}
 	}
 	private releaseWebGL() {
@@ -780,7 +783,8 @@ export class PonyTownGame implements Game {
 				this.paletteManager.dispose(this.webgl.gl);
 				disposeWebGL(this.webgl);
 			} catch (e) {
-				DEVELOPMENT && console.error(e);
+				const err: any = e as any;
+				DEVELOPMENT && console.error(err);
 			}
 
 			this.webgl = undefined;
@@ -1015,6 +1019,61 @@ export class PonyTownGame implements Game {
 						} else if (entityInRange(pickedEntity, player)) {
 							server.interact(pickedEntity.id);
 						}
+					// фича, которая делает взгляд только на дабл-клик
+					} else if (distanceXY(player.x, player.y, hover.x, hover.y) < TILE_CHANGE_RANGE) {
+						const nowClick = performance.now();
+						const lastTime = (this as any)._lastEyeClickTime as number | undefined;
+						const isDouble = !!lastTime && (nowClick - lastTime) < 350;
+						const nearCenter = distanceXY(player.x, player.y, hover.x, hover.y) < 0.3;
+						if (isDouble && nearCenter) {
+							const current = player.ponyState.expression;
+							const newExpr = current ? { ...current, leftIris: Iris.Forward, rightIris: Iris.Forward } : {
+								left: 1 as Eye,
+								right: 1 as Eye,
+								leftIris: Iris.Forward,
+								rightIris: Iris.Forward,
+								muzzle: 0 as Muzzle,
+								extra: ExpressionExtra.None,
+							} as Expression;
+							player.ponyState.expression = newExpr;
+							player.expr = encodeExpression(newExpr);
+							this.onActionsUpdate.next();
+						} else if (isDouble) {
+							// начало фичи: 8 векторов / по дабл-кликам
+							const dx = hover.x - player.x;
+							const dy = hover.y - player.y;
+							if (dx !== 0 || dy !== 0) {
+								const angle = Math.atan2(dy, dx);
+								let sector = Math.round(angle / (Math.PI / 4));
+								if (sector < 0) sector += 8;
+								sector = sector % 8;
+								let iris: Iris = Iris.Forward;
+								switch (sector) {
+									case 0: iris = Iris.Left; break;    // E
+									case 1: iris = Iris.Left; break;    // SE (н.п тебе для эмуляции левого низа)
+									case 2: iris = Iris.Down; break;     // S
+									case 3: iris = Iris.Right; break;     // SW (н.п для эмуляции левого низа)
+									case 4: iris = Iris.Right; break;     // W
+									case 5: iris = Iris.UpRight; break;   // NW
+									case 6: iris = Iris.Up; break;       // N
+									case 7: iris = Iris.UpLeft; break;  // NE
+									case 8: iris = Iris.Forward; break; 
+								}
+								const current = player.ponyState.expression;
+								const newExpr = current ? { ...current, leftIris: iris, rightIris: iris } : {
+									left: 1 as Eye,
+									right: 1 as Eye,
+									leftIris: iris,
+									rightIris: iris,
+									muzzle: 0 as Muzzle,
+									extra: ExpressionExtra.None,
+								} as Expression;
+								player.ponyState.expression = newExpr;
+								player.expr = encodeExpression(newExpr);
+								this.onActionsUpdate.next();
+							}
+						}
+						(this as any)._lastEyeClickTime = nowClick;
 					} else if (BETA && this.editor.tile !== -1) {
 						if (this.editor.brushSize > 1) {
 							const x = Math.floor((hover.x - (this.editor.brushSize / 2)));
@@ -1093,6 +1152,17 @@ export class PonyTownGame implements Game {
 						player.state = (player.state) ^ EntityState.HeadTurned;
 					}
 				}
+
+				// взгляд по numpad
+				if (input.wasPressed(Key.NUMPAD_4)) this.setIris(Iris.Right);
+				if (input.wasPressed(Key.NUMPAD_6)) this.setIris(Iris.Left);
+				if (input.wasPressed(Key.NUMPAD_8)) this.setIris(Iris.Up);
+				if (input.wasPressed(Key.NUMPAD_2)) this.setIris(Iris.Down);
+				if (input.wasPressed(Key.NUMPAD_7)) this.setIris(Iris.UpRight);
+				if (input.wasPressed(Key.NUMPAD_9)) this.setIris(Iris.UpLeft);
+				if (input.wasPressed(Key.NUMPAD_1)) this.setIris(Iris.Right); // SW
+				if (input.wasPressed(Key.NUMPAD_3)) this.setIris(Iris.Left); // SE
+				if (input.wasPressed(Key.NUMPAD_0) || input.wasPressed(Key.NUMPAD_5)) this.setIris(Iris.Forward);
 			}
 		}
 
@@ -1477,7 +1547,8 @@ export class PonyTownGame implements Game {
 				const height = getMapHeightAt(this.map, this.hover.x, this.hover.y, this.time);
 				drawText(paletteBatch, `${height.toFixed(2)}`, fontSmallPal, BLACK, x, y);
 			} catch (e) {
-				console.warn(e.message);
+				const err: any = e as any;
+				console.warn(err.message);
 			}
 		}
 
@@ -1838,5 +1909,21 @@ export class PonyTownGame implements Game {
 		spriteBatch!.flushes = 0;
 		paletteBatch!.drawnTrisStats = 0;
 		paletteBatch!.flushes = 0;
+	}
+
+	private setIris(iris: Iris) {
+		if (!this.player) return;
+		const current = this.player.ponyState.expression;
+		const newExpr = current ? { ...current, leftIris: iris, rightIris: iris } : {
+			left: 1 as Eye,
+			right: 1 as Eye,
+			leftIris: iris,
+			rightIris: iris,
+			muzzle: 0 as Muzzle,
+			extra: ExpressionExtra.None,
+		} as Expression;
+		this.player.ponyState.expression = newExpr;
+		this.player.expr = encodeExpression(newExpr);
+		this.onActionsUpdate.next();
 	}
 }

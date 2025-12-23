@@ -25,65 +25,17 @@ export const CREDITS: Credit[] = [
 	// 	links: ['https://twitter.com/your_twitter_handle'],
 	// },
 	{
-		name: 'Bytewave',
-		title: 'Programmer / Moderator',
+		name: 'Kurobaaka',
+		title: 'Programmer',
 		avatarIndex: 0,
-		links: ['https://twitter.com/BytewaveMLP', 'https://github.com/BytewaveMLP']
+		links: ['']
 	},
 	{
-		name: 'CyberPon3',
-		title: 'Programmer / Moderator',
-		avatarIndex: 2,
-		links: ['https://twitter.com/CyberPon3']
-	},
-	{
-		name: 'Keupoz',
+		name: 'GameOver1666',
 		title: 'Programmer',
-		avatarIndex: 3,
-		links: ['https://github.com/Keupoz']
-	},
-	{
-		name: 'Luney',
-		title: 'Programmer',
-		avatarIndex: 5,
-		links: ['https://twitter.com/luneythesnep', 'https://github.com/LunarMist']
-	},
-	{
-		name: 'MysticBlare',
-		title: 'Artist',
 		avatarIndex: 1,
-		links: ['https://twitter.com/MysticBlare']
+		links: ['']
 	},
-	{
-		name: 'NotMyWing',
-		title: 'Programmer / Moderator',
-		avatarIndex: 4,
-		links: ['https://twitter.com/NotMyWing', 'https://github.com/Neeve01']
-	},
-	{
-		name: 'Stubenhocker',
-		title: 'Programmer',
-		avatarIndex: 6,
-		links: ['https://github.com/Stubenhocker1399', 'https://twitter.com/Stubenhocker13']
-	},
-	{
-		name: 'Sunberry',
-		title: 'Moderator',
-		avatarIndex: 9,
-		links: ['https://twitter.com/Sunberreiy']
-	},
-	{
-		name: 'Terncode',
-		title: 'Programmer',
-		avatarIndex: 7,
-		links: ['https://twitter.com/terncode', 'https://github.com/Terncode']
-	},
-	{
-		name: 'ZizzyDizzyMC',
-		title: 'Server Host',
-		avatarIndex: 8,
-		links: ['https://twitter.com/ZizzyDizzyMC']
-	}
 ];
 
 export const CONTRIBUTORS: Contributors[] = [
