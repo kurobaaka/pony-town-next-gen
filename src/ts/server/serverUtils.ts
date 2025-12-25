@@ -35,6 +35,10 @@ export function toAccountData(account: IAccount): AccountData {
 		id: _id.toString(),
 		name, characterCount,
 		birthdate: birthdate && formatISODate(birthdate) || '',
+		/** creation date formatted with dots YYYY.MM.DD */
+		creationDate: account.createdAt && formatISODate(account.createdAt).replace(/-/g, '.') || '',
+		/** playtime in seconds (stored in account.counters.playtime) */
+		playtimeSeconds: account.counters && (account.counters as any).playtime ? (account.counters as any).playtime : undefined,
 		birthyear,
 		settings: cloneDeep(settings || {}),
 		supporter: supporterLevel(account) || undefined,

@@ -7,10 +7,12 @@ import {
 import { oauthProviders } from '../../../client/data';
 import { Model } from '../../services/model';
 import { getProviderIcon } from '../../shared/sign-in-box/sign-in-box';
-import { faStar, faExclamationCircle, faSync } from '../../../client/icons';
+import { faStar, faExclamationCircle, faSync, faCopy } from '../../../client/icons';
 import { Router } from '@angular/router';
+import { formatPlaytime } from '../../../common/utils';
 
 @Component({
+
 	selector: 'account',
 	templateUrl: 'account.pug',
 	styleUrls: ['account.scss'],
@@ -19,6 +21,30 @@ export class Account implements OnInit, OnDestroy {
 	readonly refreshIcon = faSync;
 	readonly starIcon = faStar;
 	readonly alertIcon = faExclamationCircle;
+	readonly copyIcon = faCopy;
+	idCopied = false;
+	async copyId(id?: string) {
+		if (!id) { return; }
+		try {
+			const nav = (navigator as any);
+			if (nav.clipboard && nav.clipboard.writeText) {
+				await nav.clipboard.writeText(id);
+			} else {
+				const ta = document.createElement('textarea');
+				ta.value = id;
+				ta.style.position = 'fixed';
+				ta.style.left = '-9999px';
+				document.body.appendChild(ta);
+				ta.select();
+				document.execCommand('copy');
+				document.body.removeChild(ta);
+			}
+			this.idCopied = true;
+			setTimeout(() => this.idCopied = false, 2000);
+		} catch (e) {
+			console.error('Copy failed', e);
+		}
+	}
 	readonly providers = oauthProviders.filter(p => !p.disabled);
 	readonly nameMinLength = ACCOUNT_NAME_MIN_LENGTH;
 	readonly nameMaxLength = ACCOUNT_NAME_MAX_LENGTH;
@@ -96,6 +122,9 @@ export class Account implements OnInit, OnDestroy {
 	}
 	icon(id: string) {
 		return getProviderIcon(id);
+	}
+	formatPlaytime(seconds?: number) {
+		return formatPlaytime(seconds);
 	}
 	submit() {
 		if (this.canSubmit) {
