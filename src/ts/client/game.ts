@@ -1889,9 +1889,30 @@ export class PonyTownGame implements Game {
 					const low = this.disableLighting ? ' LOW' : '';
 					const extraStats = this.extraStats;
 					const palSize = ` pal ${this.paletteManager.textureSize}`;
-					value = `${extraStats}${engine} ${fps} fps ${sent}/${recv} kb/s ${ponies} ` +
-						`ponies ${extra}${gl2}${low}${palSize}`.trim();
+					const coords = this.player ? ` Your Cords: X${Math.round(this.player.x)} Y${Math.round(this.player.y)}` : '';
+					value = `${extraStats}${engine} ${fps} fps ${sent}/${recv} kb/s ${ponies} ponies${coords} ${extra}${gl2}${low}${palSize}`.trim();
 				}
+				try {
+					const parent = this.statsText && (this.statsText.parentElement || this.statsText.parentNode);
+					const parentEl = parent instanceof HTMLElement ? parent : null;
+
+					if (parentEl) {
+						parentEl.style.right = '';
+						parentEl.style.bottom = '';
+
+						// Новое положение статы (вверху по центру)
+						parentEl.style.position = 'absolute';
+						parentEl.style.top = '8px';
+						parentEl.style.left = '50%';
+						parentEl.style.transform = 'translateX(-50%)';
+						parentEl.style.textAlign = 'center';
+						parentEl.style.pointerEvents = 'none';
+						parentEl.style.zIndex = '9999';
+					}
+				} catch (e) {
+					// fallback при ошибке
+				}
+
 
 				if (value !== this.statsTextValue) {
 					this.statsText.nodeValue = value;
