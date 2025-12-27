@@ -18,12 +18,11 @@ export interface PlaceableObject {
 @Component({
   selector: 'build-box',
   templateUrl: 'build-box.pug',
-  styleUrls: ['build-box.scss']
 })
 export class BuildBox {
   @Output() objectSelected = new EventEmitter<PlaceableObject>();
   @Output() close = new EventEmitter<void>();
-  
+
   readonly BuildIcon = faAngleDoubleRight;
 
   isOpen = false;
@@ -185,7 +184,7 @@ export class BuildBox {
     let objects = category ? category.objects : [];
 
     if (this.searchQuery) {
-      objects = objects.filter(obj => 
+      objects = objects.filter(obj =>
         obj.name.toLowerCase().includes(this.searchQuery)
       );
     }

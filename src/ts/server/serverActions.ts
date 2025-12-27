@@ -26,7 +26,7 @@ import { updateEntity, pushUpdateEntityToClient, pushUpdateTileToClient } from '
 import { SupporterInvitesService } from './services/supporterInvites';
 import { Move } from './move';
 import { logger } from './logger';
-import { findFriends } from './db';
+import { findFriends, updateAccount } from './db';
 import { Say, saySystem } from './chat';
 import { getTile } from '../common/worldMap';
 import { updateRegion, getExpectedRegion } from './regionUtils';
