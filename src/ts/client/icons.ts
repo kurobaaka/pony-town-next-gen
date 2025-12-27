@@ -8,6 +8,7 @@ import {
 } from '../generated/fa-icons';
 
 export {
+	faHammer,
 	faHashtag,
 	faCog,
 	faCogs,

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { faAngleDoubleRight } from '../../../client/icons';
+import { faHammer } from '../../../client/icons';
 
 export interface ObjectCategory {
   id: string;
@@ -23,7 +23,7 @@ export class BuildBox {
   @Output() objectSelected = new EventEmitter<PlaceableObject>();
   @Output() close = new EventEmitter<void>();
 
-  readonly BuildIcon = faAngleDoubleRight;
+  readonly BuildIcon = faHammer;
 
   isOpen = false;
   selectedCategory: string = 'all';
