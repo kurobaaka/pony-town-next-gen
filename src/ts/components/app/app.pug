@@ -6,6 +6,7 @@
 	party-list#party-list
 	settings-box#settings-box
 	swap-box#swap-box
+	build-box#build-box
 	notification-list#notifications([notifications]="notifications" [notificationsLength]="notifications.length")
 	chat-log#chat-log(*ngIf="playing" (toggleType)="chatBox.setChatType($event)" (nameClick)="chatLogNameClick(chatBox, $event)")
 	action-bar#action-bar(*ngIf="showActionBar" [blurred]="chatBox.isOpen" [editable]="editingActions")

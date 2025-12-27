@@ -59,6 +59,11 @@ export function formatDuration(duration: number) {
 		return `${s}s`;
 	}
 }
+export function formatISODate(date: Date) {
+	const year = date.getFullYear
+		(); const month = date.getMonth(
+		) + 1; const day = date.getDate(); return `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+}
 // format date with dots: YYYY.MM.DD
 export function formatDotDate(date: Date) {
 	const year = date.getFullYear();

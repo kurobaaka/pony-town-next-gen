@@ -26,7 +26,6 @@ export class BuildBox {
   
   readonly BuildIcon = faAngleDoubleRight;
 
-  showBuildBoxButton = true;
   isOpen = false;
   selectedCategory: string = 'all';
   searchQuery = '';
