@@ -763,6 +763,10 @@ export interface AccountData extends AccountDataExtra {
 	id: string;
 	name: string;
 	birthdate: string;
+	/** creation date formatted YYYY.MM.DD */
+	creationDate?: string;
+	/** playtime in seconds */
+	playtimeSeconds?: number;
 	birthyear?: number;
 	settings: AccountSettings;
 	characterCount: number;
@@ -783,6 +787,8 @@ export interface AccountCounters {
 	timeouts?: number;
 	inviteLimit?: number;
 	friendLimit?: number;
+	/** Total playtime */
+	playtime?: number;
 }
 
 export interface ModInfo {

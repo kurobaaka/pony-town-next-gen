@@ -25,12 +25,10 @@ h1(focusTitle) Account settings
 				button.btn.btn-default(type="submit" [disabled]="!canSubmit" style="min-width: 100px;")
 					| {{saveButtonText}}
 
-		//- div(style="margin-bottom: 100px;")
-		//- 	.form-group
-		//- 		h3 Account info
-		//- 		label(for="account-info") Account ID:
-		//- 		input#account-info.form-control([value]="account?.id" readonly)
 
+		ng-template(#copyTooltip)
+			.text-left
+				p {{ idCopied ? 'Your ID Copied!' : 'Copy' }}
 		div(style="margin-bottom: 100px;")
 			.form-group
 				h3.mb-3(style="color: #fff;") Account info
@@ -38,19 +36,15 @@ h1(focusTitle) Account settings
 					style="background-color: #222; padding: 15px; border-radius: 5px;"
 				)
 					.mb-2(style="color: #9c9c9c;")
-						strong Account ID: 
-						| {{account?.id || '-'}}
+						strong Account ID:
+						code {{account?.id || '-'}}
+						a.icon-button.ml-2.cursor-pointer(*ngIf="account?.id" (click)="copyId(account!.id)" [tooltip]="copyTooltip" placement="top" containerClass="tooltip-desc" aria-label="Copy account id")
+							fa-icon([icon]="copyIcon" size="xs")
 					.mb-2(style="color: #9c9c9c;")
 						strong Creation date: 
 						| {{account?.creationDate || '-'}}
-					.mb-2(style="color: #9c9c9c")
-						strong Total playtime: 
-						| {{account?.playtime || '-'}} hours
-
-		div(style="margin-bottom: 100px;")
-			.form-group
-				h3 Connected social accounts
-
+					.mb-2(style="color: #9c9c9c;")
+					strong(style="color: #9c9c9c;") Total playtime: #[span.ml-1 {{ formatPlaytime(account?.playtimeSeconds) }}]
 			.form-group
 				p.text-muted.
 					If you remove social account, you won't be able to use it to sign-in to the game anymore.
