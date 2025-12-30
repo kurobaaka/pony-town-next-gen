@@ -17,12 +17,13 @@ import {
 import { ServerEntity, IClient, ServerMap } from '../serverInterfaces';
 import { logger } from '../logger';
 import { getEntityTypeName, GhostAnimation, CatAnimation, SignIcon } from '../../common/entities';
-import { holdItem, isGift, unholdItem, getNextToyOrExtra } from '../playerUtils';
-import { toInt, hasFlag, point } from '../../common/utils';
+import { holdItem, isGift, unholdItem, useToyStash } from '../playerUtils';
+import { toInt, hasFlag, point, alignColumns } from '../../common/utils';
 import { updateAccountState } from '../accountUtils';
-import { saySystem, sayToAll } from '../chat';
+import { saySystem, sayToAll, sayTo } from '../chat';
+import { Account } from '../db';
 import { tileHeight, tileWidth } from '../../common/constants';
-import { updateEntityOptions, setEntityAnimation } from '../entityUtils';
+import { setEntityAnimation } from '../entityUtils';
 import { toWorldX } from '../../common/positionUtils';
 import { deserializeTiles } from '../../common/compress';
 import * as ctrl from '../controllers';
@@ -42,7 +43,7 @@ function createCookieTable2(x: number, y: number) {
 function createToyStash(x: number, y: number) {
 	return [
 		entities.giftPileSign(x, y - 0.1),
-		createSign(x, y, 'Toy Stash', (_, client) => updateEntityOptions(client.pony, getNextToyOrExtra(client)), entities.sign),
+		createSign(x, y, 'Toy Stash', (_, client) => useToyStash(client), entities.sign),
 	];
 }
 
@@ -74,7 +75,59 @@ function donateEgg(_: any, client: IClient) {
 	}
 }
 
+// Leaderboard state (seasonal)
+
+export async function buildGiftsLeadersMessage(): Promise<string> {
+	const now = new Date();
+	const year = (now.getMonth() === 11) ? now.getFullYear() + 1 : now.getFullYear();
+
+	// Fetch top 3 accounts by state.gifts from DB (state.gifts is the canonical place)
+	const accounts: any[] = await Account.find({})
+		.select('name state.gifts')
+		.sort({ 'state.gifts': -1 })
+		.limit(3)
+		.lean()
+		.exec();
+
+	const header = `ТОП 3 ИГРОКОВ ПО СБОРУ ПОДАРКОВ ${year}`;
+	const sep = '-----------------------------------';
+	const width = sep.length;
+	const giftEmoji = ' 🎁';
+
+	const lines = [header, sep];
+
+	// determine if there are any non-zero gift counts
+	const anyNonZero = accounts.some(a => (a && a.state && a.state.gifts && a.state.gifts > 0));
+
+	if (!anyNonZero) {
+		const emptyText = 'упс, тут похоже никого... -с-';
+		const pad = Math.max(0, Math.floor((width - emptyText.length) / 2));
+		lines.push(' '.repeat(pad) + emptyText);
+		return lines.join('\n');
+	}
+
+	for (let i = 0; i < 3; i++) {
+		const a = accounts[i];
+		const gifts = (a && a.state && a.state.gifts) ? a.state.gifts : 0;
+		if (a && gifts > 0) {
+			const rawName = (a.name || 'Player');
+			const name = rawName; // trimming handled by alignColumns
+			const left = `${i + 1} ${name}`;
+			const numberStr = `${gifts}${giftEmoji}`;
+			lines.push(alignColumns(left, numberStr, width));
+		} else {
+			// empty slot: display "(пусто)" instead of name and hide gift counter
+			const left = `${i + 1} (пусто)`;
+			lines.push(alignColumns(left, undefined, width));
+		}
+	}
+
+	return lines.join('\n');
+}
+
 function removeSeasonalObjects(world: World, map: ServerMap) {
+	// remove seasonal entities only
+
 	const remove: ServerEntity[] = [];
 
 	for (const region of map.regions) {
@@ -1348,6 +1401,16 @@ function addSeasonalObjects(world: World, map: ServerMap, season: Season, holida
 		add(entities.giftPile1(144.13, 45.54));
 		add(entities.giftPile3(132.66, 47.25));
 		add(entities.giftPileTree(118.78, 48.25));
+
+		// Seasonal leaderboard sign placed slightly right of pixel.horse
+		add(createSign(72.2, 70.5, 'Gifts on leaders', (entity, client) => {
+			(async () => {
+				const msg = await buildGiftsLeadersMessage();
+				sayTo(client, entity, msg, MessageType.Announcement);
+			})();
+		}, entities.sign));
+
+		// leaderboard shows when a player clicks the sign (no periodic broadcast)
 
 		add(entities.giftPile1(51.31, 31.33));
 		add(entities.giftPile2(58.66, 31.75));

@@ -212,6 +212,9 @@ export interface IClient extends ClientActions, ClientExtensions {
 	connectedTime: number;
 	leaveReason?: string;
 
+	// toys command tracking
+	lastToysCommandTime?: number;
+
 	// pending data
 	updateQueue: BinaryWriter;
 	regionUpdates: Uint8Array[];

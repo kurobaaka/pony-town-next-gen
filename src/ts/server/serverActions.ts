@@ -1,4 +1,5 @@
 import { Socket, Method, SocketServer, Bin, getMethods } from 'ag-sockets';
+import { updateAccount } from './db';
 import {
 	PlayerAction, ModAction, ChatType, PonyData, IServerActions, TileType, Action, EditorAction, Entity,
 	EntityOrPonyOptions, LeaveReason, SupporterInvite, InfoFlags, AccountSettings, FriendStatusFlags,

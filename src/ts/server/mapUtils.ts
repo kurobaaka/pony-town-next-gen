@@ -8,7 +8,8 @@ import * as entities from '../common/entities';
 import { updateTileIndices } from '../client/tileUtils';
 import { generateRegionCollider } from '../common/region';
 import { PONY_TYPE, tileWidth, tileHeight } from '../common/constants';
-import { sayTo, saySystem } from './chat';
+import { sayTo, saySystem, sayToOthers } from './chat';
+
 import { setEntityName, updateEntityVelocity, setEntityAnimation } from './entityUtils';
 import { updateAccountState } from './accountUtils';
 import { toInt, includes } from '../common/utils';
@@ -160,10 +161,18 @@ export function pickCandy(client: IClient) {
 	saySystem(client, `${count} 🍬`);
 }
 
+const GIFT_MILESTONES = [50, 100, 200, 300, 400, 500, 600, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500];
+
 export function pickGift(client: IClient) {
 	let count = 0;
 	updateAccountState(client.account, state => state.gifts = count = toInt(state.gifts) + 1);
 	saySystem(client, `${count} 🎁`);
+
+	// milestone announcements
+	if (GIFT_MILESTONES.indexOf(count) >= 0) {
+		sayToOthers(client, `Вы собрали ${count}🎁!`, MessageType.Announcement, undefined, {} as any);
+	}
+
 	holdItem(client.pony, entities.gift2.type);
 }
 

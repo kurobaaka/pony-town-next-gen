@@ -228,6 +228,50 @@ npm start
 gulp sprites
 ```
 
+### Troubleshooting: "Cannot find module '../generated/sprites'"
+
+If `tsc` or `npm run build-sprites` fails with an error like `Cannot find module '../generated/sprites'`, the generated sprites file is missing and TypeScript fails before the sprite generator runs. Common fixes:
+
+- Make sure you pulled assets via Git LFS:
+
+```bash
+git lfs pull
+```
+
+- Ensure `assetsPath` in `config.json` points to the folder that contains the `assets-source` used for sprite generation.
+
+- Try running the generator directly (this will create `src/ts/generated/sprites.ts` and sprite images in `tools/output/images`):
+
+```bash
+node src/scripts/tools/create-sprites.js
+```
+
+- Quick workaround if you can't run the generator (e.g., missing assets): create a minimal stub file to allow TypeScript to compile. Create `src/ts/generated/sprites.ts` with the following contents (temporary):
+
+```ts
+/* tslint:disable */
+export const spriteSheets: any[] = [];
+export const normalSpriteSheet: any = { data: undefined, texture: undefined, sprites: [], isSingleChannel: false, palette: false };
+export const paletteSpriteSheet: any = { data: undefined, texture: undefined, sprites: [], isSingleChannel: false, palette: true };
+export const defaultPalette = 0;
+export function createSprites(_: any) { return [{ x:0,y:0,w:0,h:0,ox:0,oy:0,type:0 }]; }
+```
+
+After that re-run:
+
+```bash
+npm run build-sprites
+```
+
+Once you have the real assets and sprite generation working, remove the stub (or replace it by running the generator) and, if needed, run:
+
+```bash
+git update-index --assume-unchanged src/ts/generated/sprites.ts
+```
+
+so local generated changes won't be shown as modified by Git.
+
+
 ### Production environment
 
 After your initial build (see above), you can use the following commands to generate a fresh production build of the site.

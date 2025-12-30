@@ -8,21 +8,22 @@ import { emojis } from '../client/emoji';
 import { IClient, ServerMap } from './serverInterfaces';
 import { World } from './world';
 import { NotificationService } from './services/notification';
-import { UserError, isUserError } from './userError';
+import { UserError } from './userError';
 import { parseExpression, expression } from '../common/expressionUtils';
 import { filterBadWords } from '../common/swears';
 import { randomString } from '../common/stringUtils';
 import {
-	getCounter, holdToy, getCollectedToysCount, holdItem, playerSleep, playerBlush, playerLove, playerCry,
+	getCounter, holdToy, getCollectedToysCount, getCollectedToysList, holdItem, playerSleep, playerBlush, playerLove, playerCry,
 	setEntityExpression, execAction, teleportTo
 } from './playerUtils';
 import { ServerLiveSettings, GameServerSettings } from '../common/adminInterfaces';
-import { isCommand, processCommand, clamp, flatten, includes, randomPoint, parseSeason, parseHoliday } from '../common/utils';
+import { isCommand, processCommand, clamp, flatten, includes, randomPoint, parseSeason, parseHoliday, toInt } from '../common/utils';
 import { createNotifyUpdate, createShutdownServer } from './api/internal';
 import { logger } from './logger';
 import { pathTo } from './paths';
 import { sayTo, sayToEveryone, sayToOthers, sayToAll, saySystem } from './chat';
 import { resetTiles } from './serverRegion';
+import { updateAccountState } from './accountUtils';
 import {
 	findEntities, updateMapState, loadMapFromFile, saveMapToFile, saveEntitiesToFile, getSizeOfMap,
 	saveMapToFileBinaryAlt, saveRegionCollider, saveMap, loadMap
@@ -220,15 +221,66 @@ export function createCommands(world: World): Command[] {
 			sayToOthers(client, `collected ${getCounter(client, 'clovers')} 🍀`, toAnnouncementMessageType(type), target, settings);
 		}, true),
 		command(['toys'], '/toys - show number of collected toys', '', ({ }, client, _, type, target, settings) => {
+			const now = Date.now();
 			const { collected, total } = getCollectedToysCount(client);
-			sayToOthers(client, `collected ${collected}/${total} toys`, toAnnouncementMessageType(type), target, settings);
+
+			if (collected === 0) {
+				sayToOthers(client, `У вас пока нет игрушек соберите подарки что бы открыть одну из игрушек`, toAnnouncementMessageType(type), target, settings);
+			} else if (client.lastToysCommandTime && (now - client.lastToysCommandTime) < 10000) {
+				const list = getCollectedToysList(client);
+				sayToOthers(client, `Your toys: ${list.map(n => `#${n}`).join(', ')}`, toAnnouncementMessageType(type), target, settings);
+			} else {
+				sayToOthers(client, `collected ${collected}/${total} toys`, toAnnouncementMessageType(type), target, settings);
+			}
+
+			client.lastToysCommandTime = now;
 		}),
 
-		// other
-		command(['unstuck'], '/unstuck - respawn at spawn point', '', ({ world }, client) => {
-			world.resetToSpawn(client);
-			world.kick(client, '/unstuck');
-		}),
+	// admin counter modification
+	command(['collect'], '/collect <kind> <amount> - grant/remove counters (admin only)', 'admin', ({ }, client, message) => {
+		const parts = message.trim().split(/\s+/);
+		if (parts.length < 2) {
+			throw new UserError('invalid parameters');
+		}
+
+		const kind = parts[0];
+		if (![ 'gifts', 'eggs', 'clovers', 'candies', 'toy', 'toys' ].includes(kind)) {
+			throw new UserError('invalid kind');
+		}
+
+		const amount = parseInt(parts[1], 10);
+		if (isNaN(amount)) {
+			throw new UserError('invalid amount');
+		}
+
+		if ([ 'gifts', 'eggs', 'clovers', 'candies' ].includes(kind)) {
+			const k = kind as 'gifts' | 'eggs' | 'clovers' | 'candies';
+			updateAccountState(client.account, (state: any) => state[k] = Math.max(0, toInt(state[k]) + amount));
+			const kindNames: any = { gifts: 'подарков', eggs: 'яиц', clovers: 'клевер(ов)', candies: 'конфет' };
+			saySystem(client, `${amount >= 0 ? 'Вы выдали' : 'Вы удалили'} ${Math.abs(amount)} ${kindNames[kind]}`);
+		} else {
+			// toy(s)
+			const n = Math.abs(amount);
+			const total = getCollectedToysCount(client).total;
+			const m = Math.min(n, total);
+			if (m === 0) {
+				saySystem(client, 'Неверный параметр для игрушек');
+				return;
+			}
+
+			updateAccountState(client.account, (state: any) => {
+				let mask = toInt(state.toys);
+				if (amount >= 0) {
+					for (let i = 0; i < m; i++) mask |= (1 << i);
+				} else {
+					for (let i = 0; i < m; i++) mask &= ~(1 << i);
+				}
+				state.toys = mask;
+			});
+
+			saySystem(client, `${amount >= 0 ? 'Вы выдали' : 'Вы удалили'} игрушки 1-${m}`);
+		}
+	}),
 		command(['leave'], '/leave - leave the game', '', ({ world }, client) => {
 			world.kick(client, '/leave');
 		}),
@@ -564,11 +616,12 @@ export const createRunCommand =
 				} else {
 					return false;
 				}
-			} catch (e) {
-				if (isUserError(e)) {
+			} catch (err) {
+				const e: any = err;
+				if (e && typeof e.message === 'string') {
 					saySystem(client, e.message);
 				} else {
-					throw e;
+					throw err;
 				}
 			}
 

@@ -11,8 +11,8 @@ import { serverMapInstanceFromTemplate, createServerMap, copyMapTiles, deseriali
 import { TileType, MapType, Season } from '../../common/interfaces';
 import { rect } from '../../common/rect';
 import { createAddLight, createSignWithText, createWoodenFenceMaker, createBoxOfLanterns } from '../controllerUtils';
-import { setEntityName, updateEntityOptions } from '../entityUtils';
-import { getNextToyOrExtra, holdItem } from '../playerUtils';
+import { setEntityName } from '../entityUtils';
+import { holdItem, useToyStash } from '../playerUtils';
 import { tileWidth, tileHeight } from '../../common/constants';
 import { TorchController, UpdateController } from '../controllers';
 import { resetRegionUpdates } from '../serverRegion';
@@ -54,7 +54,7 @@ export function createIslandMap(world: World, instanced: boolean, template = fal
 	setEntityName(boxOfFruits, 'Box of fruits');
 
 	const giftPile = add(entities.giftPileInteractive(37.66, 18.21));
-	giftPile.interact = (_, client) => updateEntityOptions(client.pony, getNextToyOrExtra(client));
+	giftPile.interact = (_, client) => useToyStash(client);
 	setEntityName(giftPile, 'Toy stash');
 
 	const types = entities.stashEntities.map(e => e.type);

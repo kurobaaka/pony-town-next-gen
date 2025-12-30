@@ -159,6 +159,9 @@ export function createClient(
 	client.unsubscribes = [];
 	client.subscribes = [];
 
+	// command tracking
+	client.lastToysCommandTime = 0;
+
 	client.positions = [];
 
 	return client;
@@ -672,6 +675,30 @@ export function getCollectedToysCount(client: IClient) {
 	}
 
 	return { collected, total };
+}
+
+export function getCollectedToysList(client: IClient): number[] {
+	const stateToys = toInt((client.account.state || {}).toys);
+	const result: number[] = [];
+
+	for (let i = 0, bit = 1; i < toys.length; i++ , bit <<= 1) {
+		if (stateToys & bit) {
+			result.push(toys[i].type);
+		}
+	}
+
+	return result;
+}
+
+export function useToyStash(client: IClient) {
+	const opt = getNextToyOrExtra(client);
+	updateEntityOptions(client.pony, opt);
+
+	if (opt.toy && opt.toy > 0) {
+		saySystem(client, `#${opt.toy}`);
+	} else if (opt.extra) {
+		saySystem(client, `#extra`);
+	}
 }
 
 export function getNextToyOrExtra(client: IClient) {

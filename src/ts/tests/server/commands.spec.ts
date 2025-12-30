@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import { assert, stub, SinonStub } from 'sinon';
 import { mockClient } from '../mocks';
 import { ChatType, MessageType, Action, ExpressionExtra, Eye, Muzzle } from '../../common/interfaces';
+import * as entities from '../../common/entities';
+import * as mapUtils from '../../server/mapUtils';
 import { IClient } from '../../server/serverInterfaces';
 import { UserError } from '../../server/userError';
 import {
@@ -312,6 +314,43 @@ describe('commands', () => {
 				runCommand(client, 'drop', '', ChatType.Say, undefined, {});
 
 				assert.calledWith(execAction, client, Action.Drop);
+			});
+		});
+
+		describe('collectable announcements', () => {
+			it('announces gift milestone at 100', () => {
+				client.account.state = { gifts: 99 } as any;
+				mapUtils.pickGift(client);
+				expect(client.saysQueue.some(s => s[1].includes('Поздравляю') && s[2] === MessageType.Announcement)).true;
+			});
+
+			it('announces first toy and opened toy when opening first toy', () => {
+				client.account.state = {} as any;
+				client.pony.options = { hold: entities.gift2.type } as any;
+				playerUtils.openGift(client);
+				expect(client.saysQueue.some(s => s[1].includes('вы собрали свою первую игрушку'))).true;
+				expect(client.saysQueue.some(s => /открыта игрушка|#\d+/.test(s[1]))).true;
+			});
+		});
+
+		describe('/collect', () => {
+			it('modifies counters and notifies admin', () => {
+				runCommand(client, 'collect', 'gifts 100', ChatType.Say, undefined, {});
+				expect((client.account.state as any).gifts).equal(100);
+				expect(client.saysQueue.some(s => s[1].includes('Вы выдали') && s[2] === MessageType.System)).true;
+			});
+
+			it('modifies candies and notifies admin', () => {
+				runCommand(client, 'collect', 'candies 50', ChatType.Say, undefined, {});
+				expect((client.account.state as any).candies).equal(50);
+				expect(client.saysQueue.some(s => s[1].includes('Вы выдали') && s[2] === MessageType.System)).true;
+			});
+
+			it('grants toys 1..N when using /collect toy N', () => {
+				client.account.state = {} as any;
+				runCommand(client, 'collect', 'toy 5', ChatType.Say, undefined, {});
+				expect(playerUtils.getCollectedToysCount(client).collected).equal(5);
+				expect(client.saysQueue.some(s => s[1].includes('Вы выдали') && s[2] === MessageType.System)).true;
 			});
 		});
 
