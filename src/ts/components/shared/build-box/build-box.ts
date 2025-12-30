@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { faAngleDoubleRight } from '../../../client/icons';
+import { faHammer } from '../../../client/icons';
 
 export interface ObjectCategory {
   id: string;
@@ -18,15 +18,13 @@ export interface PlaceableObject {
 @Component({
   selector: 'build-box',
   templateUrl: 'build-box.pug',
-  styleUrls: ['build-box.scss']
 })
 export class BuildBox {
   @Output() objectSelected = new EventEmitter<PlaceableObject>();
   @Output() close = new EventEmitter<void>();
-  
-  readonly BuildIcon = faAngleDoubleRight;
 
-  showBuildBoxButton = true;
+  readonly BuildIcon = faHammer;
+
   isOpen = false;
   selectedCategory: string = 'all';
   searchQuery = '';
@@ -186,7 +184,7 @@ export class BuildBox {
     let objects = category ? category.objects : [];
 
     if (this.searchQuery) {
-      objects = objects.filter(obj => 
+      objects = objects.filter(obj =>
         obj.name.toLowerCase().includes(this.searchQuery)
       );
     }
