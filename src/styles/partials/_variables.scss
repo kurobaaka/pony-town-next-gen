@@ -24,6 +24,10 @@ $focus-color: #50a5ff;
 $headers-color: #ddbb74;
 $grass-color: #90ee90;
 
+:root {
+	--grass-color: #{$grass-color};
+} 
+
 $friends-color: #40bf19;
 $party-color: #50b5ff;
 

@@ -124,6 +124,19 @@ export function createBasePony(): PonyInfo {
 
 		cm: [],
 		cmFlip: false,
+		flip: false,
+		headTurned: false,
+		headTurn: 0,
+
+		// effect flags
+		blush: false,
+		sleeping: false,
+		tears: false,
+		crying: false,
+		hearts: false,
+
+		// preview background color (hex without '#')
+		previewBackground: '90ee90',
 
 		customOutlines: false,
 		freeOutlines: false,
@@ -464,7 +477,7 @@ export const createToPaletteSet =
 export function toPaletteGeneric<T>(
 	info: PonyInfoGeneric<T>, manager: PaletteManager, toColorList: (color: (T | undefined)[]) => Uint32Array,
 	getColorsForSet: GetColorsForSet<T>, blackColor: T, whiteColor: T, parseCMColor: (color: T) => number
-): PalettePonyInfo {
+): any {
 	const darken = !info.freeOutlines;
 	const toSet = createToPaletteSet(manager, getColorsForSet, false, darken);
 	const toSetExtra = createToPaletteSet(manager, getColorsForSet, true, darken);
@@ -472,7 +485,7 @@ export function toPaletteGeneric<T>(
 	const defaultSet = { type: 0, pattern: 0, fills: [info.coatFill], outlines: [info.coatOutline] };
 	// const defaultSet = { type: 0, pattern: 1, fills: [info.coatFill, whiteColor], outlines: [info.coatOutline, blackColor] };
 
-	return {
+	return ({
 		body: toSet(defaultSet, sprites.body[1]),
 		head: toSet(info.head || defaultSet, sprites.head0[1]),
 		nose: toSet(info.nose, sprites.noses[0]),
@@ -551,6 +564,9 @@ export function toPaletteGeneric<T>(
 
 		cm: undefined,
 		cmFlip: !!info.cmFlip,
+		flip: !!info.flip,
+		headTurned: !!info.headTurned,
+		headTurn: toInt(info.headTurn),
 		cmPalette: createCMPalette<T>(info.cm, manager, parseCMColor),
 
 		customOutlines: !!info.customOutlines,
@@ -558,7 +574,7 @@ export function toPaletteGeneric<T>(
 		darkenLockedOutlines: !!info.darkenLockedOutlines,
 		defaultPalette: manager.addArray(defaultPalette),
 		waterPalette: manager.addArray(sprites.pony_wake_1.palette),
-	};
+	} as any);
 }
 
 export function toPalette(info: PonyInfo, manager = mockPaletteManager): PalettePonyInfo {

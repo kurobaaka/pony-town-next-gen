@@ -210,14 +210,20 @@ export function isPonyBug(pony: Pony) {
 export function ensurePonyInfoDecoded(pony: Pony) {
 	if (pony.info !== undefined && pony.palettePonyInfo === undefined) {
 		pony.palettePonyInfo = decodePonyInfo(pony.info, pony.paletteManager);
+		const info = (pony.palettePonyInfo as any) || {};
 		const wingType = pony.palettePonyInfo.wings && pony.palettePonyInfo.wings.type || 0;
 		pony.animator.variant = wingType === 4 ? 'bug' : '';
 		pony.ponyState.blushColor = blushColor(pony.palettePonyInfo.coatPalette.colors[1]);
 		pony.magicColor = withAlpha(pony.palettePonyInfo.magicColorValue, MAGIC_ALPHA);
+
+		// apply persistent head / flip options from pony info
+		pony.ponyState.headTurned = !!info.headTurned;
+		pony.ponyState.headTurn = Math.max(0, Math.min(6, (info.headTurn === undefined ? 0 : info.headTurn) | 0));
+		pony.drawingOptions.flipped = isFacingRight(pony) ? !info.flip : !!info.flip;
 	}
 
 	return pony.palettePonyInfo!;
-}
+} 
 
 export function invalidatePalettesForPony(pony: Pony) {
 	pony.discardBatch = true;
@@ -540,6 +546,8 @@ export function updatePonyEntity(pony: Pony, delta: number, gameTime: number, sa
 	if (pony.batch !== undefined) {
 		const options = pony.drawingOptions;
 		const right = isFacingRight(pony);
+		const flipInfo = (pony.palettePonyInfo as any) && (pony.palettePonyInfo as any).flip;
+		options.flipped = right ? !flipInfo : !!flipInfo;
 
 		if (
 			holdingUpdated ||

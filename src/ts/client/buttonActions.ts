@@ -8,7 +8,7 @@ import * as sprites from '../generated/sprites';
 import { createExpression } from './clientUtils';
 import { encodeExpression, decodeExpression } from '../common/encoders/expressionEncoder';
 import { PonyTownGame } from './game';
-import { boopAction, upAction, downAction, turnHeadAction } from './playerActions';
+import { boopAction, upAction, downAction, turnHeadAction, interact } from './playerActions';
 import { ACTIONS_LIMIT, COMMAND_ACTION_TIME_DELAY } from '../common/constants';
 import { cloneDeep, hasFlag } from '../common/utils';
 import { boop, defaultHeadFrame, stand, sneeze, yawn, lie, sit, fly, laugh, kiss, excite } from './ponyAnimations';
@@ -116,6 +116,8 @@ const actionActions = [
 	actionButtonAction('excite', 'Excite', Action.Excite),
 	actionButtonAction('blush', 'Blush', Action.Blush),
 	actionButtonAction('drop', 'Drop item', Action.Drop),
+	actionButtonAction('interact', 'Interact'),
+	actionButtonAction('open', 'Open gift'),
 	actionButtonAction('drop-toy', 'Drop toy', Action.DropToy),
 	actionButtonAction('magic', 'Magic', Action.Magic),
 	actionButtonAction('switch-tool', 'Switch tool', Action.SwitchTool),
@@ -306,8 +308,15 @@ export function useAction(game: PonyTownGame, action: ButtonAction | undefined) 
 						case 'switch-tile':
 							game.send(server => server.action(Action.SwitchToTileTool));
 							game.changePlaceTile(false);
+							break;						case 'interact': {
+							interact(game, false);
 							break;
-						default:
+						}
+						case 'open': {
+							// use held item (will open gift if holding one)
+							game.send(server => server.use());
+							break;
+						}						default:
 							console.log('Action not supported: ', action.action);
 					}
 				}
@@ -491,8 +500,17 @@ export function drawAction(canvas: HTMLCanvasElement, action: ButtonAction | und
 								drawPony(batch, actionPony, state, 20, 40, defaultDrawPonyOptions());
 								batch.drawSprite(sprites.arrow_down, BLACK, defaultPalette, 1, 3);
 								break;
-							}
-							case 'drop-toy': {
+							}						case 'interact': {
+							const state = { ...createState(), holding: fakePaletteManager(() => apple2(0, 0)) };
+							drawPony(batch, actionPony, state, 20, 40, defaultDrawPonyOptions());
+							batch.drawSprite(sprites.arrow_up, BLACK, defaultPalette, 1, 3);
+							break;
+						}
+						case 'open': {
+							const palette = mockPaletteManager.addArray(sprites.gift_1.palettes![0]);
+							batch.drawSprite(sprites.gift_1.color, WHITE, palette, 2, 2);
+							break;
+						}							case 'drop-toy': {
 								const state = { ...createState() };
 								const options = { ...defaultDrawPonyOptions(), toy: 17 };
 								drawPony(batch, actionPony, state, 18, 52, options);

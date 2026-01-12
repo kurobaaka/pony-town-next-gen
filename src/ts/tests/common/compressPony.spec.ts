@@ -66,6 +66,9 @@ function base<T>(black: T, white: T) {
 		frecklesColor: undefined,
 		cm: undefined,
 		cmFlip: undefined,
+		flip: false,
+		headTurned: false,
+		headTurn: 0,
 		customOutlines: false,
 		freeOutlines: false,
 		darkenLockedOutlines: undefined,
@@ -156,7 +159,7 @@ describe('compressPony', () => {
 	describe('precompressPony() + postdecompressPony()', () => {
 		const BASE = base(BLACK, WHITE);
 
-		function test(input: Partial<PonyInfoNumber>, expected?: Partial<PonyInfoNumber>) {
+		function runTestNumber(input: Partial<PonyInfoNumber>, expected?: Partial<PonyInfoNumber>) {
 			return () => {
 				const data = precompressPony(input as any, BLACK, x => x);
 				const result1 = postdecompressPony(data, x => x);
@@ -166,13 +169,13 @@ describe('compressPony', () => {
 			};
 		}
 
-		it('empty', test({}, {
+		it('empty', runTestNumber({}, {
 			coatOutline: undefined,
 			eyeWhitesLeft: undefined,
 			eyelashColorLeft: undefined,
 		}));
 
-		it('colors', test({
+		it('colors', runTestNumber({
 			coatFill: RED,
 			coatOutline: RED,
 			eyeColorLeft: RED,
@@ -195,7 +198,7 @@ describe('compressPony', () => {
 			eyelashColorLeft: undefined,
 		}));
 
-		it('booleans', test({
+		it('booleans', runTestNumber({
 			customOutlines: true,
 			lockEyes: true,
 			lockEyeColor: true,
@@ -212,7 +215,7 @@ describe('compressPony', () => {
 				eyelashColorLeft: undefined,
 			}));
 
-		it('removes lockBackLegAccessory', test({
+		it('removes lockBackLegAccessory', runTestNumber({
 			lockBackLegAccessory: true
 		}, {
 				coatOutline: undefined,
@@ -220,7 +223,7 @@ describe('compressPony', () => {
 				eyelashColorLeft: undefined,
 			}));
 
-		it('set', test({
+		it('set', runTestNumber({
 			customOutlines: true,
 			lockCoatOutline: true,
 			coatOutline: undefined,
@@ -236,7 +239,7 @@ describe('compressPony', () => {
 			}
 		}));
 
-		it('missing set fields', test({
+		it('missing set fields', runTestNumber({
 			customOutlines: true,
 			tail: {
 				type: 1,
@@ -257,7 +260,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('missing set color', test({
+		it('missing set color', runTestNumber({
 			customOutlines: true,
 			tail: {
 				type: 1,
@@ -282,7 +285,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('cm', test({
+		it('cm', runTestNumber({
 			cm: [undefined, RED, undefined, BLUE] as any,
 		}, {
 				cm: [TRANSPARENT, RED, TRANSPARENT, BLUE],
@@ -330,7 +333,7 @@ describe('compressPony', () => {
 	describe('compressPony() + decompressPony()', () => {
 		const BASE = base('000000', 'ffffff');
 
-		function test(input: Partial<PonyInfo>, expected?: Partial<PonyInfo>) {
+function runTestPony(input: Partial<PonyInfo>, expected?: Partial<PonyInfo>) {
 			return () => {
 				const data = compressPonyString(input as any);
 				const result = decompressPonyString(data, false);
@@ -338,11 +341,13 @@ describe('compressPony', () => {
 			};
 		}
 
-		it('empty', test({}, {}));
+		it('empty', runTestPony({}, {}));
 
-		it('coatFill', test({ coatFill: 'ff0000' }, { coatFill: 'ff0000', coatOutline: 'b30000' }));
+		it('head/flip', runTestPony({ flip: true, headTurned: true, headTurn: 3 }, { flip: true, headTurned: true, headTurn: 3 }));
 
-		it('eyeColorLeft', test({
+		it('coatFill', runTestPony({ coatFill: 'ff0000' }, { coatFill: 'ff0000', coatOutline: 'b30000' }));
+
+		it('eyeColorLeft', runTestPony({
 			eyeColorLeft: 'ff00ff',
 		}, {
 				coatFill: '000000',
@@ -351,7 +356,7 @@ describe('compressPony', () => {
 				eyeColorRight: '000000',
 			}));
 
-		it('eyeColorLeft + eyeColorRight', test({
+		it('eyeColorLeft + eyeColorRight', runTestPony({
 			eyeColorLeft: 'ff00ff',
 			eyeColorRight: '00ff00',
 		}, {
@@ -361,7 +366,7 @@ describe('compressPony', () => {
 				eyeColorRight: '00ff00',
 			}));
 
-		it('eyeColorLeft + eyeColorRight (locked)', test({
+		it('eyeColorLeft + eyeColorRight (locked)', runTestPony({
 			lockEyeColor: true,
 			eyeColorLeft: '00ff00',
 			eyeColorRight: 'ff00ff',
@@ -375,7 +380,7 @@ describe('compressPony', () => {
 				eyeColorRight: 'ff00ff',
 			}));
 
-		it('eyeshadow', test({
+		it('eyeshadow', runTestPony({
 			eyeshadow: true,
 			eyeshadowColor: 'ff00ff',
 		}, {
@@ -391,9 +396,9 @@ describe('compressPony', () => {
 				customOutlines: false,
 			}));
 
-		it('cm', test({ cm: ['ff0000', '', '00ff00'] }, { cm: ['ff0000', '', '00ff00'], cmFlip: false }));
+		it('cm', runTestPony({ cm: ['ff0000', '', '00ff00'] }, { cm: ['ff0000', '', '00ff00'], cmFlip: false }));
 
-		it('cm (flip)', test({
+		it('cm (flip)', runTestPony({
 			cm: ['ff0000', '', '00ff00'],
 			cmFlip: true,
 		}, {
@@ -401,7 +406,7 @@ describe('compressPony', () => {
 				cmFlip: true,
 			}));
 
-		it('all locked', test({
+		it('all locked', runTestPony({
 			tail: {
 				type: 2,
 				pattern: 1,
@@ -419,7 +424,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('set', test({
+it('set', runTestPony({
 			mane: {
 				type: 1,
 				pattern: 1,
@@ -437,7 +442,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('0 colors', test({
+it('0 colors', runTestPony({
 			ears: {
 				type: 0,
 				pattern: 0,
@@ -455,7 +460,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('extraAccessory', test({
+it('extraAccessory', runTestPony({
 			extraAccessory: {
 				type: 0,
 				pattern: 0,
@@ -473,11 +478,11 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('neckAccessory', test({
+		it('neckAccessory', runTestPony({
 			neckAccessory: { type: 0, pattern: 0 }
 		}, {}));
 
-		it('locked fills', test({
+it('locked fills', runTestPony({
 			mane: {
 				type: 1,
 				pattern: 0,
@@ -509,7 +514,7 @@ describe('compressPony', () => {
 				},
 			}));
 
-		it('locked back hooves', test({
+it('locked back hooves', runTestPony({
 			frontHooves: {
 				type: 0,
 				pattern: 0,
@@ -539,7 +544,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('back mane', test({
+		it('back mane', runTestPony({
 			mane: {
 				type: 3,
 				pattern: 1,
@@ -570,7 +575,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('chest accessory (adds default sleeve if missing)', test({
+		it('chest accessory (adds default sleeve if missing)', runTestPony({
 			chestAccessory: {
 				type: 2,
 				pattern: 8,
@@ -595,7 +600,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('back leg accessory', test({
+		it('back leg accessory', runTestPony({
 			backLegAccessory: {
 				type: 1,
 				pattern: 0,
@@ -614,7 +619,7 @@ describe('compressPony', () => {
 				}
 			}));
 
-		it('cm (with undefined)', test({
+		it('cm (with undefined)', runTestPony({
 			cm: [
 				, , , 'fde9cd', ,
 				'fde9cd', , , , ,

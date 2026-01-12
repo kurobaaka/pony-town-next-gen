@@ -1,5 +1,4 @@
 import { Socket, Method, SocketServer, Bin, getMethods } from 'ag-sockets';
-import { updateAccount } from './db';
 import {
 	PlayerAction, ModAction, ChatType, PonyData, IServerActions, TileType, Action, EditorAction, Entity,
 	EntityOrPonyOptions, LeaveReason, SupporterInvite, InfoFlags, AccountSettings, FriendStatusFlags,
@@ -178,7 +177,7 @@ export class ServerActions implements IServerActions, SocketServer {
 			this.client.updateSelection(entityId, 0);
 		}
 	}
-	@Method({ rateLimit: '2/s', serverRateLimit: '4/s', binary: [Bin.U32] })
+	@Method({ rateLimit: '10/s', serverRateLimit: '20/s', binary: [Bin.U32] })
 	interact(entityId: number) {
 		validateNumber(entityId, 'entityId');
 		this.updateLastAction();

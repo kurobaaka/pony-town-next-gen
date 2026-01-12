@@ -25,8 +25,8 @@
 	position: relative;
 	width: 400px;
 	height: 400px;
-	background: $grass-color;
-	border-radius: $border-radius-lg;
+	background: var(--grass-color);
+	border-radius: $border-radius-lg; 
 
 	@include media-breakpoint-down(sm) {
 		width: 280px;

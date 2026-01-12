@@ -1288,6 +1288,19 @@ export interface PonyInfoBase<T, SET> {
 
 	cm: T[] | undefined;
 	cmFlip: boolean | undefined;
+	flip: boolean | undefined;
+	headTurned: boolean | undefined;
+	headTurn: number | undefined;
+
+	// effect flags (from Actions / expressions)
+	blush: boolean | undefined;
+	sleeping: boolean | undefined;
+	tears: boolean | undefined;
+	crying: boolean | undefined;
+	hearts: boolean | undefined;
+
+	// preview background color for character editor (hex without '#', e.g. '90ee90')
+	previewBackground: T | undefined;
 
 	customOutlines: boolean | undefined;
 	freeOutlines: boolean | undefined;

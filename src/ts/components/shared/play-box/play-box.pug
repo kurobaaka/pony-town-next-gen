@@ -18,7 +18,7 @@
 
 .form-group(*ngIf="isAndroidBrowser")
 	.alert.alert-warning(role="alert")
-		| Your browser is outdated and is not able to correctly run pixel.horse.
+		| Your browser is outdated and is not able to correctly run The Server.
 		| Please install a different browser to be able to play the game.
 
 .form-group(*ngIf="model.missingBirthdate && !birthdateSet && requestBirthdate")
@@ -86,7 +86,7 @@
 .form-group(*ngIf="isBrowserOutdated")
 	.alert.alert-warning(role="alert")
 		button.close.float-right((click)="dismissOutdatedBrowser()" aria-label="Close" style="font-size: 20px;") &times;
-		| Your browser is outdated and is known to have issues running pixel.horse.
+		| Your browser is outdated and is known to have issues running The Server.
 		| Make sure you have latest version installed.
 
 .form-group(*ngIf="invalidVersion && !offline")

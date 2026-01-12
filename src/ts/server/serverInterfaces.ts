@@ -214,6 +214,8 @@ export interface IClient extends ClientActions, ClientExtensions {
 
 	// toys command tracking
 	lastToysCommandTime?: number;
+	// toy notification tracking (timestamp of last long notification shown to avoid repeating long messages)
+	lastToyLongShownTime?: number;
 
 	// pending data
 	updateQueue: BinaryWriter;

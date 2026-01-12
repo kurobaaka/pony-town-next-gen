@@ -159,17 +159,20 @@ export function pickCandy(client: IClient) {
 	let count = 0;
 	updateAccountState(client.account, state => state.candies = count = toInt(state.candies) + 1);
 	saySystem(client, `${count} 🍬`);
-}
 
-const GIFT_MILESTONES = [50, 100, 200, 300, 400, 500, 600, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500];
+	// announce every 75 candies
+	if (count % 75 === 0) {
+		sayToOthers(client, `Вы собрали ${count}🍬!`, MessageType.Announcement, undefined, {} as any);
+	}
+}
 
 export function pickGift(client: IClient) {
 	let count = 0;
 	updateAccountState(client.account, state => state.gifts = count = toInt(state.gifts) + 1);
 	saySystem(client, `${count} 🎁`);
 
-	// milestone announcements
-	if (GIFT_MILESTONES.indexOf(count) >= 0) {
+	// announce every 100 gifts
+	if (count % 100 === 0) {
 		sayToOthers(client, `Вы собрали ${count}🎁!`, MessageType.Announcement, undefined, {} as any);
 	}
 
@@ -180,13 +183,25 @@ export function pickClover(client: IClient) {
 	let count = 0;
 	updateAccountState(client.account, state => state.clovers = count = toInt(state.clovers) + 1);
 	saySystem(client, `${count} 🍀`);
+
+	// announce every 25 clovers
+	if (count % 25 === 0) {
+		sayToOthers(client, `Вы собрали ${count}🍀!`, MessageType.Announcement, undefined, {} as any);
+	}
+
 	holdItem(client.pony, entities.cloverPick.type);
 }
 
+// egg announce
 export function pickEgg(client: IClient) {
 	let count = 0;
 	updateAccountState(client.account, state => state.eggs = count = toInt(state.eggs) + 1);
 	saySystem(client, `${count} 🥚`);
+
+	// announce every 50 eggs
+	if (count % 50 === 0) {
+		sayToOthers(client, `Вы собрали ${count}🥚!`, MessageType.Announcement, undefined, {} as any);
+	}
 
 	if (Math.random() < 0.05) {
 		const options = client.pony.options as PonyOptions;
@@ -290,7 +305,15 @@ export function createBunny(waypoints: Point[]) {
 
 			if (entity.vx !== vx || entity.vy !== vy) {
 				updateEntityVelocity(entity, vx, vy, now);
-				setEntityAnimation(entity, BunnyAnimation.Walk, vx === 0 ? undefined : vx > 0);
+
+				let dir: boolean | undefined;
+				if (vx === 0) {
+					dir = undefined;
+				} else {
+					dir = vx > 0;
+				}
+
+				setEntityAnimation(entity, BunnyAnimation.Walk, dir);
 			}
 		}
 	};

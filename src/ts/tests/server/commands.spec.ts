@@ -328,8 +328,43 @@ describe('commands', () => {
 				client.account.state = {} as any;
 				client.pony.options = { hold: entities.gift2.type } as any;
 				playerUtils.openGift(client);
-				expect(client.saysQueue.some(s => s[1].includes('вы собрали свою первую игрушку'))).true;
-				expect(client.saysQueue.some(s => /открыта игрушка|#\d+/.test(s[1]))).true;
+			expect(client.saysQueue.some(s => s[1].includes('вы собрали свою первую игрушку') && s[2] === MessageType.Announcement)).true;
+			expect(client.saysQueue.some(s => /открыта игрушка|#\d+/.test(s[1]) && s[2] === MessageType.Announcement)).true;
+			});
+
+		it('command /open opens gift', () => {
+			client.account.state = {} as any;
+			client.pony.options = { hold: entities.gift2.type } as any;
+			runCommand(client, 'open', '', ChatType.Say, undefined, {});
+			expect(client.saysQueue.some(s => /открыта игрушка|#\d+/.test(s[1]))).true;
+		});
+
+			it('sends system message for opened non-first toy', () => {
+				client.account.state = { toys: 1 } as any;
+				client.pony.options = { hold: entities.gift2.type } as any;
+
+				const ld = require('lodash');
+				const s = stub(ld, 'sample').returns(2);
+				playerUtils.openGift(client);
+				s.restore();
+
+				expect(client.saysQueue.some(s => /#\d+|Открыта игрушка/.test(s[1]) && s[2] === MessageType.System)).true;
+			});
+
+			it('shows long then short system notifications for multiple opens in a session', () => {
+				client.account.state = { toys: 1 } as any;
+				client.pony.options = { hold: entities.gift2.type } as any;
+
+				const ld = require('lodash');
+				const s = stub(ld, 'sample');
+				s.onFirstCall().returns(2).onSecondCall().returns(3);
+
+				playerUtils.openGift(client); // long message expected
+				playerUtils.openGift(client); // short message expected
+				s.restore();
+
+				expect(client.saysQueue.some(s => /Открыта игрушка/.test(s[1]) && s[2] === MessageType.System)).true;
+				expect(client.saysQueue.some(s => /#\d+/.test(s[1]) && s[2] === MessageType.System)).true;
 			});
 		});
 

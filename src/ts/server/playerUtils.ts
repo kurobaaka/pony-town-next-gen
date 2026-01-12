@@ -37,7 +37,8 @@ import {
 import { withBorder } from '../common/rect';
 import { isOnlineFriend } from './services/friends';
 import { grapePurple, grapeGreen, tools } from '../common/entities';
-import { saySystem } from './chat';
+import { saySystem, sayToOthers } from './chat';
+import { MessageType } from '../common/interfaces';
 
 export function isMutedOrShadowed(client: IClient) {
 	return client.shadowed || isMuted(client.account);
@@ -738,10 +739,37 @@ export function openGift(client: IClient) {
 
 		const state = client.account.state || {};
 
-		if (!hasToyUnlocked(toyType, toInt(state.toys))) {
+		const prev = getCollectedToysCount(client).collected;
+		const total = getCollectedToysCount(client).total;
+		const wasUnlocked = hasToyUnlocked(toyType, toInt(state.toys));
+
+		if (!wasUnlocked) {
 			updateAccountState(client.account, state => {
 				state.toys = unlockToy(toyType, toInt(state.toys));
 			});
+
+			// notification logic
+			const now = Date.now();
+			const after = getCollectedToysCount(client).collected;
+
+			// first toy collected -> announcement
+			if (prev === 0 && after === 1) {
+				sayToOthers(client, 'Вы собрали свою первую игрушку!', MessageType.Announcement, undefined, {} as any);
+				sayToOthers(client, `Открыта игрушка #${toyType}`, MessageType.Announcement, undefined, {} as any);
+			} else if (after === total) {
+				// collected all -> announcement
+				sayToOthers(client, `Вы собрали ${after}/${total} игрушек! Поздравляем!`, MessageType.Announcement, undefined, {} as any);
+				sayToOthers(client, `Открыта игрушка #${toyType}`, MessageType.Announcement, undefined, {} as any);
+			} else {
+				// normal unlocked toy -> system message (long/short)
+				const LONG_WINDOW = 5 * 60 * 1000; // 5 minutes
+				if (!client.lastToyLongShownTime || (now - client.lastToyLongShownTime) > LONG_WINDOW) {
+					saySystem(client, `Открыта игрушка #${toyType} — вы получили новую игрушку!`);
+					client.lastToyLongShownTime = now;
+				} else {
+					saySystem(client, `#${toyType}`);
+				}
+			}
 		}
 	}
 }

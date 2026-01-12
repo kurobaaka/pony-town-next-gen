@@ -30,8 +30,8 @@ code {
 // bg / text
 
 .bg-grass {
-	background: $grass-color;
-}
+	background: var(--grass-color);
+} 
 
 .text-smuted {
 	color: $text-smuted;

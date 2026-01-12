@@ -136,3 +136,20 @@ html, body {
 	color: rgb(225, 145, 6);
 	animation: spin_4991 7s infinite;
 }
+
+/* Keyframes for cycling loading words. Each .word gets a negative delay so they appear in sequence. */
+@keyframes spin_4991 {
+	0% { opacity: 0; transform: translateY(0); }
+	2% { opacity: 1; }
+	18% { opacity: 1; }
+	20% { opacity: 0; }
+	100% { opacity: 0; }
+}
+
+$interval: 7s;
+$words: 30; // safer upper bound for number of words listed in index.pug
+@for $i from 1 through $words {
+	.word:nth-child(#{$i}) {
+		animation-delay: -($interval * ($i - 1) / $words);
+	}
+}

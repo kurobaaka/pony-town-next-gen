@@ -1402,7 +1402,7 @@ function addSeasonalObjects(world: World, map: ServerMap, season: Season, holida
 		add(entities.giftPile3(132.66, 47.25));
 		add(entities.giftPileTree(118.78, 48.25));
 
-		// Seasonal leaderboard sign placed slightly right of pixel.horse
+		// Seasonal leaderboard sign placed slightly right of The Server
 		add(createSign(72.2, 70.5, 'Gifts on leaders', (entity, client) => {
 			(async () => {
 				const msg = await buildGiftsLeadersMessage();
@@ -2653,7 +2653,7 @@ export function createMainMap(world: World): ServerMap {
 	add(entities.rock(98.63, 38.04));
 	add(entities.rock(117.22, 24.63));
 
-	add(createSignWithText(70.5, 70.5, 'pixel.horse', '      pixel.horse\n[under construction]', entities.sign));
+	add(createSignWithText(70.5, 70.5, 'The Server', '      The Server\n[under construction]', entities.sign));
 
 	addEntities(createToyStash(47.00, 55.00));
 

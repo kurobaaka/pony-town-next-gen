@@ -4,7 +4,8 @@ import { rect } from '../../common/rect';
 import { TileType, MapType } from '../../common/interfaces';
 import { createServerMap, deserializeMap } from '../serverMap';
 import { World, goToMap } from '../world';
-import { createSign, give } from '../controllerUtils';
+import { createSign, createSignWithText } from '../controllerUtils';
+import { saySystem } from '../chat';
 import { ServerEntity } from '../serverInterfaces';
 import { pathTo } from '../paths';
 import { pickGift, pickCandy, pickEgg, pickClover } from '../mapUtils';
@@ -37,125 +38,58 @@ export function createCustomMap(world: World) {
 	// place barrel at 5, 5 location
 	add(entities.barrel(5, 5));
 
-	// special instant-respawn gift for testing at 20,15
-	(function createInstantGift(x: number, y: number) {
-		const ctor = entities.gift2;
-
+	// helper: create an instant-respawn collectable with unified behaviour
+	function createInstantCollectable(x: number, y: number, ctor: any, onCollect: (client: any) => void, range = 1.5, respawnDelay = 50) {
 		function spawn() {
 			const ent = ctor(x, y) as ServerEntity;
-			ent.interactRange = ent.interactRange || 1.5;
-			ent.interact = (_entity: any, client: any) => {
+			ent.interactRange = ent.interactRange || range;
+
+			const handleInteract = (_entity: any, client: any) => {
 				if (client.shadowed) {
+					// invisible player: don't award, just remove on their client
 					pushRemoveEntityToClient(client, _entity);
-				} else {
-					// remove current instance and respawn immediately at same coords
-					world.removeEntity(_entity, map);
-					const next = ctor(x, y) as ServerEntity;
-					next.interactRange = next.interactRange || 1.5;
-					next.interact = ent.interact; // preserve same behavior
-					world.addEntity(next, map);
-					// award gift to player
-					pickGift(client);
+					return;
 				}
+
+				// remove current instance so player sees it disappear
+				world.removeEntity(_entity, map);
+
+				// award immediately (hold item, counters, messages)
+				onCollect(client);
+
+				// respawn a visible instance shortly after so player notices the pickup
+				setTimeout(() => {
+					const next = ctor(x, y) as ServerEntity;
+					next.interactRange = next.interactRange || range;
+					next.interact = handleInteract; // reuse same handler
+					world.addEntity(next, map);
+				}, respawnDelay);
 			};
+
+			ent.interact = handleInteract;
 			world.addEntity(ent, map);
 		}
 
 		spawn();
-	})(20, 15);
+	}
+
+	// special instant-respawn gift for testing at 20,15 (uses unified helper)
+	createInstantCollectable(20, 15, entities.gift2, (c) => pickGift(c));
 
 
 
 	// sign with name 'test collectable objects' at 20.25,14
-	// toggles between giving a basket and a jack-o-lantern on each click
-	{
-		const giveBasket = give(entities.basket.type);
-		const giveLantern = give(entities.jackoLanternOn.type);
-		let toggle = 0;
-		add(createSign(20.25, 14, 'test collectable objects', (e, client) => {
-			if ((toggle % 2) === 0) {
-				giveBasket(e, client);
-			} else {
-				giveLantern(e, client);
-			}
-			toggle++;
-		}, entities.sign));
-	}
+	// show milestones list instead of awarding items; message should be from the sign itself
+	add(createSignWithText(20.25, 14, 'test collectable objects', 'Милестоны:\nПодарки: каждые 100\nЯйца: каждые 50\nКлеверы: каждые 25\nКонфеты: каждые 75', entities.sign));
 
 	// extra egg (egg-1-0) at 19.25,15
-	(function createInstantEgg2(x: number, y: number) {
-		const ctor = entities.eggs[0];
-
-		function spawn() {
-			const ent = ctor(x, y) as ServerEntity;
-			ent.interactRange = ent.interactRange || 1.5;
-			ent.interact = (_entity: any, client: any) => {
-				if (client.shadowed) {
-					pushRemoveEntityToClient(client, _entity);
-				} else {
-					world.removeEntity(_entity, map);
-					const next = ctor(x, y) as ServerEntity;
-					next.interactRange = next.interactRange || 1.5;
-					next.interact = ent.interact;
-					world.addEntity(next, map);
-					pickEgg(client);
-				}
-			};
-			world.addEntity(ent, map);
-		}
-
-		spawn();
-	})(19.25, 15);
+	createInstantCollectable(19.25, 15, entities.eggs[0], (c) => pickEgg(c));
 
 	// four-leaf-clover at 20.625,14.5
-	(function createInstantClover2(x: number, y: number) {
-		const ctor = entities.fourLeafClover;
-
-		function spawn() {
-			const ent = ctor(x, y) as ServerEntity;
-			ent.interactRange = ent.interactRange || 1.5;
-			ent.interact = (_entity: any, client: any) => {
-				if (client.shadowed) {
-					pushRemoveEntityToClient(client, _entity);
-				} else {
-					world.removeEntity(_entity, map);
-					const next = ctor(x, y) as ServerEntity;
-					next.interactRange = next.interactRange || 1.5;
-					next.interact = ent.interact;
-					world.addEntity(next, map);
-					pickClover(client);
-				}
-			};
-			world.addEntity(ent, map);
-		}
-
-		spawn();
-	})(20.625, 14.5);
+	createInstantCollectable(20.625, 14.5, entities.fourLeafClover, (c) => pickClover(c));
 
 	// candy at 21.25,14.8
-	(function createInstantCandy2(x: number, y: number) {
-		const ctor = entities.candy;
-
-		function spawn() {
-			const ent = ctor(x, y) as ServerEntity;
-			ent.interactRange = ent.interactRange || 1.5;
-			ent.interact = (_entity: any, client: any) => {
-				if (client.shadowed) {
-					pushRemoveEntityToClient(client, _entity);
-				} else {
-					world.removeEntity(_entity, map);
-					const next = ctor(x, y) as ServerEntity;
-					next.interactRange = next.interactRange || 1.5;
-					next.interact = ent.interact;
-					world.addEntity(next, map);
-					pickCandy(client);
-				}
-			};
-			world.addEntity(ent, map);
-		}
-
-		spawn();
-	})(21.25, 14.8);
+	createInstantCollectable(21.25, 14.8, entities.candy, (c) => pickCandy(c));
 
 
 	// place more entities here ...

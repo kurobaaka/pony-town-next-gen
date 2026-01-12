@@ -14,7 +14,7 @@ import {
 } from '../client/ponyUtils';
 import { CM_SIZE } from './constants';
 
-export const VERSION = 5; // previous: 3
+export const VERSION = 6; // previous: 5
 
 const VERSION_BITS = 6; // max 63
 const COLORS_LENGTH_BITS = 10; // max 1024
@@ -155,7 +155,14 @@ const booleanFields: FieldDefinition<boolean>[] = [
 			empty(info.frontLegAccessoryRight) && empty(info.backLegAccessoryRight)
 	},
 	{ name: 'eyeshadow' },
+	{ name: 'blush' },
+	{ name: 'sleeping' },
+	{ name: 'tears' },
+	{ name: 'crying' },
+	{ name: 'hearts' },
 	{ name: 'cmFlip', omit: info => info.cm === undefined || info.cm.every(not) },
+	{ name: 'flip' },
+	{ name: 'headTurned' },
 	{ name: 'unlockEyeWhites' },
 	{ name: 'freeOutlines' },
 	{ name: 'unlockFrontLegAccessory' },
@@ -170,6 +177,7 @@ const numberFields: FieldDefinition<number>[] = [
 	{ name: 'eyeOpennessLeft', omit: info => !!info.lockEyes },
 	{ name: 'fangs' },
 	{ name: 'muzzle' },
+	{ name: 'headTurn' },
 	{ name: 'freckles', dontSave: true }, // TODO: remove
 ];
 
@@ -185,6 +193,7 @@ const colorFields: FieldDefinition<number>[] = [
 	{ name: 'eyelashColor' },
 	{ name: 'eyelashColorLeft', omit: info => !info.unlockEyelashColor },
 	{ name: 'magicColor', default: WHITE },
+	{ name: 'previewBackground', default: parseColorFast('90ee90') },
 ];
 
 const omittableFields: FieldDefinition<any>[] = [

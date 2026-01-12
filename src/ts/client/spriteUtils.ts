@@ -15,7 +15,8 @@ export function addTitles(sprites: ColorExtraSets, titles: string[]): ColorExtra
 }
 
 export function addLabels(sprites: ColorExtraSets, labels: string[]) {
-	sprites && sprites.forEach((s, i) => s && s[0] ? s[0]!.label = labels[i] : undefined);
+	// Ensure both `label` and `title` are set so tooltips (which read `title`) work like in addTitles
+	sprites && sprites.forEach((s, i) => s && s[0] ? (s[0]!.label = labels[i], s[0]!.title = labels[i]) : undefined);
 	return sprites;
 }
 

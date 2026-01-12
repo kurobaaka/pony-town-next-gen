@@ -14,10 +14,10 @@ import { filterBadWords } from '../common/swears';
 import { randomString } from '../common/stringUtils';
 import {
 	getCounter, holdToy, getCollectedToysCount, getCollectedToysList, holdItem, playerSleep, playerBlush, playerLove, playerCry,
-	setEntityExpression, execAction, teleportTo
+	setEntityExpression, execAction, teleportTo, openGift
 } from './playerUtils';
 import { ServerLiveSettings, GameServerSettings } from '../common/adminInterfaces';
-import { isCommand, processCommand, clamp, flatten, includes, randomPoint, parseSeason, parseHoliday, toInt } from '../common/utils';
+import { isCommand, processCommand, clamp, flatten, includes, randomPoint, parseSeason, parseHoliday, toInt, formatPlaytime, formatISODate } from '../common/utils';
 import { createNotifyUpdate, createShutdownServer } from './api/internal';
 import { logger } from './logger';
 import { pathTo } from './paths';
@@ -203,9 +203,9 @@ export function createCommands(world: World): Command[] {
 		command(['droptoy'], '/droptoy - drop held toy', '', ({ }, client, _, __, ___, settings) => {
 			execAction(client, Action.DropToy, settings);
 		}),
-		// command(['open'], '/open - open gift', '', ({ }, client) => {
-		// 	openGift(client);
-		// }),
+		command(['open'], '/open - open gift', '', ({ }, client) => {
+			openGift(client);
+		}),
 
 		// counters
 		command(['gifts'], '/gifts - show gift score', '', ({ }, client, _, type, target, settings) => {
@@ -220,20 +220,57 @@ export function createCommands(world: World): Command[] {
 		command(['clovers', 'clover'], '/clovers - show clover score', '', ({ }, client, _, type, target, settings) => {
 			sayToOthers(client, `collected ${getCounter(client, 'clovers')} 🍀`, toAnnouncementMessageType(type), target, settings);
 		}, true),
-		command(['toys'], '/toys - show number of collected toys', '', ({ }, client, _, type, target, settings) => {
+		command(['toys'], '/toys [list] - show number of collected toys (use "/toys list" to list your toys)', '', ({ }, client, message, type, target, settings) => {
 			const now = Date.now();
 			const { collected, total } = getCollectedToysCount(client);
+			const cmd = (message || '').trim().toLowerCase();
 
-			if (collected === 0) {
-				sayToOthers(client, `У вас пока нет игрушек соберите подарки что бы открыть одну из игрушек`, toAnnouncementMessageType(type), target, settings);
-			} else if (client.lastToysCommandTime && (now - client.lastToysCommandTime) < 10000) {
+			if (cmd === 'list') {
 				const list = getCollectedToysList(client);
-				sayToOthers(client, `Your toys: ${list.map(n => `#${n}`).join(', ')}`, toAnnouncementMessageType(type), target, settings);
+				if (!list.length) {
+					sayToOthers(client, `У вас пока нет игрушек соберите подарки что бы открыть одну из игрушек`, toAnnouncementMessageType(type), target, settings);
+				} else {
+					sayToOthers(client, `Your toys: ${list.map(n => `#${n}`).join(' ')}`, toAnnouncementMessageType(type), target, settings);
+				}
 			} else {
-				sayToOthers(client, `collected ${collected}/${total} toys`, toAnnouncementMessageType(type), target, settings);
-			}
+				if (collected === 0) {
+					sayToOthers(client, `У вас пока нет игрушек соберите подарки что бы открыть одну из игрушек`, toAnnouncementMessageType(type), target, settings);
+				} else if (client.lastToysCommandTime && (now - client.lastToysCommandTime) < 10000) {
+					const list = getCollectedToysList(client);
+					sayToOthers(client, `Your toys: ${list.map(n => `#${n}`).join(' ')}`, toAnnouncementMessageType(type), target, settings);
+				} else {
+					sayToOthers(client, `collected ${collected}/${total} toys`, toAnnouncementMessageType(type), target, settings);
+				}
 
-			client.lastToysCommandTime = now;
+				client.lastToysCommandTime = now;
+			}
+		}),
+
+		command(['account'], '/account <id|playtime|creation> - show account info', '', ({ }, client, message, type, target, settings) => {
+			const cmd = (message || '').trim().toLowerCase();
+
+			switch (cmd) {
+				case 'id': {
+					sayToOthers(client, `Your ID: ${client.accountId}`, toAnnouncementMessageType(type), target, settings);
+					break;
+				}
+				case 'playtime': {
+					const stored = (client.account.counters && (client.account.counters as any).playtime) ? (client.account.counters as any).playtime : 0;
+					const session = Math.round((Date.now() - client.connectedTime) / 1000);
+					const totalSeconds = stored + session;
+					const text = `Total Playtime: ${formatPlaytime(totalSeconds)}`;
+					sayToOthers(client, text, toAnnouncementMessageType(type), target, settings);
+					break;
+				}
+				case 'creation': {
+					const created = client.account.createdAt ? formatISODate(client.account.createdAt).replace(/-/g, '.') : 'unknown';
+					sayToOthers(client, `Creation Date: ${created}`, toAnnouncementMessageType(type), target, settings);
+					break;
+				}
+				default: {
+					saySystem(client, 'usage: /account <id|playtime|creation>');
+				}
+			}
 		}),
 
 	// admin counter modification

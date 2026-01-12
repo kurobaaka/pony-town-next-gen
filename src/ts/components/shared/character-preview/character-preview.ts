@@ -1,9 +1,11 @@
 import {
 	Component, Input, ElementRef, AfterViewInit, OnDestroy, NgZone, ViewChild, OnChanges, HostListener
 } from '@angular/core';
-import { PonyInfo, PonyState } from '../../../common/interfaces';
+import { PonyInfo, PonyState, ExpressionExtra, Eye, Muzzle, Iris } from '../../../common/interfaces';
 import { toPalette } from '../../../common/ponyInfo';
+import { createExpression } from '../../../client/clientUtils';
 import { GRASS_COLOR, TRANSPARENT } from '../../../common/colors';
+import { parseColorFast } from '../../../common/color';
 import {
 	createCanvas, disableImageSmoothing, getPixelRatio, resizeCanvas, resizeCanvasWithRatio
 } from '../../../client/canvasUtils';
@@ -129,17 +131,70 @@ export class CharacterPreview implements OnDestroy, OnChanges, AfterViewInit {
 		const x = Math.round(bufferWidth / 2);
 		const y = Math.round(bufferHeight / 2 + 28);
 
+		// compute preview background (per-pony if set, otherwise CSS var --grass-color or fallback GRASS_COLOR)
+		let defaultBg = GRASS_COLOR;
+		try {
+			const css = getComputedStyle(document.documentElement).getPropertyValue('--grass-color').trim();
+			if (css) {
+				// parseColorFast accepts formats like '#90ee90' or '90ee90'
+				defaultBg = parseColorFast(css);
+			}
+		} catch (e) { }
+
+		// If canvas background is disabled, try to read the wrapper background so outline can be drawn
+		let bg: number;
+		if (this.noBackground) {
+			try {
+				const parent = (this.canvas && this.canvas.nativeElement && this.canvas.nativeElement.parentElement) as HTMLElement | null;
+				if (parent) {
+					// Safely access computed style and default to transparent if unavailable
+					const style = getComputedStyle(parent!);
+					const parentBg = (style && style.backgroundColor ? style.backgroundColor : '').trim();
+					const parsed = parseColorFast(parentBg);
+					bg = parsed || TRANSPARENT;
+				} else {
+					bg = TRANSPARENT;
+				}
+			} catch (e) {
+				bg = TRANSPARENT;
+			}
+		} else {
+			bg = this.pony && (this.pony as any).previewBackground ? parseColorFast((this.pony as any).previewBackground) : defaultBg;
+		}
+
 		if (this.pony) {
-			this.batch.start(paletteSpriteSheet, this.noBackground ? TRANSPARENT : GRASS_COLOR);
+			this.batch.start(paletteSpriteSheet, bg);
 
 			try {
 				const options = { ...DEFAULT_OPTIONS, shadow: !this.noShadow, extra: !!this.extra };
-				drawPony(this.batch, toPalette(this.pony), this.state || DEFAULT_STATE, x, y, options);
-			} catch (e) {
-				console.error(e);
-			}
+				// apply preview options from pony info
+				options.flipped = !!(this.pony && (this.pony as any).flip);
 
-			this.batch.end();
+				// merge preview state with passed state so head turn settings are respected
+				const state = { ...(this.state || DEFAULT_STATE),
+					headTurn: (this.pony && (this.pony as any).headTurn) || 0,
+					headTurned: !!(this.pony && (this.pony as any).headTurned),
+				};
+
+				// apply effect flags (blush, zzz, tears, cry, hearts) from pony info to a temporary expression
+				const extra =
+					((this.pony && (this.pony as any).blush) ? ExpressionExtra.Blush : 0) |
+					((this.pony && (this.pony as any).sleeping) ? ExpressionExtra.Zzz : 0) |
+					((this.pony && (this.pony as any).tears) ? ExpressionExtra.Tears : 0) |
+					((this.pony && (this.pony as any).crying) ? ExpressionExtra.Cry : 0) |
+					((this.pony && (this.pony as any).hearts) ? ExpressionExtra.Hearts : 0);
+
+				const finalState = { ...state };
+		if (extra) {
+			finalState.expression = createExpression(Eye.Neutral, Eye.Neutral, Muzzle.Flat, Iris.Forward, Iris.Forward, extra);
+		}
+
+		drawPony(this.batch, toPalette(this.pony), finalState, x, y, options);
+		} catch (e) {
+			console.error(e);
+		}
+
+		this.batch.end();
 		}
 
 		const viewContext = canvas.getContext('2d');
@@ -165,7 +220,7 @@ export class CharacterPreview implements OnDestroy, OnChanges, AfterViewInit {
 			}
 
 			viewContext.globalCompositeOperation = 'source-in';
-			viewContext.fillStyle = colorToCSS(GRASS_COLOR);
+				viewContext.fillStyle = colorToCSS(bg);
 			viewContext.fillRect(0, 0, viewContext.canvas.width, viewContext.canvas.height);
 			viewContext.globalCompositeOperation = 'source-over';
 		}
