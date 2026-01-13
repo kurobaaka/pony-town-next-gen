@@ -63,6 +63,7 @@ function eyeSprite(e: PonyEye | undefined) {
 export class Character implements OnInit, OnDestroy {
 	@ViewChild('characterPreview', { static: true }) characterPreview!: any;
 	readonly debug = DEVELOPMENT || BETA;
+	previewScale: number = 3;
 	readonly playIcon = faPlay;
 	readonly lockIcon = faLock;
 	readonly saveIcon = faSave;

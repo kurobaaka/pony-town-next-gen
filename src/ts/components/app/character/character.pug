@@ -24,7 +24,7 @@ page-loader(*ngIf="!playing")
 				(preview)="previewPony = $event")
 
 			.character-preview-box.mx-auto.my-3((fixToTop)="fixed = $event" [fixToTopOffset]="-40" [style.background]="info.previewBackground ? '#' + info.previewBackground : 'var(--grass-color)'")
-				character-preview(#characterPreview [pony]="previewInfo" [state]="state" [noBackground]="true" [noShadow]="fixed" [name]="previewName" [tag]="previewTag" [extra]="previewExtra" style="z-index: 100")
+				character-preview(#characterPreview [pony]="previewInfo" [state]="state" [scale]="previewScale" [noBackground]="true" [noShadow]="fixed" [name]="previewName" [tag]="previewTag" [extra]="previewExtra" style="z-index: 100")
 
 			.form-group.text-center
 				button.btn.btn-lg.btn-default([disabled]="!canDuplicate" (click)="duplicate()" aria-label="Duplicate character")
@@ -77,13 +77,21 @@ page-loader(*ngIf="!playing")
 							button.btn.btn-sm.btn-default.ml-1((click)="importFile.click()") Import ponies
 							input.d-none(#importFile type="file" (change)="importPonies(importFile.files[0])")
 
-					//-.row.form-group
-						label.col-sm-4.col-form-label Preview options
-						.col-sm-8.text-muted.pt-1
-							custom-checkbox([(checked)]="info.flip" (checkedChange)="changed()")
-								| Flip character
-							custom-checkbox([(checked)]="info.headTurned" (checkedChange)="changed()")
-								| Turn head by default
+.row.form-group
+				label.col-sm-4.col-form-label Preview options
+				.col-sm-8.text-muted.pt-1
+					-// custom-checkbox([(checked)]="info.flip" (checkedChange)="changed()")
+					-//	| Flip character
+					-// custom-checkbox([(checked)]="info.headTurned" (checkedChange)="changed()")
+					-//	| Turn head by default
+					.row.form-group
+						label.col-sm-4.col-form-label Preview scale
+						.col-sm-8
+							select.form-control#preview-scale((change)="changed()" [(ngModel)]="previewScale")
+								option([ngValue]="1") x1
+								option([ngValue]="2") x2
+								option([ngValue]="3") x3
+								option([ngValue]="4") x4
 
 
 

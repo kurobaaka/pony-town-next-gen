@@ -5,7 +5,6 @@ import { TileType, MapType } from '../../common/interfaces';
 import { createServerMap, deserializeMap } from '../serverMap';
 import { World, goToMap } from '../world';
 import { createSign, createSignWithText } from '../controllerUtils';
-import { saySystem } from '../chat';
 import { ServerEntity } from '../serverInterfaces';
 import { pathTo } from '../paths';
 import { pickGift, pickCandy, pickEgg, pickClover } from '../mapUtils';
@@ -80,7 +79,7 @@ export function createCustomMap(world: World) {
 
 	// sign with name 'test collectable objects' at 20.25,14
 	// show milestones list instead of awarding items; message should be from the sign itself
-	add(createSignWithText(20.25, 14, 'test collectable objects', 'Милестоны:\nПодарки: каждые 100\nЯйца: каждые 50\nКлеверы: каждые 25\nКонфеты: каждые 75', entities.sign));
+	add(createSignWithText(20.25, 14, 'test collectable objects', 'Достижения:\nПодарки: каждые 100\nЯйца: каждые 50\nКлеверы: каждые 25\nКонфеты: каждые 75', entities.sign));
 
 	// extra egg (egg-1-0) at 19.25,15
 	createInstantCollectable(19.25, 15, entities.eggs[0], (c) => pickEgg(c));

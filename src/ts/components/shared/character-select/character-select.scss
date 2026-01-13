@@ -12,3 +12,73 @@ character-list {
 		right: 0;
 	}
 }
+
+.input-group-append {
+	position: relative; // for absolute-positioned emoji box
+}
+
+.character-emoji-button {
+	user-select: none;
+	padding: 0 6px;
+	margin-right: 6px;
+	-webkit-filter: grayscale(100%);
+	filter: grayscale(100%);
+	display: inline-block;
+	vertical-align: middle;
+
+	&:hover {
+		-webkit-filter: grayscale(0);
+		filter: grayscale(0%);
+	}
+}
+
+.emoji-box-top {
+	display: flex;
+	padding: 10px;
+	position: absolute;
+	background-color: #000000;
+	opacity: 0.95;
+	top: 40px; // show below the button (top-down)
+	right: 0;
+	width: 220px;
+	height: 190px;
+	overflow-y: auto;
+	z-index: 300;
+
+	&::-webkit-scrollbar {
+		width: 7px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: rgb(77, 77, 77);
+		border-radius: 14px;
+	}
+}
+
+.emoji-box-top ul {
+	margin-bottom: 0;
+}
+
+.emoji-box-top li {
+	display: inline;
+	list-style: none;
+	column-width: 180px;
+}
+
+.emote-sample {
+	user-select: none;
+	display: inline-block;
+	width: 29px;
+	height: 29px;
+	text-align: center;
+	margin-bottom: 3px;
+	cursor: pointer;
+	&:hover {
+		background: rgba(0, 255, 255, 0.2);
+		border-radius: 2px;
+	}
+}
+
+.emote-sample emote-box {
+	line-height: 2;
+}
