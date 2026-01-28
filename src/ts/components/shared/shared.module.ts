@@ -57,6 +57,8 @@ import { tabsetComponents } from './tabset/tabset';
 import { PlayNotice } from './play-notice/play-notice';
 import { PageLoader } from './page-loader/page-loader';
 import { virtualListDirectives, VirtualList } from './virtual-list/virtual-list';
+import { EmojiPickerComponent } from './emoji-picker/emoji-picker';
+import { EmojiInputComponent } from './emoji-input/emoji-input';
 
 import { Anchor } from './directives/anchor';
 import { BtnHighlight, BtnHighlightDanger } from './directives/btnHighlight';
@@ -89,6 +91,8 @@ const declarations = [
 	CharacterPreview,
 	CharacterSelect,
 	EmoteBox,
+	EmojiPickerComponent,
+	EmojiInputComponent,
 	SliderBar,
 	SpriteBox,
 	SpriteSelection,

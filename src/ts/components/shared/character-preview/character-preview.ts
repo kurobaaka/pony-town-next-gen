@@ -158,11 +158,21 @@ export class CharacterPreview implements OnDestroy, OnChanges, AfterViewInit {
 			} catch (e) {
 				bg = TRANSPARENT;
 			}
+			// Force transparent background for batch rendering when noBackground is true
+			bg = TRANSPARENT;
 		} else {
 			bg = this.pony && (this.pony as any).previewBackground ? parseColorFast((this.pony as any).previewBackground) : defaultBg;
 		}
 
 		if (this.pony) {
+			// Clear batch canvas if no background is needed
+			if (this.noBackground) {
+				const batchContext = this.batch.canvas.getContext('2d');
+				if (batchContext) {
+					batchContext.clearRect(0, 0, this.batch.canvas.width, this.batch.canvas.height);
+				}
+			}
+
 			this.batch.start(paletteSpriteSheet, bg);
 
 			try {
@@ -185,24 +195,13 @@ export class CharacterPreview implements OnDestroy, OnChanges, AfterViewInit {
 					((this.pony && (this.pony as any).hearts) ? ExpressionExtra.Hearts : 0);
 
 				const finalState = { ...state };
-		if (extra) {
-			finalState.expression = createExpression(Eye.Neutral, Eye.Neutral, Muzzle.Flat, Iris.Forward, Iris.Forward, extra);
-		}
-
-		drawPony(this.batch, toPalette(this.pony), finalState, x, y, options);
-		} catch (e) {
-			console.error(e);
-		}
-
-		this.batch.end();
-		}
-
-		const viewContext = canvas.getContext('2d');
-
-		if (!viewContext)
-			return;
-
-		disableImageSmoothing(viewContext);
+			if (extra && state.expression) {
+				// Apply effect flags to existing expression instead of replacing it
+				finalState.expression = { ...state.expression, extra: (state.expression.extra || 0) | extra };
+			} else if (extra && !state.expression) {
+				// Only create default expression if there's no existing expression and we have effects
+				finalState.expression = createExpression(Eye.Neutral, Eye.Neutral, Muzzle.Flat, Iris.Forward, Iris.Forward, extra);
+			}
 
 		if (this.noBackground) {
 			viewContext.clearRect(0, 0, canvas.width, canvas.height);

@@ -1,0 +1,24 @@
+.emoji-picker-box(*ngIf="display")
+	.search
+		input.form-control(
+			type="search"
+			placeholder="Search..."
+			[(ngModel)]="searchQuery"
+			(input)="onSearchChange(searchQuery)"
+		)
+
+	.emoji-picker-scroll-container(#scrollContainer)
+		.emoji-picker-scrollbar.scroll.tThin.unselectable
+			.emoji-picker-content
+				div(*ngFor="let category of filteredCategories")
+					p {{ category.name }}
+					.emoji-picker-list
+							button.pixelart(
+								*ngFor="let emote of category.emotes"
+								(click)="selectEmoji(emote)"
+								(mouseenter)="onMouseEnterEmojiButton($event)"
+								[title]="':' + emote.names[0] + ':'"
+								[attr.aria-label]="emote.names[0]"
+							)
+								emote-box([emote]="emote.names[0]" class="pixelart")
+

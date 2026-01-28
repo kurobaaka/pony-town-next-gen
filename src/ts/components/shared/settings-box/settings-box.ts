@@ -28,6 +28,7 @@ export class SettingsBox implements OnInit, OnDestroy {
 	readonly minusIcon = faMinus;
 	modalRef?: BsModalRef;
 	time?: string;
+	scaleOptions = { min: 1, max: 4 }; // Zoom scale range
 	@ViewChild('dropdown', { static: true }) dropdown!: Dropdown;
 	@ViewChild('actionsModal', { static: true }) actionsModal!: TemplateRef<any>;
 	@ViewChild('settingsModal', { static: true }) settingsModal!: TemplateRef<any>;
@@ -78,10 +79,33 @@ export class SettingsBox implements OnInit, OnDestroy {
 				distinctUntilChanged(),
 			)
 			.subscribe(text => {
+				// Format time with status based on world state
+				const worldState = this.game.worldState;
+				let displayTime = text;
+
+				if (worldState) {
+					if (worldState.timeFrozen) {
+						if (worldState.frozenHour !== undefined) {
+							const dayStart = 4.75;
+							const dayEnd = 20.25;
+							const hour = worldState.frozenHour;
+							if (hour > dayStart && hour <= dayEnd) {
+								displayTime = 'Eternal day';
+							} else {
+								displayTime = 'Eternal night';
+							}
+						} else {
+							displayTime = `${text} (freezed)`;
+						}
+					} else if (worldState.timeSpeed && worldState.timeSpeed !== 1.0) {
+						displayTime = `${text} (speed x${worldState.timeSpeed.toFixed(1)})`;
+					}
+				}
+
 				if (this.dropdown.isOpen) {
-					this.zone.run(() => this.time = text);
+					this.zone.run(() => this.time = displayTime);
 				} else {
-					this.time = text;
+					this.time = displayTime;
 				}
 			});
 	}

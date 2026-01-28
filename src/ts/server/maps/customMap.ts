@@ -32,7 +32,7 @@ export function createCustomMap(world: World) {
 	}
 
 	// place return sign 2 tiles north of center of the map
-	add(createSign(map.width / 2, map.height / 2 - 2, 'Go back', (_, client) => goToMap(world, client, '', 'center')));
+	add(createSign(map.width / 2, map.height / 2 - 2, 'Go back', (_, client) => goToMap(world, client, 'main', 'center')));
 
 	// place barrel at 5, 5 location
 	add(entities.barrel(5, 5));

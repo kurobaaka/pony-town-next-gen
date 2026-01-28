@@ -17,7 +17,7 @@ ng-template(#actionsModal)
 				span.clock-display {{time}}
 			.dropdown-item.d-flex.mb-1
 				fa-icon.mr-2([icon]="searchIcon" [fixedWidth]="true")
-				.flex-grow-1 Scale (x{{scale}})
+				.flex-grow-1 Scale (x{{scale}}) [{{scaleOptions.min}}-{{scaleOptions.max}}]
 				button.btn.btn-xs.btn-outline-secondary((click)="zoomOut()" aria-label="Zoom out")
 					fa-icon([icon]="minusIcon" [fixedWidth]="true")
 				button.btn.btn-xs.btn-outline-secondary.ml-2((click)="zoomIn()" aria-label="Zoom in")
@@ -25,7 +25,7 @@ ng-template(#actionsModal)
 			.dropdown-item.dropdown-item-static.mb-1
 				a((click)="toggleVolume()" title="Toggle sound")
 					fa-icon([icon]="volumeIcon" [fixedWidth]="true")
-					//.flex-grow-1 Volume
+					-//.flex-grow-1 Volume
 				slider-bar([(value)]="volume" [step]="1" (started)="volumeStarted()")
 				.text-muted.text-right(*ngIf="track" style="margin-top: -5px;")
 					small

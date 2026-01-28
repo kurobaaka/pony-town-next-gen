@@ -99,7 +99,7 @@ export function createIslandMap(world: World, instanced: boolean, template = fal
 	add(entities.lanternOn(46.19, 23.38));
 	add(entities.lanternOn(42.63, 21.42));
 	add(entities.lanternOn(47.00, 18.96));
-	add(entities.triggerBoat(45.5, 24.8)).interact = (_, client) => goToMap(world, client, '', 'harbor');
+	add(entities.triggerBoat(45.5, 24.8)).interact = (_, client) => goToMap(world, client, 'main', 'harbor');
 	add(createSignWithText(43, 23.5, 'Return to land', `Hop on the boat to return to the mainland`));
 
 	for (let y = 0; y < 10; y++) {

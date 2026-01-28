@@ -31,7 +31,7 @@ export const createMove =
 			const pony = client.pony;
 			const { x, y, dir, flags, time, camera } = decodeMovement(a, b, c, d, e);
 			const v = dirToVector(dir);
-			const speed = flagsToSpeed(flags);
+			const speed = flagsToSpeed(flags) * (pony && (pony as any).speedMultiplier || 1);
 
 			if (checkOutsideMap(client, x, y))
 				return;

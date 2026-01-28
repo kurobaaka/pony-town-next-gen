@@ -9,12 +9,14 @@
 		placeholder="Name of your character"
 		aria-label="Name of your character")
 	.input-group-append
-		button.emote-box.game-button.character-emoji-button(*ngIf="emojiButton" [emote]="btnEmoji" (click)="toggleEmojiBox()" (mouseenter)="onMouseEnterEmojiButton($event)" aria-label="Emoji picker" title="Emoji picker")
-		.emotes.emoji-box-top([style.display]="emojiBoxState")
-			ul
-				li(*ngFor="let e of emotes" (click)="addEmoji(e.symbol)")
-					span.emote-sample.mr-2
-						emote-box([emote]="e.names[0]")
+		emoji-picker(
+			*ngIf="emojiButton"
+			[display]="emojiBoxState === 'inline-block'"
+			(emojiSelected)="addEmoji($event)"
+			(closed)="emojiBoxState = 'none'"
+			class="emoji-dropdown")
+		button.btn.btn-default(*ngIf="emojiButton" (click)="toggleEmojiBox()" [attr.title]="'Emoji picker'" [attr.aria-label]="'Emoji picker'")
+			emote-box.character-emoji-button([emote]="btnEmoji" (mouseenter)="onMouseEnterEmojiButton($event)")
 		button.btn.btn-default(*ngIf="newButton" (click)="createNew()" [disabled]="!canNew" aria-label="Create New character")
 			| new
 		button.btn.btn-default(*ngIf="editButton" (click)="edit()" [disabled]="!canEdit" aria-label="Edit character")

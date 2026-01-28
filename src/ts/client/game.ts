@@ -155,6 +155,7 @@ export class PonyTownGame implements Game {
 	placeInQueue = 0;
 	time = performance.now();
 	lightData = createLightData(Season.Summer);
+	worldState: WorldState | undefined = undefined;
 	season = Season.Summer;
 	holiday = Holiday.None;
 	worldFlags = WorldStateFlags.None;
@@ -1019,6 +1020,9 @@ export class PonyTownGame implements Game {
 						} else if (entityInRange(pickedEntity, player)) {
 							server.interact(pickedEntity.id);
 						}
+					// Check if clicking on empty area to close profile
+					} else if (this.selected && distanceXY(player.x, player.y, hover.x, hover.y) >= TILE_CHANGE_RANGE) {
+						this.select(undefined);
 					// фича, которая делает взгляд только на дабл-клик
 					} else if (distanceXY(player.x, player.y, hover.x, hover.y) < TILE_CHANGE_RANGE) {
 						const nowClick = performance.now();
@@ -1072,6 +1076,9 @@ export class PonyTownGame implements Game {
 								player.expr = encodeExpression(newExpr);
 								this.onActionsUpdate.next();
 							}
+						} else if (this.selected) {
+							// Close profile on any click near self if not double-clicking
+							this.select(undefined);
 						}
 						(this as any)._lastEyeClickTime = nowClick;
 					} else if (BETA && this.editor.tile !== -1) {
@@ -1246,6 +1253,7 @@ export class PonyTownGame implements Game {
 		}
 	}
 	setWorldState(state: WorldState, initial: boolean) {
+		this.worldState = state;
 		this.season = state.season;
 		this.holiday = state.holiday;
 		this.worldFlags = state.flags;

@@ -20,11 +20,13 @@ page-loader(*ngIf="!playing")
 			discord-button.mb-3
 			visit-pt-button.mb-3
 			character-select(
-				[(error)]="error" [newButton]="true" [removeButton]="true" (change)="updateMuzzles()"
-				(preview)="previewPony = $event")
+			[(error)]="error" [newButton]="true" [removeButton]="true" [emojiButton]="true" (change)="updateMuzzles()"
+			(preview)="previewPony = $event")
 
 			.character-preview-box.mx-auto.my-3((fixToTop)="fixed = $event" [fixToTopOffset]="-40" [style.background]="info.previewBackground ? '#' + info.previewBackground : 'var(--grass-color)'")
-				character-preview(#characterPreview [pony]="previewInfo" [state]="state" [scale]="previewScale" [noBackground]="true" [noShadow]="fixed" [name]="previewName" [tag]="previewTag" [extra]="previewExtra" style="z-index: 100")
+				character-preview(
+					#characterPreview [pony]="previewInfo" [state]="state" [scale]="previewScale" [noBackground]="true" [noShadow]="fixed"
+					[name]="previewName" [tag]="previewTag" [extra]="previewExtra" style="z-index: 100")
 
 			.form-group.text-center
 				button.btn.btn-lg.btn-default([disabled]="!canDuplicate" (click)="duplicate()" aria-label="Duplicate character")
@@ -77,33 +79,38 @@ page-loader(*ngIf="!playing")
 							button.btn.btn-sm.btn-default.ml-1((click)="importFile.click()") Import ponies
 							input.d-none(#importFile type="file" (change)="importPonies(importFile.files[0])")
 
-.row.form-group
-				label.col-sm-4.col-form-label Preview options
-				.col-sm-8.text-muted.pt-1
-					-// custom-checkbox([(checked)]="info.flip" (checkedChange)="changed()")
-					-//	| Flip character
-					-// custom-checkbox([(checked)]="info.headTurned" (checkedChange)="changed()")
-					-//	| Turn head by default
+					//-.row.form-group
+						label.col-sm-4.col-form-label Preview options
+						.col-sm-8.text-muted.pt-1
+							 custom-checkbox([(checked)]="info.flip" (checkedChange)="changed()")
+								| Flip character
+							 custom-checkbox([(checked)]="info.headTurned" (checkedChange)="changed()")
+								| Turn head by default
+					
 					.row.form-group
 						label.col-sm-4.col-form-label Preview scale
 						.col-sm-8
-							select.form-control#preview-scale((change)="changed()" [(ngModel)]="previewScale")
-								option([ngValue]="1") x1
-								option([ngValue]="2") x2
-								option([ngValue]="3") x3
-								option([ngValue]="4") x4
+						.dropdown(dropdown #scaleDropdown="ag-dropdown" [focusOnOpen]="false" style="max-width: 120px;")
+							button.btn.btn-default.dropdown-toggle(dropdownToggle style="width: 100%; text-align: left;")
+								| scale: 
+								span.float-right(style="font-weight: bold;") x{{previewScale}}
+							.dropdown-menu(style="min-width: 100px;" *dropdownMenu)
+								button.dropdown-item((click)="previewScale = 1; scaleDropdown.close(); changed()" [class.active]="previewScale === 1") x1
+								button.dropdown-item((click)="previewScale = 2; scaleDropdown.close(); changed()" [class.active]="previewScale === 2") x2
+								button.dropdown-item((click)="previewScale = 3; scaleDropdown.close(); changed()" [class.active]="previewScale === 3") x3
+								button.dropdown-item((click)="previewScale = 4; scaleDropdown.close(); changed()" [class.active]="previewScale === 4") x4
+								button.dropdown-item((click)="previewScale = 5; scaleDropdown.close(); changed()" [class.active]="previewScale === 5") x5
+								button.dropdown-item((click)="previewScale = 6; scaleDropdown.close(); changed()" [class.active]="previewScale === 6") x6
+								button.dropdown-item((click)="previewScale = 7; scaleDropdown.close(); changed()" [class.active]="previewScale === 7") x7
 
-
-
-					.row.form-group
-						label.col-sm-4.col-form-label(for="preview-background") Background
-							fa-icon.text-muted.ml-2([icon]="infoIcon" [tooltip]="backgroundTooltip" containerClass="tooltip-desc")
-						.col-sm-8
-							.input-group(style="max-width: 240px")
-								color-picker(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChange)="changed()")
-								.input-group-append
-									button.btn.btn-default(type="button" (click)="resetBackground()" aria-label="Reset background") Reset
-
+				.row.form-group
+					.col-sm-4.col-lock-box
+						label(for="preview-background") Background
+						check-box.lock-box(
+							[(checked)]="lockBackgroundDefault" [icon]="lockIcon" (checkedChange)="backgroundLockChanged($event)"
+							label="Lock background color" title="Lock background color")
+					.col-sm-8
+					color-picker.form-control(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChange)="changed()" [disabled]="lockBackgroundDefault" style="max-width: 240px" [style.opacity]="lockBackgroundDefault ? '0.5' : '1'")
 					//-.row.form-group
 						label.col-sm-4.col-form-label Effects
 						.col-sm-8.text-muted.pt-1
@@ -117,7 +124,6 @@ page-loader(*ngIf="!playing")
 								| Crying
 							custom-checkbox([(checked)]="info.hearts" (checkedChange)="changed()")
 								| Hearts
-
 
 					.row.form-group
 						label#social-site-label.col-sm-4.col-form-label Show social site

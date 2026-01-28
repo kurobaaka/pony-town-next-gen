@@ -31,7 +31,12 @@ export function encryptInfo(info: string) {
 
 export function createPony(account: IAccount, character: ICharacter, state: CharacterState) {
 	const pony = ponyEntity(state.x, state.y) as ServerEntity;
-	pony.state = hasFlag(state.flags, CharacterStateFlags.Right) ? EntityState.FacingRight : 0;
+	// Initialize speed multiplier to normal (1.0x)
+	(pony as any).speedMultiplier = 1;
+	// Restore facing direction and animation state from flags
+	const animation = ((state.flags || 0) & CharacterStateFlags.AnimationMask) >> CharacterStateFlags.AnimationShift;
+	pony.state = (hasFlag(state.flags, CharacterStateFlags.Right) ? EntityState.FacingRight : 0) |
+		(animation << 4); // Animation is stored in upper bits
 	updatePony(pony, account, character);
 	updatePonyFromState(pony, state);
 	cleanupPonyOptions(pony);
@@ -90,6 +95,12 @@ export function updatePonyFromState(pony: ServerEntity, state: CharacterState) {
 	}
 
 	pony.options.extra = hasFlag(state.flags, CharacterStateFlags.Extra);
+
+	// Restore animation state (sitting, lying, flying, etc)
+	const animation = ((state.flags || 0) & CharacterStateFlags.AnimationMask) >> CharacterStateFlags.AnimationShift;
+	if (animation) {
+		pony.state = (pony.state & ~EntityState.AnimationMask) | (animation << 4);
+	}
 }
 
 export function cleanupPonyOptions({ options }: ServerEntity) {

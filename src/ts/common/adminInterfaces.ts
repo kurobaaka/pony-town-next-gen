@@ -428,6 +428,9 @@ export const enum CharacterStateFlags {
 	None = 0,
 	Right = 1,
 	Extra = 2,
+	// Pony animation state (sitting, lying, flying, etc)
+	AnimationMask = 0b11100,
+	AnimationShift = 2,
 }
 
 export interface CharacterState {

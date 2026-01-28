@@ -498,7 +498,7 @@ export function createCaveMap(world: World): ServerMap {
 	add(entities.caveFill(25, 12));
 	add(entities.caveFill(21, 27));
 
-	add(entities.trigger3x1(27.5, 55)).trigger = (_, client) => goToMap(world, client, '', 'cave');
+	add(entities.trigger3x1(27.5, 55)).trigger = (_, client) => goToMap(world, client, 'main', 'cave');
 
 	add(entities.lanternOn(10.38, 18.38));
 	add(entities.lanternOn(12.66, 18.38));

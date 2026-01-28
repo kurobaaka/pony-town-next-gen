@@ -78,6 +78,9 @@ export class World {
 	private maxId = 0 >>> 0;
 	private offlineClients: IClient[] = [];
 	private baseTime = 0;
+	private timeFrozen = false;
+	private timeSpeed = 1.0;
+	private frozenHour?: number; // If set, freezes at specific hour
 	private entityById = new Map<number, ServerEntity>();
 	private reservedIds = new Map<number, string>();
 	private reservedIdsByKey = new Map<string, ReservedID>();
@@ -112,7 +115,11 @@ export class World {
 	}
 	// entities
 	get time() {
-		return this.baseTime + Date.now();
+		if (this.timeFrozen) {
+			// Return baseTime which is set to maintain the frozen hour
+			return this.baseTime;
+		}
+		return this.baseTime + Date.now() * this.timeSpeed;
 	}
 	setTime(hour: number) {
 		let newBaseTime = hour * HOUR_LENGTH - (Date.now() % DAY_LENGTH);
@@ -122,7 +129,45 @@ export class World {
 		}
 
 		this.baseTime = newBaseTime;
+		this.timeFrozen = false;
+		this.frozenHour = undefined;
+		this.timeSpeed = 1.0;
 		this.updateWorldState();
+	}
+	freezeTime() {
+		this.timeFrozen = true;
+		this.frozenHour = undefined;
+		this.updateWorldState();
+	}
+	unfreezeTime() {
+		this.timeFrozen = false;
+		this.frozenHour = undefined;
+		this.updateWorldState();
+	}
+	setTimeSpeed(speed: number) {
+		this.timeSpeed = Math.max(0.1, Math.min(10, speed));
+		this.timeFrozen = false;
+		this.frozenHour = undefined;
+		this.updateWorldState();
+	}
+	freezeTimeAtHour(hour: number) {
+		// Calculate the time value for the given hour within the current day cycle
+		const hourValue = hour % 24;
+		// Calculate time at this hour: convert hour (0-24) to time value within DAY_LENGTH
+		const timeAtHour = (hourValue / 24) * DAY_LENGTH;
+		// Set baseTime so that this.time will always equal timeAtHour when frozen
+		this.baseTime = timeAtHour - (Date.now() % DAY_LENGTH);
+		this.timeFrozen = true;
+		this.frozenHour = hourValue;
+		this.updateWorldState();
+	}
+	getTimeStatus(): { isFrozen: boolean; isAtSpecificHour: boolean; speed: number; hour: number } {
+		return {
+			isFrozen: this.timeFrozen,
+			isAtSpecificHour: this.frozenHour !== undefined,
+			speed: this.timeSpeed,
+			hour: this.frozenHour !== undefined ? this.frozenHour : -1,
+		};
 	}
 	setTile(map: ServerMap, x: number, y: number, type: TileType) {
 		if (!BETA && map.tilesLocked)
@@ -153,6 +198,9 @@ export class World {
 			holiday: this.holiday,
 			flags: this.getSettings().filterSwears ? WorldStateFlags.Safe : WorldStateFlags.None,
 			featureFlags: this.featureFlags,
+			timeFrozen: this.timeFrozen,
+			timeSpeed: this.timeSpeed !== 1.0 ? this.timeSpeed : undefined,
+			frozenHour: this.frozenHour,
 		};
 	}
 	setSeason(season: Season, holiday: Holiday) {
@@ -346,12 +394,12 @@ export class World {
 		}
 		timingEnd();
 
-		timingStart('updateCamera + updateSubscriptions');
-		for (const client of this.clients) {
-			if (updateClientCamera(client)) {
-				unsubscribeFromOutOfRangeRegions(client);
-				subscribeToRegionsInRange(client);
-			}
+timingStart('updateCamera + updateSubscriptions');
+	for (const client of this.clients) {
+		if (updateClientCamera(client)) {
+			unsubscribeFromOutOfRangeRegions(client);
+			subscribeToRegionsInRange(client);
+		}
 		}
 		timingEnd();
 

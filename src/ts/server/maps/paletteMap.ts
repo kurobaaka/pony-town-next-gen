@@ -17,7 +17,7 @@ export function createPaletteMap(world: World) {
 		world.addEntity(entity, map);
 	}
 
-	add(createSign(map.width / 2, map.height / 2, 'Go back', (_, client) => goToMap(world, client, '', 'center')));
+	add(createSign(map.width / 2, map.height / 2, 'Go back', (_, client) => goToMap(world, client, 'main', 'center')));
 
 	const pad = 5;
 	let x = pad;

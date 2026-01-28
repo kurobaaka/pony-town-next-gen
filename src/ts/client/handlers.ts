@@ -135,6 +135,11 @@ export function handleUpdateEntity(game: PonyTownGame, update: DecodedUpdate) {
 				entity.y = y;
 				savePlayerPosition();
 			}
+
+			// Update velocity for both player and other entities to sync server-calculated speed
+			if (vx !== undefined && vy !== undefined) {
+				updateEntityVelocity(game.map, entity, vx, vy);
+			}
 		}
 
 		if (state !== undefined) {

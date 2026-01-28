@@ -109,6 +109,21 @@ export const emojis: Emoji[] = [
 	['♂', 'male'],
 	['♀', 'female'],
 	['⚧', 'trans', 'transgender'],
+
+	// zodiac
+	['♈', 'aries'],
+	['♉', 'taurus'],
+	['♊', 'gemini'],
+	['♋', 'cancer'],
+	['♌', 'leo'],
+	['♍', 'virgo'],
+	['♎', 'libra'],
+	['♏', 'scorpio'],
+	['♐', 'sagittarius'],
+	['♑', 'capricorn'],
+	['♒', 'aquarius'],
+	['♓', 'pisces'],
+	['⛎', 'ophiuchus'],
 ].map(createEmoji);
 
 export const emojiMap = new Map<string, string>();

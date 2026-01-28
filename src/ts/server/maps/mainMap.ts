@@ -92,7 +92,7 @@ export async function buildGiftsLeadersMessage(): Promise<string> {
 	const header = `ТОП 3 ИГРОКОВ ПО СБОРУ ПОДАРКОВ ${year}`;
 	const sep = '-----------------------------------';
 	const width = sep.length;
-	const giftEmoji = ' 🎁';
+	const giftEmoji = '🎁';
 
 	const lines = [header, sep];
 
@@ -112,6 +112,7 @@ export async function buildGiftsLeadersMessage(): Promise<string> {
 		if (a && gifts > 0) {
 			const rawName = (a.name || 'Player');
 			const name = rawName; // trimming handled by alignColumns
+			// Position goes to LEFT, then player name; gift count goes to RIGHT
 			const left = `${i + 1} ${name}`;
 			const numberStr = `${gifts}${giftEmoji}`;
 			lines.push(alignColumns(left, numberStr, width));
@@ -123,6 +124,22 @@ export async function buildGiftsLeadersMessage(): Promise<string> {
 	}
 
 	return lines.join('\n');
+}
+
+function formatAppleServerMessage(): string {
+	const title = 'The 🍏 Server';
+	const subtitle = '[under construction]';
+	// Center title relative to subtitle width
+	function visibleLen(s: string) {
+		return Array.from(s).length; // counts code points more correctly than .length
+	}
+
+	const titleLen = visibleLen(title);
+	const subtitleLen = visibleLen(subtitle);
+	const pad = Math.max(0, Math.floor((subtitleLen - titleLen) / 2));
+	const centeredTitle = ' '.repeat(pad) + title;
+
+	return centeredTitle + '\n' + subtitle;
 }
 
 function removeSeasonalObjects(world: World, map: ServerMap) {
@@ -1559,7 +1576,7 @@ export function updateMainMapSeason(world: World, map: ServerMap, season: Season
 
 export function createMainMap(world: World): ServerMap {
 	const mapSize = 20;
-	const map = createServerMap('', MapType.None, mapSize, mapSize, TileType.Grass);
+	const map = createServerMap('main', MapType.None, mapSize, mapSize, TileType.Grass);
 
 	map.flags |= MapFlags.EdibleGrass;
 
@@ -2653,7 +2670,7 @@ export function createMainMap(world: World): ServerMap {
 	add(entities.rock(98.63, 38.04));
 	add(entities.rock(117.22, 24.63));
 
-	add(createSignWithText(70.5, 70.5, 'The 🍏 Server', '      The 🍏 Server\n[under construction]', entities.sign));
+	add(createSignWithText(70.5, 70.5, 'The 🍏 Server', formatAppleServerMessage(), entities.sign));
 
 	addEntities(createToyStash(47.00, 55.00));
 

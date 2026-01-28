@@ -1,0 +1,16 @@
+.emoji-input-wrapper
+	input(
+		#inputElement
+		[value]="value"
+		(input)="onInputChange($event.target.value)"
+		[placeholder]="placeholder"
+		[attr.aria-label]="ariaLabel"
+		[attr.maxlength]="maxlength"
+		class="form-control"
+	)
+
+	emoji-picker(
+		[display]="showEmojiPicker"
+		(emojiSelected)="onEmojiSelected($event)"
+		class="emoji-dropdown"
+	)

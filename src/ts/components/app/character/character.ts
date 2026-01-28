@@ -64,6 +64,7 @@ export class Character implements OnInit, OnDestroy {
 	@ViewChild('characterPreview', { static: true }) characterPreview!: any;
 	readonly debug = DEVELOPMENT || BETA;
 	previewScale: number = 3;
+	lockBackgroundDefault = false;
 	readonly playIcon = faPlay;
 	readonly lockIcon = faLock;
 	readonly saveIcon = faSave;
@@ -326,6 +327,20 @@ export class Character implements OnInit, OnDestroy {
 	resetBackground() {
 		// default green (matches GRASS_COLOR = 0x90ee90ff)
 		this.info.previewBackground = '90ee90';
+		this.lockBackgroundDefault = true;
+		this.changed();
+	}
+
+	backgroundLockChanged(locked: boolean) {
+		if (locked) {
+			// Lock to default green
+			this.info.previewBackground = '90ee90';
+			this.lockBackgroundDefault = true;
+		} else {
+			// Unlock and clear
+			this.info.previewBackground = undefined;
+			this.lockBackgroundDefault = false;
+		}
 		this.changed();
 	}
 	eyeColorLockChanged(locked: boolean) {
