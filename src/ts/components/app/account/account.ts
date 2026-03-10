@@ -19,6 +19,9 @@ import { formatPlaytime } from '../../../common/utils';
 })
 export class Account implements OnInit, OnDestroy {
 	readonly refreshIcon = faSync;
+
+	private playtimeInterval: any;
+	private lastSync = Date.now();
 	readonly starIcon = faStar;
 	readonly alertIcon = faExclamationCircle;
 	readonly copyIcon = faCopy;
@@ -75,9 +78,18 @@ export class Account implements OnInit, OnDestroy {
 		this.isNewAccount = account.birthdate === '';
 
 		this.pageChanged();
+
+		// start timer to refresh playtime display
+		this.lastSync = Date.now();
+		this.playtimeInterval = setInterval(() => {
+			// trigger change detection by updating a dummy property
+		}, 1000);
 	}
 	ngOnDestroy() {
 		this.model.mergedAccount = false;
+		if (this.playtimeInterval) {
+			clearInterval(this.playtimeInterval);
+		}
 	}
 	pageChanged() {
 		this.model.getHides(this.page)
@@ -91,6 +103,14 @@ export class Account implements OnInit, OnDestroy {
 	}
 	get account() {
 		return this.model.account;
+	}
+
+	get displayPlaytime() {
+		const acc = this.account;
+		if (!acc || acc.playtimeSeconds == null) return '';
+		const base = acc.playtimeSeconds;
+		const delta = Math.floor((Date.now() - this.lastSync) / 1000);
+		return this.formatPlaytime(base + delta);
 	}
 	get supporter() {
 		return this.model.supporter;

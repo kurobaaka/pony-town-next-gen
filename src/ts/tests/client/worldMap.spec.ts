@@ -90,6 +90,15 @@ describe('worldMap', () => {
 			expect(e.expr).equal(234);
 		});
 
+		it('applies speed multiplier from options', () => {
+			const e = entity(123, 0, 0, 1) as Pony;
+			e.ponyState = defaultPonyState();
+			addEntity(game.map, e);
+
+			handleUpdateEntity(game, { ...def, id: 123, options: { speedMultiplier: 2 } as any });
+			expect((e as any).speedMultiplier).equal(2);
+		});
+
 		it('overrides right flag for player', () => {
 			const player = entity(123, 0, 0, 1);
 			game.player = player as any;

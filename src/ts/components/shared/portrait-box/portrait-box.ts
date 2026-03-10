@@ -10,12 +10,14 @@ import { drawPony } from '../../../client/ponyDraw';
 import { paletteSpriteSheet } from '../../../generated/sprites';
 
 const scales: { [key: string]: number } = {
+	xlarge: 4,
 	large: 3,
 	medium: 2,
 	small: 1,
 };
 
 const sizes: { [key: string]: number } = {
+	xlarge: 140,
 	large: 100,
 	medium: 66,
 	small: 33,

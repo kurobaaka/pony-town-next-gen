@@ -6,6 +6,8 @@ ng-template(#invitesModal)
 
 ng-template(#actionsModal)
 	actions-modal((close)="modalRef.hide()" [focusTrap]="true" (keydown)="$event.stopPropagation()")
+ng-template(#toyModal)
+	select-toy-modal((close)="modalRef.hide()" [focusTrap]="true" (keydown)="$event.stopPropagation()")
 
 .settings-box.unselectable
 	.dropdown(#dropdown="ag-dropdown" dropdown autoClose="outsideClick" [hookToCanvas]="true")
@@ -25,12 +27,39 @@ ng-template(#actionsModal)
 			.dropdown-item.dropdown-item-static.mb-1
 				a((click)="toggleVolume()" title="Toggle sound")
 					fa-icon([icon]="volumeIcon" [fixedWidth]="true")
-					-//.flex-grow-1 Volume
-				slider-bar([(value)]="volume" [step]="1" (started)="volumeStarted()")
-				.text-muted.text-right(*ngIf="track" style="margin-top: -5px;")
-					small
-						| playing: #[b {{track}}]
-						a.text-muted.ml-1((click)="nextTrack()" title="Next track")
+			slider-bar([(value)]="volume" [step]="1" (started)="volumeStarted()" style="margin: 0 5px;")
+			.music-compact(*ngIf="track")
+				small
+					span.track-status
+						.track-visualizer
+							.visualizer-bar(*ngFor="let bar of visualizerBars" [style.height]="(50 + bar * 50) + '%'")
+					span.track-name {{track}}
+					span.expand-icon((click)="toggleMusicExpanded()" [title]="musicExpanded ? 'Collapse' : 'Expand'")
+						fa-icon([icon]="musicExpanded ? chevronDownIcon : chevronUpIcon" [fixedWidth]="true")
+			.music-player(*ngIf="musicExpanded && track")
+				.progress-container
+					.progress-bar-wrapper
+						.progress-bar-bg
+						.progress-bar-fill([style.width]="trackProgress + '%'")
+					.progress-times
+						span.time-current {{trackCurrentTime}}
+						span.time-duration {{trackDuration}}
+				.player-controls
+					button.btn.btn-xs.btn-outline-secondary(
+						(click)="previousTrack()"
+						title="Previous track"
+						[disabled]="!track")
+					fa-icon([icon]="backwardIcon" [fixedWidth]="true" style="transform: scaleX(-1);")
+					button.btn.btn-xs.btn-outline-secondary(
+						(click)="togglePausePlay()"
+						title="Toggle play/pause"
+						[disabled]="!track"
+						style="margin: 0 5px;")
+						fa-icon([icon]="isPlaying ? pauseIcon : playIcon" [fixedWidth]="true")
+					button.btn.btn-xs.btn-outline-secondary(
+						(click)="nextTrack()"
+						title="Next track"
+						[disabled]="!track")
 							fa-icon([icon]="forwardIcon" [fixedWidth]="true")
 			a.dropdown-item((click)="unhideAllHiddenPlayers()").mb-1
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
@@ -41,6 +70,9 @@ ng-template(#actionsModal)
 			a.dropdown-item((click)="openActions()").mb-1
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| Actions
+			a.dropdown-item((click)="openToys()").mb-1
+				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
+				| Select toys
 			//-a.dropdown-item((click)="openInvites()" *ngIf="hasInvites")
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| Manage invites

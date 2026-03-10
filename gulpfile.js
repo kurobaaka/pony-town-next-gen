@@ -114,13 +114,33 @@ const icons = cb => {
 	const root1 = path.join('node_modules', '@fortawesome', 'free-solid-svg-icons');
 	const root2 = path.join('node_modules', '@fortawesome', 'free-brands-svg-icons');
 
-	const getIconCode = src => JSON.stringify(require(`./${src}`).definition);
+	// read all icon names used in the client icons.ts file
 	const iconsTs = readFile('src/ts/client/icons.ts');
 	const matched = _.uniq(iconsTs.match(/\bfa[A-Z]\S*\b/g));
-	const icons = matched.map(m => ({
-		name: m,
-		code: fs.existsSync(path.join(root1, `${m}.js`)) ? getIconCode(path.join(root1, `${m}.js`)) : getIconCode(path.join(root2, `${m}.js`)),
-	})).sort((a, b) => a.name.localeCompare(b.name));
+
+	// helper that attempts to require a fontawesome module, returns null on failure
+	const getIconCode = src => {
+		try {
+			return JSON.stringify(require(`./${src}`).definition);
+		} catch (e) {
+			console.warn(`warning: failed to load icon ${src}`);
+			return null;
+		}
+	};
+
+	const icons = matched.map(m => {
+		const solid = path.join(root1, `${m}.js`);
+		const brands = path.join(root2, `${m}.js`);
+		let code = null;
+		if (fs.existsSync(solid)) {
+			code = getIconCode(solid);
+		} else if (fs.existsSync(brands)) {
+			code = getIconCode(brands);
+		}
+		if (!code) return null;
+		return { name: m, code };
+	}).filter(x => x).sort((a, b) => a.name.localeCompare(b.name));
+
 	const code = `/* tslint:disable */\n\n${icons.map(({ name, code }) => `export const ${name} = ${code};`).join('\n')}`;
 	fs.writeFile('src/ts/generated/fa-icons.ts', lintCode(code), 'utf8', cb);
 };

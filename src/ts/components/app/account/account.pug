@@ -44,7 +44,7 @@ h1(focusTitle) Account settings
 						strong Creation date: 
 						| {{account?.creationDate || '-'}}
 					.mb-2(style="color: #9c9c9c;")
-					strong(style="color: #9c9c9c;") Total playtime: #[span.ml-1 {{ formatPlaytime(account?.playtimeSeconds) }}]
+					strong(style="color: #9c9c9c;") Total playtime: #[span.ml-1 {{ displayPlaytime }}]
 			.form-group
 				p.text-muted.
 					If you remove social account, you won't be able to use it to sign-in to the game anymore.

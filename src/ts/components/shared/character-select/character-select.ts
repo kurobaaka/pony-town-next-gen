@@ -1,16 +1,18 @@
-import { Component, Input, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, EventEmitter, Output, ViewChild, ElementRef, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { PonyObject } from '../../../common/interfaces';
 import { PLAYER_NAME_MAX_LENGTH } from '../../../common/constants';
 import { VERSION_ERROR } from '../../../common/errors';
 import { GameService } from '../../services/gameService';
 import { Model, createDefaultPonyObject } from '../../services/model';
 import { Dropdown } from '../directives/dropdown';
-import { faSpinner, faTrash, faTimes, faCheck } from '../../../client/icons';
+import { faSpinner, faTrash, faTimes, faCheck, faEdit } from '../../../client/icons';
 import { focusElementAfterTimeout } from '../../../client/htmlUtils';
 import { delay } from '../../../common/utils';
 import { isMobile } from '../../../client/data';
 import { emojis } from '../../../client/emoji';
+import { toPalette } from '../../../common/ponyInfo';
 import { sample } from 'lodash';
 
 @Component({
@@ -24,6 +26,8 @@ export class CharacterSelect {
 	readonly deleteIcon = faTrash;
 	readonly removeIcon = faTimes;
 	readonly confirmIcon = faCheck;
+	readonly editIcon = faEdit;
+	showDeleteModal = false;
 	@Input() newButton = false;
 	@Input() editButton = false;
 	@Input() removeButton = false;
@@ -34,17 +38,21 @@ export class CharacterSelect {
 	@ViewChild('nameInput', { static: true }) nameInput!: ElementRef;
 	@ViewChild('ariaAnnounce', { static: true }) ariaAnnounce!: ElementRef;
 	@ViewChild('dropdown', { static: true }) dropdown!: Dropdown;
+	@ViewChild('deleteModal', { static: true }) deleteModalTpl!: TemplateRef<any>;
 	@Input() emojiButton = true;
 	readonly emotes = emojis;
+	readonly toPalette = toPalette;
 	emojiBoxState = 'none';
 	btnEmoji = emojis[0].names[0];
 	removing = false;
+	currentModalRef?: BsModalRef;
 	private locked = false; // TEMP: move to model
 	constructor(
 		private element: ElementRef,
 		private router: Router,
 		private model: Model,
 		private gameService: GameService,
+		private modalService: BsModalService,
 	) {
 	}
 	get joining() {
@@ -94,8 +102,8 @@ export class CharacterSelect {
 	}
 	remove() {
 		if (this.canRemove) {
-			this.removing = true;
-			focusElementAfterTimeout(this.element.nativeElement, '.cancel-remove-button');
+			// show delete modal as a template-based overlay so content is rendered inside modal container
+			this.currentModalRef = this.modalService.show(this.deleteModalTpl, { class: 'modal-sm' });
 		}
 	}
 	cancelRemove() {

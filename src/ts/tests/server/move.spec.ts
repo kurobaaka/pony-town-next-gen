@@ -96,6 +96,16 @@ describe('move', () => {
 			expect(client.pony.vy).equal(-PONY_SPEED_TROT, 'vy');
 		});
 
+		it('respects speed multiplier', () => {
+			(const client.pony as any).speedMultiplier = 2;
+			const [a, b, c, d, e] = encodeMovement(12, 34, 2, EntityState.PonyTrotting, 456, camera);
+
+			move(client, 0, a, b, c, d, e, {});
+
+			expect(client.pony.vx).equal(PONY_SPEED_TROT * 2, 'vx with multiplier');
+			expect(client.pony.vy).equal(-PONY_SPEED_TROT * 2, 'vy with multiplier');
+		});
+
 		it('updates safe position if not colliding', () => {
 			const [a, b, c, d, e] = encodeMovement(12, 34, 2, EntityState.PonyTrotting, 123, camera);
 			isStaticCollision.returns(false);

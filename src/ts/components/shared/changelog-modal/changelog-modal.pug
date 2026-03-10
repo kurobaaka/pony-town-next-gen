@@ -1,0 +1,32 @@
+.modal-header.d-sm-block
+	h4.modal-title.d-flex.justify-content-between.w-100
+		| {{ headerTitle }}
+		button.px-2(type='button' aria-label='Close' (click)='closeModal()')
+			span(aria-hidden='true') ×
+
+.modal-body.text-large
+	-// About section with update GIF
+	.update-about
+		.image-box(style="background: url('/assets/images/update-a54dc07f62.gif') 0% 0% / cover;")
+		.about-text
+			p Welcome to a new update!
+
+	.changelog-container
+		.changelog-list
+			div(*ngFor="let v of changelog")
+				h4 {{v.version}}
+				ul
+					li(*ngFor="let c of v.changes" [innerHTML]="c")
+
+	//- Debug option: always show after loading
+	.mt-4(*ngIf="debug")
+		custom-checkbox([(checked)]="alwaysShowAfterLoad" (checkedChange)="settingsService.browser.hideChangelogModal = !$event; settingsService.saveBrowserSettings()")
+			| Always show window after loading
+
+	//- Link to about page for full changelog
+	p.mb-0.mt-3
+		| See the #[a(routerLink='/about' fragment='changelog') about page] for the full changelog.
+
+.modal-footer.d-flex
+	.div(class='flex-grow-1')
+	button.btn.btn-wide.btn-outline-secondary(type='button' (click)='closeModal()') Continue

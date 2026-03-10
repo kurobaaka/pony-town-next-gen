@@ -696,6 +696,7 @@ export interface BrowserSettings {
 	walkByDefault?: boolean;
 	brightNight?: boolean;
 	timestamp?: '24' | '12';
+	hideChangelogModal?: boolean;
 }
 
 export interface EntityTypeName {
@@ -774,6 +775,7 @@ export interface AccountData extends AccountDataExtra {
 	roles?: string[] | undefined;
 	check?: any;
 	flags: AccountDataFlags;
+	state?: any;
 }
 
 export interface UpdateAccountData {
@@ -1304,6 +1306,7 @@ export interface PonyInfoBase<T, SET> {
 
 	// preview background color for character editor (hex without '#', e.g. '90ee90')
 	previewBackground: T | undefined;
+	lockPreviewBackground: boolean | undefined;
 
 	customOutlines: boolean | undefined;
 	freeOutlines: boolean | undefined;

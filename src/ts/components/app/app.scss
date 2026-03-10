@@ -213,3 +213,7 @@ $chat-pad: 5px;
 		margin-top: 100px;
 	}
 }
+
+.app-version a.changelog-link:hover {
+	color: $link-color;
+}

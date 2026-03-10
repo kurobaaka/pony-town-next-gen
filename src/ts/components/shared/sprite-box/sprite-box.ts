@@ -122,6 +122,22 @@ export class SpriteBox implements AfterViewInit, OnChanges, DoCheck {
 			const palette = mockPaletteManager.addArray(paletteColors);
 			const extraPalette = sprite.palettes && mockPaletteManager.addArray(sprite.palettes[0]);
 
+			// Check if sprite has actual geometry (sprite.color)
+			if (!sprite.color && sprite.palettes && sprite.palettes[0]) {
+				// Fallback: render colored rectangle for palette-only items (like toys)
+				const rgbaArray = new Uint32Array(sprite.palettes[0]);
+				const color = rgbaArray[0] || 0xFFFFFFFF; // Use first color in palette
+				const x = Math.round((bufferSize - 32) / 2);
+				const y = Math.round((bufferSize - 32) / 2);
+				
+				context.globalAlpha = 0.7;
+				context.fillStyle = '#' + ((color >>> 8) & 0xFFFFFF).toString(16).padStart(6, '0');
+				context.fillRect(x, y, 32, 32);
+				context.globalAlpha = 1.0;
+				context.restore();
+				return;
+			}
+
 			let x = this.x;
 			let y = this.y;
 

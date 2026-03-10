@@ -1,5 +1,10 @@
+@import "../../../../styles/partials/variables";
+@import "../../../../styles/partials/page-loader";
+
+// legacy overrides (minimal)
 .page-loader {
 	padding: 150px 0;
+	// padding, sizing moved to partial
 }
 
 fa-icon {

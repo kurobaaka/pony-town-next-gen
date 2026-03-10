@@ -336,6 +336,39 @@ tabset.fixed-height {
 	}
 }
 
+/* Add subtle scrollbar to modal backdrop to prevent page shift when modal overflows */
+body.modal-open {
+	overflow-y: scroll; /* Always show scrollbar space */
+	
+	@include media-breakpoint-down(xs) {
+		overflow-y: auto; /* Hide on mobile */
+	}
+}
+
+/* Style the scrollbar to be nearly invisible on desktop */
+body.modal-open::-webkit-scrollbar {
+	width: 8px;
+}
+
+body.modal-open::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+body.modal-open::-webkit-scrollbar-thumb {
+	background: rgba(200, 200, 200, 0.3);
+	border-radius: 4px;
+	
+	&:hover {
+		background: rgba(200, 200, 200, 0.5);
+	}
+}
+
+/* Firefox scrollbar */
+body.modal-open {
+	scrollbar-color: rgba(200, 200, 200, 0.3) transparent;
+	scrollbar-width: thin;
+}
+
 // custom controls
 
 .custom-control-label {

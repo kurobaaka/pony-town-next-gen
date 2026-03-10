@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Model } from '../../services/model';
 import { emojis } from '../../../client/emoji';
 import { faArrowLeft, faArrowRight, faArrowUp, faArrowDown } from '../../../client/icons';
 import { contactEmail, contactDiscord } from '../../../client/data';
@@ -21,7 +22,27 @@ export class Help {
 
 	// allow scrolling to #issues and #rules fragments
 
-	constructor(private route: ActivatedRoute) {}
+	constructor(private route: ActivatedRoute, public model: Model) {}
+
+	get isMod() { return this.model.isMod; }
+	get isSupporter() {
+		const a = this.model.account;
+		return !!(a && a.supporter);
+	}
+
+	// expose account for convenience (matching other components)
+	get account() {
+		return this.model.account;
+	}
+
+	get isAdmin() {
+		const a = this.model.account;
+		return !!(a && a.roles && a.roles.indexOf('admin') !== -1);
+	}
+	get isSuperadmin() {
+		const a = this.model.account;
+		return !!(a && a.roles && a.roles.indexOf('superadmin') !== -1);
+	}
 
 	ngAfterViewInit() {
 		this.route.fragment.subscribe(f => {

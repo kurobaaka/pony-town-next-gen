@@ -6,9 +6,9 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Subscription } from 'rxjs';
 import { GameService } from '../services/gameService';
 import { Model, Friend } from '../services/model';
-import { version, host, contactEmail, twitterLink, discordLink, copyrightName, contactDiscord } from '../../client/data';
+import { version, host, contactEmail, twitterLink, discordLink, copyrightName, contactDiscord, telegramLink } from '../../client/data';
 import { PonyTownGame } from '../../client/game';
-import { faTwitter, faPatreon, faDiscord, faEnvelope, faCog, faHome, faInfoCircle, faHorseHead, faQuestionCircle } from '../../client/icons';
+import { faTwitter, faPatreon, faDiscord, faEnvelope, faCog, faHome, faInfoCircle, faHorseHead, faQuestionCircle, faTelegram } from '../../client/icons';
 import { OAuthProvider, Entity, FakeEntity, Pony } from '../../common/interfaces';
 import { registerServiceWorker, isBrowserOutdated, checkIframeKey } from '../../client/clientUtils';
 import { ErrorReporter } from '../services/errorReporter';
@@ -41,6 +41,8 @@ export class App implements OnInit, OnDestroy {
 	@ViewChild('announcerText', { static: true }) announcerText!: ElementRef;
 	@ViewChild('reloadModal', { static: true }) reloadModal!: TemplateRef<any>;
 	@ViewChild('signInModal', { static: true }) signInModal!: TemplateRef<any>;
+	@ViewChild('changelogModal', { static: true }) changelogModal!: TemplateRef<any>;
+	changelogModalRef?: BsModalRef;
 	readonly version = version;
 	readonly date = new Date();
 	readonly emailIcon = faEnvelope;
@@ -52,10 +54,12 @@ export class App implements OnInit, OnDestroy {
 	readonly helpIcon = faQuestionCircle;
 	readonly aboutIcon = faInfoCircle;
 	readonly charactersIcon = faHorseHead;
+	readonly telegramIcon = faTelegram;
 	readonly contactEmail = contactEmail;
 	readonly contactDiscord = contactDiscord;
 	readonly discordLink = discordLink;
 	readonly twitterLink = twitterLink;
+	readonly telegramLink = telegramLink;
 	readonly copyright = copyrightName;
 	private url = location.pathname;
 	private reloadModalRef?: BsModalRef;
@@ -172,6 +176,20 @@ export class App implements OnInit, OnDestroy {
 		}
 
 		clearInterval(this.reloadInterval);
+	}
+
+	openChangelog() {
+		if (this.changelogModalRef) {
+			this.changelogModalRef.hide();
+			this.changelogModalRef = undefined;
+		}
+		this.changelogModalRef = this.modalService.show(this.changelogModal, { class: 'modal-lg' });
+		const refAny: any = this.changelogModalRef as any;
+		if (refAny && refAny.onHidden && refAny.onHidden.subscribe) {
+			refAny.onHidden.subscribe(() => {
+				this.changelogModalRef = undefined;
+			});
+		}
 	}
 	chatLogNameClick(chatBox: ChatBox, message: ChatLogMessage) {
 		if (!message.entityId) {

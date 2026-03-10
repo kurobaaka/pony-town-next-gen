@@ -930,7 +930,8 @@ export class PonyTownGame implements Game {
 			const vec = (x || y) ? dirToVector(dir) : { x: 0, y: 0 };
 			const walk = input.isMovementFromButtons ? (this.settings.browser.walkByDefault ? !shift : shift) : false;
 			const flags = getMovementFlag(x, y, walk);
-			const speed = flagsToSpeed(flags);
+			// apply server-provided speed multiplier if present (default 1)
+			const speed = flagsToSpeed(flags) * ((player as any).speedMultiplier || 1);
 			const vx = vec.x * speed;
 			const vy = vec.y * speed;
 

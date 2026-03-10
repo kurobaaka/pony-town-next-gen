@@ -137,6 +137,7 @@ export function createBasePony(): PonyInfo {
 
 		// preview background color (hex without '#')
 		previewBackground: '90ee90',
+		lockPreviewBackground: true,
 
 		customOutlines: false,
 		freeOutlines: false,

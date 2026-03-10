@@ -34,7 +34,8 @@
 	footer.text-muted.text-nowrap(*ngIf="!playing")
 		.app-version
 			| version #[b {{version}}]
-
+			p.mt-1
+			a.changelog-link((click)="openChangelog()") changelog
 		.text-right
 			.d-flex.flex-wrap
 				//- .text-nowrap.mr-2
@@ -43,6 +44,8 @@
 				.text-nowrap
 					a.text-muted.mr-2(*ngIf="twitterLink" [href]="twitterLink" target="_blank" title="Twitter")
 						fa-icon([icon]="twitterIcon" [fixedWidth]="true")
+					a.text-muted.mr-2(*ngIf="telegramLink" [href]="telegramLink" target="_blank" title="Telegram")
+						fa-icon([icon]="telegramIcon" [fixedWidth]="true")
 					a.text-muted.mr-2(*ngIf="contactEmail" href="mailto:{{contactEmail}}" target="_blank" title="Email")
 						fa-icon([icon]="emailIcon" [fixedWidth]="true")
 			div
@@ -58,3 +61,6 @@ ng-template(#reloadModal)
 	.modal-footer
 		button.btn.btn-outline-secondary((click)="cancelReloadModal()")
 			| Cancel
+
+ng-template(#changelogModal)
+	changelog-modal((close)="changelogModalRef?.hide()" [focusTrap]="true")

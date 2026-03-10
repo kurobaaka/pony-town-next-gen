@@ -6,6 +6,7 @@ export interface AppConfig {
 	twitterLink?: string;
 	supporterLink?: string;
 	discordLink?: string;
+	telegramLink?: string;
 	contactEmail?: string;
 	contactDiscord?: string;
 	port: number;

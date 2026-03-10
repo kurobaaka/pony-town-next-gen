@@ -17,7 +17,7 @@ import { World, findClientByAccountId, findAllOnlineFriends } from './world';
 import { HidingService } from './services/hiding';
 import {
 	createCharacterState, interactWith, useHeldItem, setEntityExpression, getPlayerState, execAction,
-	updateEntityPlayerState
+	updateEntityPlayerState, holdToy
 } from './playerUtils';
 import { allEntities } from './api/account';
 import { CounterService } from './services/counter';
@@ -338,6 +338,13 @@ export class ServerActions implements IServerActions, SocketServer {
 				const entity = createAnEntity(type, 0, x, y, {}, mockPaletteManager, this.world);
 				entity.state |= EntityState.Editable;
 				this.world.addEntity(entity, this.map);
+				break;
+			}
+			case Action.DropToy: {
+				validateNumber(param, 'param');
+				this.updateLastAction();
+				const toy = param | 0;
+				holdToy(this.pony, toy);
 				break;
 			}
 			default:

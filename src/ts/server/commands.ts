@@ -17,6 +17,7 @@ import {
 	getCounter, holdToy, getCollectedToysCount, getCollectedToysList, holdItem, playerSleep, playerBlush, playerLove, playerCry,
 	setEntityExpression, execAction, teleportTo, openGift
 } from './playerUtils';
+import { updateEntityOptions } from './entityUtils';
 import { ServerLiveSettings, GameServerSettings } from '../common/adminInterfaces';
 import { isCommand, processCommand, clamp, flatten, includes, randomPoint, parseSeason, parseHoliday, toInt, formatPlaytime, formatISODate } from '../common/utils';
 import { formatHourMinutes } from '../common/timeUtils';
@@ -115,13 +116,15 @@ function getSpawnTarget(map: ServerMap, message: string) {
 		return randomPoint(spawn);
 	}
 
-	const match = /^(\d+) (\d+)$/.exec(message.trim());
+	// allow coordinates with decimal separator dot or comma
+	const match = /^(\d+(?:[\.,]\d+)?)\s+(\d+(?:[\.,]\d+)?)$/.exec(message.trim());
 
 	if (!match) {
 		throw new UserError('invalid parameters');
 	}
 
-	const [, tx, ty] = match;
+	let tx = match[1].replace(',', '.');
+	let ty = match[2].replace(',', '.');
 	const x = clamp(+tx, 0, map.width - 0.5 / tileWidth);
 	const y = clamp(+ty, 0, map.height - 0.5 / tileHeight);
 	return { x, y };
@@ -164,6 +167,10 @@ function isValidMapForEditing(map: ServerMap, client: IClient, checkTimeout: boo
 
 let interval: any;
 
+// backups for admin adjustments, allow reset to pre-change value
+const playtimeBackup = new WeakMap<IClient, number>();
+const createdBackup = new WeakMap<IClient, Date | undefined>();
+
 export function createCommands(world: World): Command[] {
 	const commands = compact([
 		// chat
@@ -181,7 +188,9 @@ export function createCommands(world: World): Command[] {
 			
 			// Build help text with categories
 			const helpLines: string[] = [];
-			const categoryOrder = ['Chat', 'Actions', 'Pony states', 'Emotes', 'Expressions', 'House', 'Supporters', 'Mod', 'Admin', 'Superadmin', 'Debug', 'Other'];
+			const categoryOrder = ['Chat', 'Actions', 'Pony states', 'Emotes', 'Expressions', 'House', 'Supporters', 'Debug', 'Other', 'Mod', 'Admin', 'Superadmin'];
+// moved Other above Mod so generic commands show earlier
+
 			
 			for (const cat of categoryOrder) {
 				if (grouped[cat]) {
@@ -237,19 +246,19 @@ export function createCommands(world: World): Command[] {
 		}, false, 'Actions'),
 
 		// counters
-		command(['gifts'], '/gifts - show gift score', '', ({ }, client, _, type, target, settings) => {
+		command(['gifts', 'giftscore'], '/gifts - show gift score', '', ({ }, client, _, type, target, settings) => {
 			sayToOthers(client, `collected ${getCounter(client, 'gifts')} 🎁`, toAnnouncementMessageType(type), target, settings);
 		}, true, 'Chat'),
-		command(['candies', 'candy'], '/candies - show candy score', '', ({ }, client, _, type, target, settings) => {
+		command(['candies', 'candy', 'sweets'], '/candies - show candy score', '', ({ }, client, _, type, target, settings) => {
 			sayToOthers(client, `collected ${getCounter(client, 'candies')} 🍬`, toAnnouncementMessageType(type), target, settings);
 		}, true, 'Chat'),
-		command(['eggs'], '/eggs - show egg score', '', ({ }, client, _, type, target, settings) => {
+		command(['eggs', 'eggcount'], '/eggs - show egg score', '', ({ }, client, _, type, target, settings) => {
 			sayToOthers(client, `collected ${getCounter(client, 'eggs')} 🥚`, toAnnouncementMessageType(type), target, settings);
 		}, true, 'Chat'),
-		command(['clovers', 'clover'], '/clovers - show clover score', '', ({ }, client, _, type, target, settings) => {
+		command(['clovers', 'clover', 'clovercount'], '/clovers - show clover score', '', ({ }, client, _, type, target, settings) => {
 			sayToOthers(client, `collected ${getCounter(client, 'clovers')} 🍀`, toAnnouncementMessageType(type), target, settings);
 		}, true, 'Chat'),
-		command(['toys'], '/toys [list] - show number of collected toys (use "/toys list" to list your toys)', '', ({ }, client, message, type, target, settings) => {
+		command(['toys', 'toylist'], '/toys [list] - show number of collected toys (use "/toys list" to list your toys)', '', ({ }, client, message, type, target, settings) => {
 			const now = Date.now();
 			const { collected, total } = getCollectedToysCount(client);
 			const cmd = (message || '').trim().toLowerCase();
@@ -275,39 +284,151 @@ export function createCommands(world: World): Command[] {
 			}
 		}, false, 'Chat'),
 
-		command(['account'], '/account <id|playtime|creation> - show account info', '', ({ }, client, message, type, target, settings) => {
-			const cmd = (message || '').trim().toLowerCase();
+		// collections summary command (same channel behavior as /toys)
+		command(['collections', 'col'], '/collections - show counts of toys, gifts, eggs, clovers, candies', '', ({ }, client, _message, type, target, settings) => {
+			const { collected, total } = getCollectedToysCount(client);
+			const gifts = getCounter(client, 'gifts');
+			const eggs = getCounter(client, 'eggs');
+			const clovers = getCounter(client, 'clovers');
+			const candies = getCounter(client, 'candies');
 
-			switch (cmd) {
-				case 'id': {
-					sayToOthers(client, `Your ID: ${client.accountId}`, toAnnouncementMessageType(type), target, settings);
-					break;
-				}
-				case 'playtime': {
-					const stored = (client.account.counters && (client.account.counters as any).playtime) ? (client.account.counters as any).playtime : 0;
-					const session = Math.round((Date.now() - client.connectedTime) / 1000);
-					const totalSeconds = stored + session;
-					const text = `Total Playtime: ${formatPlaytime(totalSeconds)}`;
-					sayToOthers(client, text, toAnnouncementMessageType(type), target, settings);
-					break;
-				}
-				case 'creation': {
-					const created = client.account.createdAt ? formatISODate(client.account.createdAt).replace(/-/g, '.') : 'unknown';
-					sayToOthers(client, `Creation Date: ${created}`, toAnnouncementMessageType(type), target, settings);
-					break;
-				}
-				default: {
-					saySystem(client, 'usage: /account <id|playtime|creation>');
-				}
+			const lines: string[] = [
+				`collected ${collected}/${total} toys`,
+				`collected ${gifts} gifts 🎁`,
+				`collected ${eggs} eggs 🥚`,
+				`collected ${clovers} clovers 🍀`,
+				`collected ${candies} candies 🍬`,
+			];
+
+			sayToOthers(client, lines.join('\n'), toAnnouncementMessageType(type), target, settings);
+		}, true, 'Chat'),
+
+		// achievements command
+		command(['achievements', 'achs'], '/achievements - list collection milestones you have achieved', '', ({ }, client, _message, type, target, settings) => {
+			const check = '✓ ';
+
+			// helpers for formatting
+			function ordinal(n: number) {
+				const s = ['th','st','nd','rd'];
+				const v = n % 100;
+				return n + (s[(v-20)%10] || s[v] || s[0]);
 			}
-		}),
 
-		command(['leave'], '/leave - leave the game', '', ({ world }, client) => {
-			world.kick(client, '/leave');
+			function formatDate(d: Date) {
+				const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+				return `${ordinal(d.getDate())} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+			}
+
+			function formatPlayVerbose(seconds: number) {
+				let s = Math.floor(seconds);
+				const days = Math.floor(s / 86400); s %= 86400;
+				const hours = Math.floor(s / 3600); s %= 3600;
+				const mins = Math.floor(s / 60);
+				const secs = s % 60;
+				const parts: string[] = [];
+				if (days) parts.push(`${days}day${days>1?'s':''}`);
+				if (hours) parts.push(`${hours}hour${hours>1?'s':''}`);
+				if (mins) parts.push(`${mins}min${mins>1?'s':''}`);
+				if (secs || parts.length===0) parts.push(`${secs}sec${secs>1?'s':''}`);
+				return parts.join(' ');
+			}
+
+			// Section 1: account age + playtime titles
+			const accountLines: string[] = [];
+			if (client.account.createdAt) {
+				const created = new Date(client.account.createdAt);
+				accountLines.push(`${check}Joined on ${formatDate(created)}`);
+				const ageMs = Date.now() - created.getTime();
+				const days = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+				if (days >= 1) accountLines.push(`${check}Still fresh after just a day`);
+				if (days >= 30) accountLines.push(`${check}A month has passed since signup`);
+				if (days >= 182) accountLines.push(`${check}Half a year veteran`);
+				if (days >= 365) accountLines.push(`${check}One year wanderer`);
+				if (days >= 730) accountLines.push(`${check}Two years strong`);
+			}
+
+			// playtime titles
+			const stored = (client.account.counters && (client.account.counters as any).playtime) ? (client.account.counters as any).playtime : 0;
+			const session = Math.round((Date.now() - client.connectedTime) / 1000);
+			const totalSeconds = stored + session;
+			accountLines.push(`${check}Total playtime: ${formatPlayVerbose(totalSeconds)}`);
+			if (totalSeconds >= 3600) accountLines.push(`${check}Played at least an hour`);
+			if (totalSeconds >= 36000) accountLines.push(`${check}Over 10 hours in-game`);
+			if (totalSeconds >= 360000) accountLines.push(`${check}Centuries? Nah, 100 hours`);
+			if (totalSeconds >= 1800000) accountLines.push(`${check}Half a million seconds logged`);
+
+			// Section 2: counter milestones
+			const counterLines: string[] = [];
+			const gifts = getCounter(client, 'gifts');
+			for (let m = 100; m <= gifts; m += 100) {
+				counterLines.push(`${check}Collected ${m} gifts`);
+			}
+			const eggs = getCounter(client, 'eggs');
+			for (let m = 50; m <= eggs; m += 50) {
+				counterLines.push(`${check}Collected ${m} eggs`);
+			}
+			const clovers = getCounter(client, 'clovers');
+			for (let m = 50; m <= clovers; m += 50) {
+				counterLines.push(`${check}Collected ${m} clovers`);
+			}
+			const candies = getCounter(client, 'candies');
+			for (let m = 100; m <= candies; m += 100) {
+				counterLines.push(`${check}Collected ${m} candies`);
+			}
+
+			// Section 3: toy achievements
+			const toyLines: string[] = [];
+			const { collected, total } = getCollectedToysCount(client);
+			if (collected >= 1) {
+				toyLines.push(`${check}First toy collected (${collected}/${total})`);
+			}
+			if (collected === total && total > 0) {
+				toyLines.push(`${check}All possible toys collected (${total}/${total})`);
+			}
+
+			// assemble final output respecting empty sections
+			const sections: string[][] = [];
+			if (accountLines.length) sections.push(accountLines);
+			if (counterLines.length) sections.push(counterLines);
+			if (toyLines.length) sections.push(toyLines);
+
+			if (sections.length === 0) {
+				sayToOthers(client, 'No achievements yet', toAnnouncementMessageType(type), target, settings);
+			} else {
+				const output = sections.map(sec => sec.join('\n')).join('\n---------\n');
+				sayToOthers(client, output, toAnnouncementMessageType(type), target, settings);
+			}
 		}, false, 'Chat'),
 
-		// pony states
-		command(['sit'], '/sit - sit down or stand up', '', shouldNotBeCalled, false, 'Pony states'),
+// account-related info commands moved out of the generic /account
+	command(['accountdate','accdate','creation','created'], '/accountdate - show date when your account was created', '', ({ }, client, _message, type, target, settings) => {
+		const created = client.account.createdAt ? formatISODate(client.account.createdAt).replace(/-/g, '.') : 'unknown';
+		sayToOthers(client, `Creation Date: ${created}`, toAnnouncementMessageType(type), target, settings);
+	}, false, 'Other'),
+	command(['accountid','accid','id','whoami'], '/accountid - show your account ID', '', ({ }, client, _message, type, target, settings) => {
+		sayToOthers(client, `Your ID: ${client.accountId}`, toAnnouncementMessageType(type), target, settings);
+	}, false, 'Other'),
+	command(['playtime','ptime','timeplayed'], '/playtime - show total playtime', '', ({ }, client, _message, type, target, settings) => {
+		const stored = (client.account.counters && (client.account.counters as any).playtime) ? (client.account.counters as any).playtime : 0;
+		const session = Math.round((Date.now() - client.connectedTime) / 1000);
+		const totalSeconds = stored + session;
+		const text = `Total Playtime: ${formatPlaytime(totalSeconds)}`;
+		sayToOthers(client, text, toAnnouncementMessageType(type), target, settings);
+	}, false, 'Other'),
+
+	command(['age','birthage'], '/age - show your age based on birthdate in settings', '', ({ }, client, _message, type, target, settings) => {
+		if (!client.account.birthdate) {
+			throw new UserError('birthdate not set');
+		}
+		const bd = new Date(client.account.birthdate);
+		const now = new Date();
+		let age = now.getFullYear() - bd.getFullYear();
+		const m = now.getMonth() - bd.getMonth();
+		if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
+			age--;
+		}
+		sayToOthers(client, `Age: ${age} year${age !== 1 ? 's' : ''}`, toAnnouncementMessageType(type), target, settings);
+	}, false, 'Other'),
 		command(['lie', 'lay'], '/lie - lie down or sit up', '', shouldNotBeCalled, false, 'Pony states'),
 		command(['fly'], '/fly - fly up or fly down', '', shouldNotBeCalled, false, 'Pony states'),
 		command(['stand'], '/stand - stand up', '', shouldNotBeCalled, false, 'Pony states'),
@@ -464,13 +585,13 @@ export function createCommands(world: World): Command[] {
 				}
 
 				const lines = ['Available Maps:'];
-				for (const [id, instances] of mapsList) {
+				mapsList.forEach((instances, id) => {
 					if (instances.size === 0) {
 						lines.push(`  ${id}`);
 					} else {
 						lines.push(`  ${id} (instances: ${Array.from(instances).join(', ')})`);
 					}
-				}
+				});
 				lines.push('', 'Usage: /goto <map_id> [instance]');
 				saySystem(client, lines.join('\n'));
 				return;
@@ -493,6 +614,8 @@ export function createCommands(world: World): Command[] {
 
 			if (!arg || arg.toLowerCase() === 'reset') {
 				(client.pony as any).speedMultiplier = 1;
+				client.speedMultiplier = 1;
+				updateEntityOptions(client.pony, { speedMultiplier: 1 });
 				saySystem(client, 'Speed reset to 1x');
 				return;
 			}
@@ -505,30 +628,68 @@ export function createCommands(world: World): Command[] {
 			}
 
 			(client.pony as any).speedMultiplier = value;
+			client.speedMultiplier = value;
+			updateEntityOptions(client.pony, { speedMultiplier: value });
 			saySystem(client, `Speed set to ${value}x`);
 		}, false, 'Mod'),
-		command(['tp'], '/tp <location|x y> - teleport to location/coords. Enable "Show stats" for Your Coords', 'mod', (_context, client, message) => {
-			if (!message.trim()) {
-				const lines = [
-					'Teleport help',
-					'',
-					'Usage: /tp <location> or /tp <x> <y>',
-					'Examples:',
-					'  /tp spawn',
-					'  /tp 100 200',
-					'',
-					'Tip: Enable "Show stats" in settings to see Your Coords',
-				];
-				saySystem(client, lines.join('\n'));
+		command(['tp'], '/tp <location|x y|to <player>|here <player>|? - teleport around', 'mod', (_context, client, message) => {
+		const input = message.trim();
+		if (!input || input === '?') {
+			const lines = [
+				'Teleport command',
+				'',
+				'Usage:',
+				'  /tp <location>                 - go to a named spawn (see /locations)',
+				'  /tp <x> <y>                    - teleport to coords (decimals ok)',
+				'  /tp to <player>                - teleport to another player',
+				'  /tp here <player>              - bring a player to you',
+				'  /tp ?                          - show this help message',
+				'',
+				'Examples:',
+				'  /tp spawn',
+				'  /tp 22.1 42,5',
+				'  /tp to player2',
+				'  /tp here player2',
+				'',
+				'Tip: enable "Show stats" to see Your Coords and use /players to list names',
+			];
+			saySystem(client, lines.join('\n'));
+			return;
+		}
+		
+		// handle to/here subcommands
+		const parts = input.split(/\s+/);
+		if (parts[0].toLowerCase() === 'to' && parts[1]) {
+			const targetName = parts.slice(1).join(' ');
+			const others = _context.world.clients.filter(c => c.accountName.toLowerCase() === targetName.toLowerCase());
+			if (others.length === 0) {
+				saySystem(client, 'player not found, try /players to see online names');
 				return;
 			}
-			
-			const { x, y } = getSpawnTarget(client.map, message);
-			teleportTo(client, x, y);
-			saySystem(client, `Teleported to (${x.toFixed(1)}, ${y.toFixed(1)})`);
-		}, false, 'Mod'),
+			const target = others[0];
+			teleportTo(client, target.pony.x, target.pony.y);
+			saySystem(client, `Teleported to ${target.accountName}`);
+			return;
+		}
+		if (parts[0].toLowerCase() === 'here' && parts[1]) {
+			const targetName = parts.slice(1).join(' ');
+			const others = _context.world.clients.filter(c => c.accountName.toLowerCase() === targetName.toLowerCase());
+			if (others.length === 0) {
+				saySystem(client, 'player not found, try /players to see online names');
+				return;
+			}
+			const target = others[0];
+			teleportTo(target, client.pony.x, client.pony.y);
+			saySystem(client, `${target.accountName} has been teleported to you`);
+			return;
+		}
+		
+		const { x, y } = getSpawnTarget(client.map, input);
+		teleportTo(client, x, y);
+		saySystem(client, `Teleported to (${x.toFixed(1)}, ${y.toFixed(1)})`);
+	}, false, 'Mod'),
 
-		command(['locations'], '/locations - list all spawn locations on current map', 'mod', ({ }, client) => {
+		command(['locations'], '/locations - show list all spawn locations on current map', 'mod', ({ }, client) => {
 			const map = client.map;
 			const locations = Array.from(map.spawns.keys());
 			
@@ -543,11 +704,14 @@ export function createCommands(world: World): Command[] {
 		command(['players'], '/players - list all players on this map and total', 'mod', ({ world }, client) => {
 			const mapClients = world.clients.filter(c => c.map === client.map);
 			const totalClients = world.clients.length;
-			const lines = [
+			if (totalClients <= 1) {
+				saySystem(client, "You're the only one on the server right now");
+				return;
+			}
+			const lines: string[] = [
 				`PLAYERS (${mapClients.length} here / ${totalClients} total)`,
 				'',
 			];
-			
 			if (mapClients.length === 0) {
 				lines.push('No players on this map');
 			} else {
@@ -556,7 +720,6 @@ export function createCommands(world: World): Command[] {
 					lines.push(`  ${c.characterName} - ${c.accountName}${afkStatus}`);
 				});
 			}
-			
 			saySystem(client, lines.join('\n'));
 		}, false, 'Mod'),
 
@@ -581,7 +744,7 @@ export function createCommands(world: World): Command[] {
 			];
 			
 			let index = 1;
-			for (const [id, data] of mapData) {
+			mapData.forEach((data, id) => {
 				const playerText = data.players === 1 ? 'pony' : 'ponies';
 				if (data.players === 0) {
 					lines.push(`${index}. ${id}`);
@@ -589,7 +752,7 @@ export function createCommands(world: World): Command[] {
 					lines.push(`${index}. ${id}: ${data.players} ${playerText}`);
 				}
 				index++;
-			}
+			});
 			
 			saySystem(client, lines.join('\n'));
 		}, false, 'Mod'),
@@ -620,7 +783,7 @@ export function createCommands(world: World): Command[] {
 			findEntities(client.map, e => e.type === butterfly.type || e.type === bat.type || e.type === firefly.type)
 				.forEach(e => sayToAll(e, message, filterBadWords(message), MessageType.Admin, settings));
 		}, false, 'Admin'),
-		command(['time'], '/time <HH:MM|day|night> - set server time', DEVELOPMENT ? '' : 'admin', ({ world }, client, message) => {
+		command(['time'], '/time <HH:MM|day|night|?|<HH:MM> stop> - set server time, ? for help', DEVELOPMENT ? '' : 'admin', ({ world }, client, message) => {
 			const input = message.trim();
 
 			if (!input) {
@@ -651,12 +814,24 @@ export function createCommands(world: World): Command[] {
 			}
 
 			if (isTimeInput) {
+				// if user added "stop" as second argument, freeze at that time
+				if (args.length > 1 && args[1].toLowerCase() === 'stop') {
+					if ((world as any).timeIntervalId) {
+						clearInterval((world as any).timeIntervalId);
+					}
+					const targetTimeValue = targetHour + (targetMinute / 60);
+					world.setTime(targetTimeValue);
+					(world as any).timeIntervalId = setInterval(() => {
+						world.setTime(targetTimeValue);
+					}, 1000);
+					saySystem(client, `Time frozen at ${formatHourMinutes(world.time)}`);
+					return;
+				}
 				// Stop any running interval
 				if ((world as any).timeIntervalId) {
 					clearInterval((world as any).timeIntervalId);
 					(world as any).timeIntervalId = null;
 				}
-				
 				// Set time to HH:MM
 				if (targetHour < 0 || targetHour > 23 || targetMinute < 0 || targetMinute > 59) {
 					throw new UserError('Invalid time. Hours must be 0-23, minutes must be 0-59');
@@ -678,10 +853,10 @@ export function createCommands(world: World): Command[] {
 				// Immediately set time to day
 				world.setTime(12);
 				
-				// Periodically re-set time every 2.5 seconds to maintain eternal day
-				(world as any).timeIntervalId = setInterval(() => {
-					world.setTime(12);
-				}, 2500);
+// Periodically re-set time every 1 seconds to maintain eternal day
+			(world as any).timeIntervalId = setInterval(() => {
+				world.setTime(12);
+			}, 1000);
 				
 				saySystem(client, 'Time set to eternal day (12:00) - continuously enforced');
 				return;
@@ -696,10 +871,10 @@ export function createCommands(world: World): Command[] {
 				// Immediately set time to night
 				world.setTime(0);
 				
-				// Periodically re-set time every 2.5 seconds to maintain eternal night
-				(world as any).timeIntervalId = setInterval(() => {
-					world.setTime(0);
-				}, 2500);
+// Periodically re-set time every 1 seconds to maintain eternal night
+			(world as any).timeIntervalId = setInterval(() => {
+				world.setTime(0);
+			}, 1000);
 				
 				saySystem(client, 'Time set to eternal night (00:00) - continuously enforced');
 				return;
@@ -831,6 +1006,71 @@ export function createCommands(world: World): Command[] {
 			}
 		}
 	}, false, 'Admin'),
+
+		// admin helpers to set playtime & creation date with undo
+		command(['setplaytime'], '/setplaytime <seconds|reset> - set or restore your playtime', 'admin', ({ }, client, message) => {
+			const arg = (message || '').trim().toLowerCase();
+			if (!arg) {
+				throw new UserError('provide seconds or reset');
+			}
+			if (arg === 'reset') {
+				const prev = playtimeBackup.get(client);
+				if (prev === undefined) {
+					saySystem(client, 'no backup available');
+					return;
+				}
+				updateAccountState(client.account, (state: any) => {
+					state.counters = state.counters || {};
+					state.counters.playtime = prev;
+				});
+				playtimeBackup.delete(client);
+				saySystem(client, 'playtime restored');
+				return;
+			}
+			const sec = parseInt(arg, 10);
+			if (isNaN(sec) || sec < 0) {
+				throw new UserError('invalid seconds');
+			}
+			if (!playtimeBackup.has(client)) {
+				const stored = (client.account.counters && (client.account.counters as any).playtime) ? (client.account.counters as any).playtime : 0;
+				playtimeBackup.set(client, stored);
+			}
+			updateAccountState(client.account, (state: any) => {
+				state.counters = state.counters || {};
+				state.counters.playtime = sec;
+			});
+			saySystem(client, `playtime set to ${sec}`);
+		}, false, 'Admin'),
+
+		command(['setcreated'], '/setcreated <YYYY-MM-DD|reset> - change or restore account creation date', 'admin', ({ }, client, message) => {
+			const arg = (message || '').trim();
+			if (!arg) {
+				throw new UserError('provide date or reset');
+			}
+			if (arg.toLowerCase() === 'reset') {
+				const prev = createdBackup.get(client);
+				if (prev === undefined) {
+					saySystem(client, 'no backup available');
+					return;
+				}
+				client.account.createdAt = prev;
+				Account.updateOne({ _id: client.accountId }, { createdAt: prev }).exec();
+				createdBackup.delete(client);
+				saySystem(client, 'creation date restored');
+				return;
+			}
+			const d = new Date(arg);
+			if (isNaN(d.getTime())) {
+				throw new UserError('invalid date format');
+			}
+			if (!createdBackup.has(client)) {
+				createdBackup.set(client, client.account.createdAt);
+			}
+			client.account.createdAt = d;
+			Account.updateOne({ _id: client.accountId }, { createdAt: d }).exec();
+			saySystem(client, `creation date set to ${d.toISOString().replace(/T.*$/,'')}`);
+		}, false, 'Admin'),
+
 		command(['togglerestore'], '/togglerestore - toggle terrain restoration', 'admin', ({ world: { options } }, client) => {
 			options.restoreTerrain = !options.restoreTerrain;
 			saySystem(client, `restoration is ${options.restoreTerrain ? 'on' : 'off'}`);

@@ -169,6 +169,7 @@ const booleanFields: FieldDefinition<boolean>[] = [
 	{ name: 'unlockBackLegAccessory', omit: info => !!info.lockBackLegAccessory },
 	{ name: 'unlockEyelashColor' },
 	{ name: 'darkenLockedOutlines', omit: info => !info.freeOutlines },
+	{ name: 'lockPreviewBackground' },
 ];
 
 const numberFields: FieldDefinition<number>[] = [

@@ -23,7 +23,7 @@ page-loader(*ngIf="!playing")
 			[(error)]="error" [newButton]="true" [removeButton]="true" [emojiButton]="true" (change)="updateMuzzles()"
 			(preview)="previewPony = $event")
 
-			.character-preview-box.mx-auto.my-3((fixToTop)="fixed = $event" [fixToTopOffset]="-40" [style.background]="info.previewBackground ? '#' + info.previewBackground : 'var(--grass-color)'")
+			.character-preview-box.mx-auto.my-3((fixToTop)="fixed = $event" [fixToTopOffset]="-40" [style.background]="previewInfo.previewBackground ? '#' + previewInfo.previewBackground : 'var(--grass-color)'")
 				character-preview(
 					#characterPreview [pony]="previewInfo" [state]="state" [scale]="previewScale" [noBackground]="true" [noShadow]="fixed"
 					[name]="previewName" [tag]="previewTag" [extra]="previewExtra" style="z-index: 100")
@@ -90,18 +90,18 @@ page-loader(*ngIf="!playing")
 					.row.form-group
 						label.col-sm-4.col-form-label Preview scale
 						.col-sm-8
-						.dropdown(dropdown #scaleDropdown="ag-dropdown" [focusOnOpen]="false" style="max-width: 120px;")
-							button.btn.btn-default.dropdown-toggle(dropdownToggle style="width: 100%; text-align: left;")
-								| scale: 
-								span.float-right(style="font-weight: bold;") x{{previewScale}}
-							.dropdown-menu(style="min-width: 100px;" *dropdownMenu)
-								button.dropdown-item((click)="previewScale = 1; scaleDropdown.close(); changed()" [class.active]="previewScale === 1") x1
-								button.dropdown-item((click)="previewScale = 2; scaleDropdown.close(); changed()" [class.active]="previewScale === 2") x2
-								button.dropdown-item((click)="previewScale = 3; scaleDropdown.close(); changed()" [class.active]="previewScale === 3") x3
-								button.dropdown-item((click)="previewScale = 4; scaleDropdown.close(); changed()" [class.active]="previewScale === 4") x4
-								button.dropdown-item((click)="previewScale = 5; scaleDropdown.close(); changed()" [class.active]="previewScale === 5") x5
-								button.dropdown-item((click)="previewScale = 6; scaleDropdown.close(); changed()" [class.active]="previewScale === 6") x6
-								button.dropdown-item((click)="previewScale = 7; scaleDropdown.close(); changed()" [class.active]="previewScale === 7") x7
+							.dropdown(dropdown #scaleDropdown="ag-dropdown" [focusOnOpen]="false" style="max-width: 120px;")
+								button.btn.btn-default.dropdown-toggle(dropdownToggle style="width: 100%; text-align: left;")
+									| scale: 
+									span.float-right(style="font-weight: bold;") x{{previewScale}}
+								.dropdown-menu(style="min-width: 100px;" *dropdownMenu)
+									button.dropdown-item((click)="previewScale = 1; scaleDropdown.close(); changed()" [class.active]="previewScale === 1") x1
+									button.dropdown-item((click)="previewScale = 2; scaleDropdown.close(); changed()" [class.active]="previewScale === 2") x2
+									button.dropdown-item((click)="previewScale = 3; scaleDropdown.close(); changed()" [class.active]="previewScale === 3") x3
+									button.dropdown-item((click)="previewScale = 4; scaleDropdown.close(); changed()" [class.active]="previewScale === 4") x4
+									button.dropdown-item((click)="previewScale = 5; scaleDropdown.close(); changed()" [class.active]="previewScale === 5") x5
+									button.dropdown-item((click)="previewScale = 6; scaleDropdown.close(); changed()" [class.active]="previewScale === 6") x6
+									button.dropdown-item((click)="previewScale = 7; scaleDropdown.close(); changed()" [class.active]="previewScale === 7") x7
 
 				.row.form-group
 					.col-sm-4.col-lock-box
@@ -110,7 +110,7 @@ page-loader(*ngIf="!playing")
 							[(checked)]="lockBackgroundDefault" [icon]="lockIcon" (checkedChange)="backgroundLockChanged($event)"
 							label="Lock background color" title="Lock background color")
 					.col-sm-8
-					color-picker.form-control(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChange)="changed()" [disabled]="lockBackgroundDefault" style="max-width: 240px" [style.opacity]="lockBackgroundDefault ? '0.5' : '1'")
+					color-picker(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChange)="changed()" [disabled]="lockBackgroundDefault" style="max-width: 240px" [style.opacity]="lockBackgroundDefault ? '0.5' : '1'"):
 					//-.row.form-group
 						label.col-sm-4.col-form-label Effects
 						.col-sm-8.text-muted.pt-1
@@ -437,3 +437,11 @@ page-loader(*ngIf="!playing")
 								set-selection(
 									label="Extra accessories" [set]="info.extraAccessory" [sets]="extraAccessories"
 									[darken]="darken" (change)="changed()")
+
+ng-template(#importedModalTpl)
+	imported-modal(
+		[ponies]="importedPonies"
+		[account]="account"
+		(close)="pendingImportModal?.hide()"
+		(keep)="acceptImport()"
+		(remove)="rejectImport()")

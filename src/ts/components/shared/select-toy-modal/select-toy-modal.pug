@@ -1,0 +1,29 @@
+.modal-header.text-center
+	h4.modal-title Toys
+
+.modal-body
+	-// Preview pony using portrait-box (properly renders toys)
+	.preview-section.mb-3.text-center
+		portrait-box([pony]="previewPony" size="large" noBorder="true")
+
+	-// Toy collection stats
+	.stats.mb-3.text-center
+		div.stat-line {{getCollectedCount()}} / {{toys.length}} toys collected
+
+	-// Toy selection using set-selection pattern
+	.toys-container
+		.row.form-group
+			label.col-sm-12.text-center.col-form-label.text-muted Select a toy
+		.row.form-group
+			.col-sm-12
+				set-selection(
+					[set]="toySet"
+					[sets]="toySets"
+					[darken]="false"
+					(change)="onToySetChanged()"
+				)
+
+.modal-footer
+	button.btn.btn-outline-secondary(type='button' (click)='closeModal()') Close
+	button.btn.btn-outline-primary(type='button' (click)='confirmSelection()') Confirm
+

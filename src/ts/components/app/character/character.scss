@@ -26,7 +26,8 @@
 	width: 400px;
 	height: 400px;
 	background: var(--grass-color);
-	border-radius: $border-radius-lg; 
+	border-radius: $border-radius-lg;
+	transition: background-color 0.3s ease; 
 
 	@include media-breakpoint-down(sm) {
 		width: 280px;

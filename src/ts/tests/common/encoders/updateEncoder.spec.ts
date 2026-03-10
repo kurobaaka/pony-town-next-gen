@@ -97,6 +97,12 @@ describe('updateEncoder', () => {
 			testEncodeDecode(region, { ...exp, updates: [{ ...out, id: 123, options: { tag: 'bar' } }] });
 		});
 
+		it('encodes speed multiplier in options', () => {
+			region.entityUpdates.push({ ...def, entity: entity(123), flags: UpdateFlags.Options, options: { speedMultiplier: 1.5 } as any });
+
+			testEncodeDecode(region, { ...exp, updates: [{ ...out, id: 123, options: { speedMultiplier: 1.5 } }] });
+		});
+
 		it('encodes info', () => {
 			const e = serverEntity(123);
 			e.encryptedInfoSafe = new Uint8Array([1, 2, 3, 4, 5]);

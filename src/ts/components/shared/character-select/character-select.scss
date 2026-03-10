@@ -38,9 +38,9 @@ character-list {
 	}
 }
 
-.emoji-dropdown {
+.character-select .emoji-dropdown {
 	position: absolute;
-	top: -2px;
+	top: 122px; /* character-select needs lower placement */
 	right: 0;
 	z-index: 300;
 	margin-top: 4px;

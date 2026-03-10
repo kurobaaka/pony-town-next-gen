@@ -15,8 +15,8 @@
 			(emojiSelected)="addEmoji($event)"
 			(closed)="emojiBoxState = 'none'"
 			class="emoji-dropdown")
-		button.btn.btn-default(*ngIf="emojiButton" (click)="toggleEmojiBox()" [attr.title]="'Emoji picker'" [attr.aria-label]="'Emoji picker'")
-			emote-box.character-emoji-button([emote]="btnEmoji" (mouseenter)="onMouseEnterEmojiButton($event)")
+		button.btn.btn-default(*ngIf="emojiButton" (click)="toggleEmojiBox()" tooltip="Toggle Emoji-box" aria-label="Toggle Emoji-box")
+			fa-icon([icon]="editIcon" [fixedWidth]="true")
 		button.btn.btn-default(*ngIf="newButton" (click)="createNew()" [disabled]="!canNew" aria-label="Create New character")
 			| new
 		button.btn.btn-default(*ngIf="editButton" (click)="edit()" [disabled]="!canEdit" aria-label="Edit character")
@@ -31,14 +31,12 @@
 				(previewCharacter)="preview.emit($event)" [canNew]="!newButton && canNew")
 
 		button.btn.btn-danger.remove-button(
-			*ngIf="removeButton && !removing" (click)="remove()" [disabled]="!canRemove"
+			*ngIf="removeButton" (click)="remove()" [disabled]="!canRemove"
 			tooltip="Delete pony" aria-label="Delete pony")
 			fa-icon([icon]="deleteIcon" [fixedWidth]="true")
-		button.btn.btn-danger.cancel-remove-button(
-			*ngIf="removing" (click)="cancelRemove()"
-			tooltip="Cancel delete" aria-label="Cancel delete")
-			fa-icon([icon]="removeIcon" [fixedWidth]="true")
-		button.btn.btn-success(
-			*ngIf="removing" (click)="confirmRemove()" [disabled]="!canRemove"
-			tooltip="Confirm delete" aria-label="Confirm delete")
-			fa-icon([icon]="confirmIcon" [fixedWidth]="true")
+
+	//- delete modal template (rendered into modal overlay via BsModalService)
+	ng-template(#deleteModal)
+		delete-modal([name]="pony?.name" [pony]="pony ? (pony.ponyInfo || createDefaultPony()) : undefined"
+			(close)="currentModalRef?.hide()" (confirm)="confirmRemove(); currentModalRef?.hide()")
+

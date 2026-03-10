@@ -179,10 +179,13 @@ export class CharacterPreview implements OnDestroy, OnChanges, AfterViewInit {
 				const options = { ...DEFAULT_OPTIONS, shadow: !this.noShadow, extra: !!this.extra };
 				// apply preview options from pony info
 				options.flipped = !!(this.pony && (this.pony as any).flip);
+				// include held toy if set (some ponies may not have toy property)
+				if (this.pony && (this.pony as any).toy) {
+					options.toy = (this.pony as any).toy;
+				}
 
 				// merge preview state with passed state so head turn settings are respected
 				const state = { ...(this.state || DEFAULT_STATE),
-					headTurn: (this.pony && (this.pony as any).headTurn) || 0,
 					headTurned: !!(this.pony && (this.pony as any).headTurned),
 				};
 
@@ -195,37 +198,47 @@ export class CharacterPreview implements OnDestroy, OnChanges, AfterViewInit {
 					((this.pony && (this.pony as any).hearts) ? ExpressionExtra.Hearts : 0);
 
 				const finalState = { ...state };
-			if (extra && state.expression) {
-				// Apply effect flags to existing expression instead of replacing it
-				finalState.expression = { ...state.expression, extra: (state.expression.extra || 0) | extra };
-			} else if (extra && !state.expression) {
-				// Only create default expression if there's no existing expression and we have effects
-				finalState.expression = createExpression(Eye.Neutral, Eye.Neutral, Muzzle.Flat, Iris.Forward, Iris.Forward, extra);
-			}
-
-		if (this.noBackground) {
-			viewContext.clearRect(0, 0, canvas.width, canvas.height);
-		}
-
-		viewContext.save();
-		viewContext.scale(scale, scale);
-
-		// draw outline
-		if (this.pony && this.noShadow && this.noBackground && !this.noOutline) {
-			for (let x = -1; x <= 1; x++) {
-				for (let y = -1; y <= 1; y++) {
-					viewContext.drawImage(this.batch.canvas, x, y);
+				if (extra && state.expression) {
+					// Apply effect flags to existing expression instead of replacing it
+					finalState.expression = { ...state.expression, extra: (state.expression.extra || 0) | extra };
+				} else if (extra && !state.expression) {
+					// Only create default expression if there's no existing expression and we have effects
+					finalState.expression = createExpression(Eye.Neutral, Eye.Neutral, Muzzle.Flat, Iris.Forward, Iris.Forward, extra);
 				}
+
+				// draw pony into the offscreen batch (convert full PonyInfo to palette-friendly shape)
+				drawPony(this.batch, toPalette(this.pony), finalState, x, y, options);
+			} finally {
+				this.batch.end();
 			}
 
-			viewContext.globalCompositeOperation = 'source-in';
-				viewContext.fillStyle = colorToCSS(bg);
-			viewContext.fillRect(0, 0, viewContext.canvas.width, viewContext.canvas.height);
-			viewContext.globalCompositeOperation = 'source-over';
-		}
+			const viewContext = canvas.getContext('2d');
+			if (!viewContext) return;
+			disableImageSmoothing(viewContext);
 
-		viewContext.drawImage(this.batch.canvas, 0, 0);
-		viewContext.restore();
+			if (this.noBackground) {
+				viewContext.clearRect(0, 0, canvas.width, canvas.height);
+			}
+
+			viewContext.save();
+			viewContext.scale(scale, scale);
+
+			// draw outline
+			if (this.pony && this.noShadow && this.noBackground && !this.noOutline) {
+				for (let ox = -1; ox <= 1; ox++) {
+					for (let oy = -1; oy <= 1; oy++) {
+						viewContext.drawImage(this.batch.canvas, ox, oy);
+					}
+				}
+
+				viewContext.globalCompositeOperation = 'source-in';
+				viewContext.fillStyle = colorToCSS(bg);
+				viewContext.fillRect(0, 0, viewContext.canvas.width, viewContext.canvas.height);
+				viewContext.globalCompositeOperation = 'source-over';
+			}
+
+			viewContext.drawImage(this.batch.canvas, 0, 0);
+			viewContext.restore();
 
 		// draw name plate
 		if (!this.noShadow && this.name) {
@@ -241,6 +254,7 @@ export class CharacterPreview implements OnDestroy, OnChanges, AfterViewInit {
 			viewContext.scale(scale, scale);
 			viewContext.drawImage(this.nameBatch.canvas, 0, 10);
 			viewContext.restore();
+		}
 		}
 	}
 }

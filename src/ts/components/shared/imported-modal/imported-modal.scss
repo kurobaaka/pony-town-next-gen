@@ -1,0 +1,44 @@
+.character-preview-wrapper {
+	text-align: center;
+	width: 100%;
+}
+
+.character-list-wrapper {
+	max-height: 260px;
+	overflow-y: auto;
+	width: 100%;
+
+	hr {
+		margin: 10px 0;
+		border: none;
+		border-top: 1px solid #ddd;
+	}
+}
+
+.import-count-info {
+	background: #f8f9fa;
+	padding: 15px;
+	border-radius: 4px;
+	margin-bottom: 15px;
+	text-align: center;
+
+	p {
+		margin-bottom: 10px;
+	}
+}
+
+.modal-body {
+	p {
+		margin-bottom: 10px;
+	}
+	width: 100%;
+}
+
+.modal-footer {
+	width: 100%;
+}
+
+.row {
+	width: 100%;
+	margin: 0;
+}

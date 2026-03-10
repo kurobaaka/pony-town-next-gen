@@ -1,0 +1,91 @@
+@import '../../../styles/partials/variables';
+
+.update-about {
+	margin-bottom: 1.5rem;
+	text-align: center;
+}
+
+.image-box {
+	height: 200px;
+	width: 100%;
+	border-radius: 5px;
+	margin-bottom: 1rem;
+	background-size: cover;
+	background-position: center;
+}
+
+.about-text {
+	color: #9c9c9c;
+	font-size: 0.95rem;
+	p {
+		margin: 0;
+		margin-bottom: 0.5rem;
+	}
+}
+
+.changelog-container {
+	background-color: #1e1e1e;
+	padding: 15px;
+	border-radius: 5px;
+}
+
+.changelog-list {
+	max-height: 50vh;
+	overflow-y: auto;
+	overflow-x: hidden;
+	text-align: left;
+	line-height: 1.4;
+	padding-right: 8px;
+	word-wrap: break-word;
+}
+
+/* hide scrollbar in webkit browsers but keep functionality */
+.changelog-list::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+.changelog-list::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.changelog-list::-webkit-scrollbar-thumb {
+	background: transparent;
+}
+
+/* for Firefox */
+.changelog-list {
+	scrollbar-width: none;
+}
+
+.changelog-list h4 {
+	margin-top: 0.6rem;
+	margin-bottom: 0.3rem;
+	color: #fff;
+}
+
+.changelog-list ul {
+	margin: 0 0 0.6rem 1rem;
+}
+
+.changelog-list li {
+	margin-bottom: 0.3rem;
+	color: #9c9c9c;
+}
+
+.changelog-list pre {
+	background: #1e1e1e;
+	color: #e6e6e6;
+	padding: 0.5rem;
+	border-radius: 3px;
+	overflow: auto;
+	font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+.changelog-list code {
+	background: darken($body-bg, 5%);
+	padding: 0 4px;
+	border-radius: 3px;
+	font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+

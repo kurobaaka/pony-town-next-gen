@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
 import { defaultExpression } from '../../../client/ponyUtils';
 import { defaultPonyState } from '../../../client/ponyHelpers';
-import { Expression, Muzzle, HeadAnimation, BodyAnimation, Eye } from '../../../common/interfaces';
+import { Expression, Muzzle, HeadAnimation, BodyAnimation, Eye, Iris, ExpressionExtra } from '../../../common/interfaces';
 import { excite_meno, happy_tongue_meno, stand, boop, happy_tongue_meno_2 } from '../../../client/ponyAnimations';
 import { FrameService, FrameLoop } from '../../services/frameService';
 import { CharacterPreview } from '../character-preview/character-preview';
@@ -21,6 +21,25 @@ const EXCITED: Expression = {
 	muzzle: Muzzle.SmileOpen,
 };
 
+const SLEEP: Expression = {
+	...defaultExpression,
+	left: Eye.Closed,
+	right: Eye.Closed,
+	leftIris: Iris.Forward,
+	rightIris: Iris.Forward,
+	muzzle: Muzzle.Neutral,
+	extra: ExpressionExtra.Zzz,
+};
+
+const YAWN: Expression = {
+	...defaultExpression,
+	left: Eye.Neutral,
+	right: Eye.Neutral,
+	leftIris: Iris.Up,
+	rightIris: Iris.Up,
+	muzzle: Muzzle.SmileOpen,
+};
+
 const MENO = 'DBWIzP8imd08//D19fVazSjcwf1GhLNEiMxENSovLy/NsIdJQDnGqYBiSztWQTM6LychEnE/KRX///9WPeE1HbSpBUEIIASwgEIAAAAAbIAgCFMY34AHAAjwgCMRQCVLY38IDhAAwmFBz4fAIxjKM6SjGlaxjWtYgjGI';
 
 @Component({
@@ -37,12 +56,16 @@ export class VisitPTPony implements OnInit, OnDestroy {
 	private headTime = 0;
 	private bodyAnimation?: BodyAnimation;
 	private bodyTime = 0;
+	private lastInteractionTime = 0;
+	private isSleeping = false;
+	private readonly sleepThreshold = 30000;
 	private loop: FrameLoop;
 	constructor(frameService: FrameService) {
 		this.loop = frameService.create(delta => this.tick(delta));
 	}
 	ngOnInit() {
 		this.loop.init();
+		this.lastInteractionTime = Date.now();
 	}
 	ngOnDestroy() {
 		this.loop.destroy();
@@ -50,6 +73,17 @@ export class VisitPTPony implements OnInit, OnDestroy {
 	select() {
 		this.headTime = 0;
 		this.bodyTime = 0;
+		this.lastInteractionTime = Date.now();
+
+		if (this.isSleeping) {
+			// wake with yawn
+			this.isSleeping = false;
+			this.headAnimation = excite_meno;
+			this.expression = YAWN;
+			this.bodyAnimation = stand;
+			return;
+		}
+
 		this.expression = EXCITED;
 		this.bodyAnimation = Math.random() < 0.25 ? boop : stand;
 
@@ -65,11 +99,22 @@ export class VisitPTPony implements OnInit, OnDestroy {
 		}
 	}
 	reset() {
-		this.expression = undefined;
+		this.lastInteractionTime = Date.now();
+		if (!this.isSleeping) {
+			this.expression = undefined;
+		}
 	}
 	private tick(delta: number) {
 		this.headTime += delta;
 		this.bodyTime += delta;
+
+		const idle = Date.now() - this.lastInteractionTime;
+		if (!this.isSleeping && idle > this.sleepThreshold) {
+			this.isSleeping = true;
+			this.expression = SLEEP;
+			this.headAnimation = undefined;
+			this.bodyAnimation = undefined;
+		}
 
 		if (this.headAnimation) {
 			const frame = Math.floor(this.headTime * this.headAnimation.fps);

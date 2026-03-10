@@ -41,6 +41,10 @@ import { SiteInfo } from './site-info/site-info';
 import { SettingsBox } from './settings-box/settings-box';
 import { SettingsModal } from './settings-modal/settings-modal';
 import { InvitesModal } from './invites-modal/invites-modal';
+import { DeleteModal } from './delete-modal/delete-modal';
+import { ImportedModal } from './imported-modal/imported-modal';
+import { ChangelogModal } from './changelog-modal/changelog-modal';
+import { SelectToyModal } from './select-toy-modal/select-toy-modal';
 import { FillOutline } from './fill-outline/fill-outline';
 import { FriendsBox } from './friends-box/friends-box';
 import { InstallButton } from './install-button/install-button';
@@ -121,6 +125,10 @@ const declarations = [
 	FriendsBox,
 	InstallButton,
 	InvitesModal,
+	DeleteModal,
+	ImportedModal,
+	ChangelogModal,
+	SelectToyModal,
 	KbdKey,
 	PlayBox,
 	PlayNotice,

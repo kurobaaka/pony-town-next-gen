@@ -1,0 +1,36 @@
+.modal-header.d-none.d-sm-block
+	h4.modal-title Successfully Imported Ponies
+
+.modal-body
+	p.mb-3
+		strong {{ponies.length}}
+		| 
+		span(*ngIf="ponies.length === 1") pony has been successfully imported!
+		span(*ngIf="ponies.length > 1") ponies have been successfully imported!
+
+	div(*ngIf="!shouldShowPreviews && !showAllPreviews")
+		.import-count-info
+			p
+				| You have imported more than 3 ponies. Click the button below to preview all imported characters.
+			button.btn.btn-sm.btn-default((click)="toggleShowPreviews()")
+				| Show All Preview ({{ponies.length}})
+
+	div(*ngIf="displayPonies.length > 0")
+		.character-list-wrapper
+			div(*ngFor="let pony of displayPonies; let $last = $last")
+				.row.justify-content-center.mb-3
+					.col-12.col-sm-6.col-md-5
+						.character-preview-wrapper
+							character-preview(
+								[pony]="pony.ponyInfo"
+								[name]="pony.name"
+								[tag]="getPonyTag(pony)"
+								[noBackground]="false"
+								[noShadow]="false"
+								[scale]="2")
+				hr(*ngIf="!$last")
+
+.modal-footer.justify-content-end
+	button.btn.btn-outline-secondary((click)="closeModal()") Cancel
+	button.btn.btn-outline-danger((click)="rejectImport()") Reject and Delete
+	button.btn.btn-outline-success((click)="acceptImport()") Accept Import

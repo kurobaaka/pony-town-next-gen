@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, TemplateRef } from '@angular/core';
 
 import { clamp } from 'lodash';
 import { PLAYER_NAME_MAX_LENGTH, PLAYER_DESC_MAX_LENGTH } from '../../../common/constants';
@@ -19,6 +19,7 @@ import { drawCanvas } from '../../../graphics/contextSpriteBatch';
 import { Model, getPonyTag } from '../../services/model';
 import { loadAndInitSpriteSheets, addTitles, createEyeSprite, addLabels } from '../../../client/spriteUtils';
 import { GameService } from '../../services/gameService';
+import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { TRANSPARENT, BLACK, blushColor } from '../../../common/colors';
 import { precompressPony, compressPonyString, decompressPony, decompressPonyString } from '../../../common/compressPony';
 import { saveCanvas } from '../../../client/canvasUtils';
@@ -64,7 +65,7 @@ export class Character implements OnInit, OnDestroy {
 	@ViewChild('characterPreview', { static: true }) characterPreview!: any;
 	readonly debug = DEVELOPMENT || BETA;
 	previewScale: number = 3;
-	lockBackgroundDefault = false;
+
 	readonly playIcon = faPlay;
 	readonly lockIcon = faLock;
 	readonly saveIcon = faSave;
@@ -126,11 +127,13 @@ export class Character implements OnInit, OnDestroy {
 	sites: SocialSiteInfo[] = [];
 	error?: string;
 	canSaveFiles = isFileSaverSupported();
+	importedPonies: PonyObject[] = [];
+	pendingImportModal?: BsModalRef;
 	private savingLocked = false;
 	private interval?: any;
 	private syncTimeout?: any;
 	private animationTime = 0;
-	constructor(private gameService: GameService, private model: Model) {
+	constructor(private gameService: GameService, private model: Model, private modalService: BsModalService) {
 		this.createMuzzles();
 		this.updateMuzzles();
 	}
@@ -255,6 +258,12 @@ export class Character implements OnInit, OnDestroy {
 	set lockEyelashColor(value) {
 		this.info.unlockEyelashColor = !value;
 	}
+	get lockBackgroundDefault() {
+		return this.info.lockPreviewBackground !== false;
+	}
+	set lockBackgroundDefault(value: boolean) {
+		this.info.lockPreviewBackground = value;
+	}
 	icon(id: string) {
 		return getProviderIcon(id);
 	}
@@ -268,6 +277,7 @@ export class Character implements OnInit, OnDestroy {
 
 		this.sites = this.model.sites.filter(s => !!s.name);
 		this.updateMuzzles();
+		this.initializeBackgroundLock();
 
 		let last = Date.now();
 
@@ -333,14 +343,15 @@ export class Character implements OnInit, OnDestroy {
 
 	backgroundLockChanged(locked: boolean) {
 		if (locked) {
-			// Lock to default green
+			// Lock to default green - always reset to '90ee90'
 			this.info.previewBackground = '90ee90';
-			this.lockBackgroundDefault = true;
 		} else {
-			// Unlock and clear
-			this.info.previewBackground = undefined;
-			this.lockBackgroundDefault = false;
+			// Unlock - keep the current color (or set to default if undefined)
+			if (!this.info.previewBackground) {
+				this.info.previewBackground = '90ee90';
+			}
 		}
+		this.info.lockPreviewBackground = locked;
 		this.changed();
 	}
 	eyeColorLockChanged(locked: boolean) {
@@ -367,6 +378,14 @@ export class Character implements OnInit, OnDestroy {
 		if (pony) {
 			this.deleting = false;
 			this.pony = pony;
+			this.initializeBackgroundLock();
+		}
+	}
+	private initializeBackgroundLock() {
+		// Initialize lock state based on current background color
+		if (this.info.lockPreviewBackground === undefined) {
+			// Default: lock if it's the default color or undefined
+			this.info.lockPreviewBackground = !this.info.previewBackground || this.info.previewBackground === '90ee90';
 		}
 	}
 	setActiveAnimation(index: number) {
@@ -505,7 +524,7 @@ export class Character implements OnInit, OnDestroy {
 		if (file) {
 			const text = await readFileAsText(file);
 			const lines = text.split(/\r?\n/g);
-			let imported = 0;
+			const imported: PonyObject[] = [];
 
 			for (const line of lines) {
 				try {
@@ -521,15 +540,42 @@ export class Character implements OnInit, OnDestroy {
 						};
 
 						await this.model.savePony(pony, true);
-						imported++;
+						imported.push(pony);
 					}
 				} catch (e) {
 					DEVELOPMENT && console.error(e);
 				}
 			}
 
-			alert(`Imported ${imported} ponies`);
+			if (imported.length > 0) {
+				this.importedPonies = imported;
+				this.showImportedModal();
+			}
 		}
+	}
+
+	private showImportedModal() {
+		const modalTpl = this.getImportedModalTemplate();
+		this.pendingImportModal = this.modalService.show(modalTpl, { class: 'modal-lg' });
+	}
+
+	private getImportedModalTemplate(): TemplateRef<any> {
+		return (this as any).importedModalTpl;
+	}
+
+	acceptImport() {
+		this.importedPonies = [];
+		this.pendingImportModal?.hide();
+	}
+
+	rejectImport() {
+		this.importedPonies.forEach(pony => {
+			this.model.removePony(pony).catch(e => {
+				DEVELOPMENT && console.error('Failed to delete imported pony:', e);
+			});
+		});
+		this.importedPonies = [];
+		this.pendingImportModal?.hide();
 	}
 }
 

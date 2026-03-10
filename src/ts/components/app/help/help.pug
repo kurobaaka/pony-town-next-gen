@@ -108,17 +108,24 @@ h1(focusTitle) Help
 
 			ul.spaced-list
 				li <code>/help</code>, <code>/h</code> or <code>/?</code> - list all available commands
-				li
-					| <code>/roll</code>, <code>/rand</code> or <code>/random</code> - roll a random number between 1 and 100
+				li <code>/shrug</code> - send ¯\\_(ツ)_/¯ emoticon (can type normally too)
+				li <code>/roll</code>, <code>/rand</code> or <code>/random</code> - roll a random number between 1 and 100
 					ul.spaced-list
 						li use <code>/roll 10</code> to roll a number between 1 and 10
 						li use <code>/roll 5-10</code> to roll a number between 5 and 10
-				li <code>/say</code> or <code>/s</code> - say in public chat (can be used to switch from party chat)
+				li <code>/say</code> or <code>/s</code> - say in public chat (also used to switch from party chat)
 				li <code>/party</code> or <code>/p</code> - say in party chat
 				li <code>/think</code> or <code>/t</code> - say in thinking bubble
-				li <code>/whisper &lt;name&gt;</code> or <code>/w &lt;name&gt;</code> - whisper to player (you can also click on player name in chatlog)
-				li <code>/reply</code> or <code>/r</code> - reply to last incoming whisper
+				li <code>/whisper &lt;name&gt;</code> or <code>/w &lt;name&gt;</code> - whisper to player (click name in chatlog also works)
+				li <code>/reply</code> or <code>/r</code> - reply to last whisper
 				li <code>/e</code> - set a permanent expression like this <code>/e :)</code>
+				li <code>/accountdate</code> or <code>/accdate</code> - show account creation date
+				li <code>/accountid</code> or <code>/accid</code> - show your account ID
+				li <code>/playtime</code> or <code>/ptime</code> - show total playtime (updates only in account page)
+				li <code>/gifts</code> - show gift score
+				li <code>/candies</code> or <code>/candy</code> - show candy score
+				li <code>/eggs</code> - show egg score
+				li <code>/clovers</code> or <code>/clover</code> - show clover score
 				li <code>/unstuck</code> - resets position to spawn point and leaves the game
 				li <code>/leave</code> - leaves the game
 				li <code>/turn</code> - turn head around
@@ -126,7 +133,11 @@ h1(focusTitle) Help
 				li <code>/drop</code> - drop held item
 				li <code>/droptoy</code> - drop held toy
 				li <code>/open</code> - open gift
-				li <code>/toys</code> - show number of collected toys
+				li <code>/toys</code> - show number of collected toys (use <code>/toys list</code> for full list)
+				li <code>/collections</code> or <code>/col</code> - show counters for toys, gifts, eggs, clovers and candies
+				li <code>/achievements</code> or <code>/achs</code> - display your collection milestones, age and playtime titles
+				li <code>/age</code> or <code>/birthage</code> - show your age based on account birthdate setting
+				li <code>/playtime</code> or <code>/ptime</code> - display your total playtime (server‑calculated)
 				li <code>/boop</code> or <code>/)</code> - do a boop. Can also be used with expression: <code>/) XD</code>
 				li <code>/lie</code> - lie down or sit up
 				li <code>/sit</code> - sit down or stand up
@@ -157,6 +168,61 @@ h1(focusTitle) Help
 						li <code>/unlockhouse</code> - enables editing by other people (need to be alone in the house or a party leader)
 						li <code>/removetoolbox</code> - removes toolbox from the house (need to be alone in the house or a party leader)
 						li <code>/restoretoolbox</code> - restores toolbox to the house (need to be alone in the house or a party leader)
+					
+				-// supporter commands
+				li(*ngIf="isSupporter || isMod")
+					strong Supporter commands (visible for supporters and staff)
+				li(*ngIf="isSupporter || isMod") <code>/swap &lt;name&gt;</code> - switch to one of your characters
+				li(*ngIf="isSupporter || isMod")
+					small Supporter chat: use <code>/ss</code> for global supporter chat, and <code>/s1</code>, <code>/s2</code>, <code>/s3</code> for level‑specific supporter channels
+
+				-// moderator commands
+				li(*ngIf="isMod")
+					strong Moderator commands (visible only to mods/admins)
+				li(*ngIf="isMod") <code>/m &lt;message&gt;</code> - send a moderated broadcast
+				li(*ngIf="isMod") <code>/emotetest</code> - list all emotes for testing
+				li(*ngIf="isMod") <code>/goto &lt;map&gt; [instance]</code> - teleport to any map spawn
+				li(*ngIf="isMod") <code>/speed &lt;value|reset&gt;</code> - adjust your movement speed
+				li(*ngIf="isMod") <code>/tp &lt;location|x y|to &lt;player&gt;|here &lt;player&gt;|?</code> - teleport helper
+				li(*ngIf="isMod") <code>/locations</code> - list named spawns on current map
+				li(*ngIf="isMod") <code>/players</code> - list players on map and server
+				li(*ngIf="isMod") <code>/maps</code> - list all server maps
+				li(*ngIf="isMod") <code>/map</code> - show info about current map
+
+				-// admin commands
+				li(*ngIf="isAdmin || isSuperadmin")
+					strong Admin commands (requires admin or higher)
+				li(*ngIf="isAdmin || isSuperadmin") <code>/a &lt;message&gt;</code> - send announcement
+				li(*ngIf="isAdmin || isSuperadmin") <code>/time &lt;HH:MM|day|night|?&gt;</code> - change server time (includes freeze and help)
+				li(*ngIf="isAdmin || isSuperadmin") <code>/collect &lt;kind&gt; [amount|clear]</code> - adjust counters (gift/egg/etc.)
+				li(*ngIf="isAdmin || isSuperadmin") <code>/setplaytime &lt;sec|reset&gt;</code> - modify your recorded playtime (admin only)
+				li(*ngIf="isAdmin || isSuperadmin") <code>/setcreated &lt;YYYY-MM-DD|reset&gt;</code> - change account creation date (admin only)
+				li(*ngIf="isAdmin || isSuperadmin") <code>/togglerestore</code> - toggle terrain restoration option
+				li(*ngIf="isAdmin || isSuperadmin") <code>/resettiles</code> - reset tiles in current map to original
+				li(*ngIf="isAdmin || isSuperadmin") <code>/season &lt;season&gt; [&lt;holiday&gt;]</code> - change world season (BETA)
+				li(*ngIf="isAdmin || isSuperadmin") <code>/weather &lt;none|rain&gt;</code> - change map weather (BETA)
+
+				-// superadmin commands
+				li(*ngIf="isSuperadmin")
+					strong Superadmin commands (highest privilege)
+				li(*ngIf="isSuperadmin") <code>/update</code> - prepare server for update
+				li(*ngIf="isSuperadmin") <code>/shutdown</code> - shutdown the server
+				li(*ngIf="isSuperadmin") <code>/loadmap &lt;name&gt;</code> - load a saved map from store
+				li(*ngIf="isSuperadmin") <code>/savemap &lt;name&gt;</code> - save current map as JSON
+				li(*ngIf="isSuperadmin") <code>/savemapbin &lt;name&gt;</code> - save map as binary variant
+				li(*ngIf="isSuperadmin") <code>/saveentities &lt;name&gt;</code> - dump current entities
+				li(*ngIf="isSuperadmin") <code>/savehides</code> - export hide data
+				li(*ngIf="isSuperadmin") <code>/test</code> - developer debug command
+				li(*ngIf="isSuperadmin") <code>/spamchat</code> - toggle spam messages (BETA)
+				li(*ngIf="isSuperadmin") <code>/noclouds</code> - remove clouds (BETA)
+				li(*ngIf="isSuperadmin") <code>/msg</code> - send a debug message via special entities (BETA)
+				li(*ngIf="isSuperadmin") <code>/hold &lt;name&gt;</code> - hold specific item (BETA)
+				li(*ngIf="isSuperadmin") <code>/toy &lt;number&gt;</code> - hold toy by id (BETA)
+				li(*ngIf="isSuperadmin") <code>/dc</code> - disconnect without saving (superadmin)
+				li(*ngIf="isSuperadmin") <code>/disconnect</code> - normal disconnect (superadmin)
+				li(*ngIf="isSuperadmin") <code>/info &lt;id&gt;</code> - inspect an entity (superadmin)
+				li(*ngIf="isSuperadmin") <code>/collider</code> - save collider data for current region (superadmin)
+				li(*ngIf="isSuperadmin") <code>/testparty</code> - debug party invitations (superadmin)
 
 		section
 			h2 Chat emojis

@@ -104,18 +104,47 @@ export class Audio {
 	private playing = false;
 	private stopped: Instance[] = [];
 	private instance?: Instance;
+	private allTracks: Track[] = [];
+
 	get trackName() {
 		return this.instance && this.volume ? this.instance.track.name : '';
 	}
+
+	get currentTrackIndex() {
+		return this.instance ? this.allTracks.findIndex(t => t === this.instance!.track) : -1;
+	}
+
+	get isPlaying() {
+		return this.playing;
+	}
+
+	get currentTime(): number {
+		if (this.instance) {
+			const howl = this.instance.track.howl;
+			if (howl && howl.playing(this.instance.id)) {
+				return howl.seek(this.instance.id) as number;
+			}
+		}
+		return 0;
+	}
+
+	get duration(): number {
+		if (this.instance && this.instance.track.howl) {
+			return this.instance.track.howl.duration();
+		}
+		return 0;
+	}
+
+	get progress(): number {
+		const dur = this.duration;
+		return dur ? (this.currentTime / dur) * 100 : 0;
+	}
+
 	initTracks(season: Season, holiday: Holiday, map: MapType) {
 		const tracks = getTracks(season, holiday, map);
 
-		// Make new tracks more frequent
-		// const duplicateTracks = tracks.filter(t => t === 'ghost' || t === 'pumpkin');
-		// tracks.push(...duplicateTracks);
-		// tracks.push(...duplicateTracks);
-
-		this.tracks = tracks.map(name => ({ name, src: [getUrl(`music/${name}.webm`), getUrl(`music/${name}.mp3`)] }));
+		this.allTracks = tracks.map(name => ({ name, src: [getUrl(`music/${name}.webm`), getUrl(`music/${name}.mp3`)] }));
+		this.tracks = [...this.allTracks];
 		this.loops = 0;
 	}
 	setVolume(volume: number) {
@@ -186,6 +215,24 @@ export class Audio {
 			;
 
 		this.loops = random(4, 7);
+	}
+
+	playNextTrack() {
+		const currentIndex = this.currentTrackIndex;
+		if (currentIndex >= 0 && currentIndex < this.allTracks.length - 1) {
+			this.switchToTrack(this.allTracks[currentIndex + 1]);
+		} else {
+			this.playRandomTrack();
+		}
+	}
+
+	playPreviousTrack() {
+		const currentIndex = this.currentTrackIndex;
+		if (currentIndex > 0) {
+			this.switchToTrack(this.allTracks[currentIndex - 1]);
+		} else {
+			this.playRandomTrack();
+		}
 	}
 	private playTrack(track: Track): Instance {
 		this.prepareTrack(track);

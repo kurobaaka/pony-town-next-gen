@@ -45,6 +45,7 @@ export function toAccountData(account: IAccount): AccountData {
 		roles: (roles && roles.length) ? [...roles] : undefined,
 		flags: (hasFlag(flags, AccountFlags.DuplicatesNotification) ? AccountDataFlags.Duplicates : 0) |
 			(isPastSupporter(account) ? AccountDataFlags.PastSupporter : 0),
+		state: cloneDeep(account.state || {}),
 	};
 }
 

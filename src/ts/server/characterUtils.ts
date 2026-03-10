@@ -33,6 +33,9 @@ export function createPony(account: IAccount, character: ICharacter, state: Char
 	const pony = ponyEntity(state.x, state.y) as ServerEntity;
 	// Initialize speed multiplier to normal (1.0x)
 	(pony as any).speedMultiplier = 1;
+	// include in options so clients know the default value immediately
+	pony.options = pony.options || {} as any;
+	(pony.options as any).speedMultiplier = 1;
 	// Restore facing direction and animation state from flags
 	const animation = ((state.flags || 0) & CharacterStateFlags.AnimationMask) >> CharacterStateFlags.AnimationShift;
 	pony.state = (hasFlag(state.flags, CharacterStateFlags.Right) ? EntityState.FacingRight : 0) |

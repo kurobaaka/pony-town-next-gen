@@ -13,5 +13,107 @@
 
 .settings-box-menu {
 	@include nipple(9px);
-	min-width: 205px;
+	min-width: 280px;
 }
+
+.music-compact {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 0;
+	margin-top: 5px;
+	font-size: 0.85rem;
+
+	.track-status {
+		display: flex;
+		align-items: flex-end;
+		height: 20px;
+
+		.track-visualizer {
+			display: flex;
+			gap: 2px;
+			align-items: flex-end;
+			height: 100%;
+
+			.visualizer-bar {
+				width: 3px;
+				background: #6c757d;
+				border-radius: 1px;
+				min-height: 2px;
+				transition: height 0.1s ease-out;
+			}
+		}
+	}
+
+	.track-name {
+		flex: 1;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		color: #fff;
+		font-weight: 500;
+	}
+
+	.expand-icon {
+		cursor: pointer;
+		padding: 5px;
+		
+		&:hover {
+			color: #adb5bd;
+		}
+	}
+}
+
+.music-player {
+	padding: 10px 0;
+	border-top: 1px solid #495057;
+
+	.progress-container {
+		margin-bottom: 10px;
+
+		.progress-bar-wrapper {
+			position: relative;
+			height: 4px;
+			background: #495057;
+			border-radius: 2px;
+			overflow: hidden;
+			margin-bottom: 5px;
+
+			.progress-bar-bg {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+			}
+
+			.progress-bar-fill {
+				position: absolute;
+				height: 100%;
+				background: #6c757d;
+				transition: width 0.1s linear;
+			}
+		}
+
+		.progress-times {
+			display: flex;
+			justify-content: space-between;
+			font-size: 0.75rem;
+			color: #adb5bd;
+
+			span {
+				font-family: monospace;
+			}
+		}
+	}
+
+	.player-controls {
+		display: flex;
+		justify-content: center;
+		gap: 5px;
+
+		button {
+			&:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+		}
+	}
