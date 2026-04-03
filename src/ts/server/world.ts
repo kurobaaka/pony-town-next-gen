@@ -665,7 +665,10 @@ timingStart('updateCamera + updateSubscriptions');
 			client.pony.id = this.getNewEntityId();
 		}
 
-		client.myEntity(client.pony.id, client.characterName, client.character.info!, client.characterId, client.pony.crc || 0);
+		// Ensure character has pony info (failsafe - should be set in createJoin)
+		const info = client.character.info || '';
+
+		client.myEntity(client.pony.id, client.characterName, info, client.characterId, client.pony.crc || 0);
 
 		this.clients.push(client);
 		this.clientsByAccount.set(client.accountId, client);

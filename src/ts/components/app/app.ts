@@ -8,9 +8,9 @@ import { GameService } from '../services/gameService';
 import { Model, Friend } from '../services/model';
 import { version, host, contactEmail, twitterLink, discordLink, copyrightName, contactDiscord, telegramLink } from '../../client/data';
 import { PonyTownGame } from '../../client/game';
-import { faTwitter, faPatreon, faDiscord, faEnvelope, faCog, faHome, faInfoCircle, faHorseHead, faQuestionCircle, faTelegram } from '../../client/icons';
+import { faTwitter, faPatreon, faDiscord, faEnvelope, faCog, faHome, faInfoCircle, faHorseHead, faQuestionCircle } from '../../client/icons';
 import { OAuthProvider, Entity, FakeEntity, Pony } from '../../common/interfaces';
-import { registerServiceWorker, isBrowserOutdated, checkIframeKey } from '../../client/clientUtils';
+import { registerServiceWorker, isBrowserOutdated, checkIframeKey, initLoader } from '../../client/clientUtils';
 import { ErrorReporter } from '../services/errorReporter';
 import { SECOND, PONY_TYPE } from '../../common/constants';
 import { ChatBox } from '../shared/chat-box/chat-box';
@@ -54,7 +54,7 @@ export class App implements OnInit, OnDestroy {
 	readonly helpIcon = faQuestionCircle;
 	readonly aboutIcon = faInfoCircle;
 	readonly charactersIcon = faHorseHead;
-	readonly telegramIcon = faTelegram;
+	// readonly telegramIcon = faTelegram;
 	readonly contactEmail = contactEmail;
 	readonly contactDiscord = contactDiscord;
 	readonly discordLink = discordLink;
@@ -65,6 +65,7 @@ export class App implements OnInit, OnDestroy {
 	private reloadModalRef?: BsModalRef;
 	private reloadInterval?: any;
 	private subscriptions: Subscription[] = [];
+	private announcerTimeout?: any;
 	constructor(
 		private modalService: BsModalService,
 		private gameService: GameService,
@@ -125,14 +126,23 @@ export class App implements OnInit, OnDestroy {
 			});
 		}
 
-		if (DEVELOPMENT) {
-			this.subscriptions.push(this.game.announcements.subscribe(message => {
-				(this.announcer.nativeElement as HTMLElement).style.display = 'flex';
-				const announcerText = this.announcerText.nativeElement as HTMLElement;
+		initLoader();
+
+		this.subscriptions.push(this.game.announcements.subscribe(message => {
+			const announcer = this.announcer.nativeElement as HTMLElement;
+			const announcerText = this.announcerText.nativeElement as HTMLElement;
+			announcerText.textContent = message;
+			announcer.classList.add('show');
+
+			if (this.announcerTimeout !== undefined) {
+				clearTimeout(this.announcerTimeout);
+			}
+
+			this.announcerTimeout = setTimeout(() => {
+				announcer.classList.remove('show');
 				announcerText.textContent = '';
-				setTimeout(() => announcerText.textContent = message, 100);
-			}));
-		}
+			}, 3000);
+		}));
 
 		this.activatedRoute.queryParams.subscribe(({ error, merged, alert }) => {
 			this.model.authError = error;

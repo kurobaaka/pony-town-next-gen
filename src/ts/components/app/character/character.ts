@@ -565,7 +565,9 @@ export class Character implements OnInit, OnDestroy {
 
 	acceptImport() {
 		this.importedPonies = [];
-		this.pendingImportModal?.hide();
+		if (this.pendingImportModal) {
+			this.pendingImportModal.hide();
+		}
 	}
 
 	rejectImport() {
@@ -575,7 +577,9 @@ export class Character implements OnInit, OnDestroy {
 			});
 		});
 		this.importedPonies = [];
-		this.pendingImportModal?.hide();
+		if (this.pendingImportModal) {
+			this.pendingImportModal.hide();
+		}
 	}
 }
 

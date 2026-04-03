@@ -1,0 +1,11 @@
+.icon-gallery
+	.search-row
+		input.form-control(type="text" placeholder="Search icons..." [formControl]="searchControl" style="width: 200px;")
+	.gallery-container
+		.category(*ngFor="let category of filteredCategories")
+			h4.category-title {{ category.name }}
+			.icons-grid
+				.icon-item(*ngFor="let item of category.icons" (click)="copyToClipboard(item.name)" title="Click to copy")
+					.icon-display
+						fa-icon([icon]="item.icon")
+					.icon-name {{ item.name }}

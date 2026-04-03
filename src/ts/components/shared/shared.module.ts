@@ -23,8 +23,6 @@ import { EmoteBox } from './emote-box/emote-box';
 import { SliderBar } from './slider-bar/slider-bar';
 import { SpriteBox } from './sprite-box/sprite-box';
 import { SpriteSelection } from './sprite-selection/sprite-selection';
-import { DiscordButton } from './discord-button/discord-button';
-import { DiscordPony } from './discord-pony/discord-pony';
 import { SetSelection, SetOutlineHidden } from './set-selection/set-selection';
 import { CheckBox } from './check-box/check-box';
 import { PortraitBox } from './portrait-box/portrait-box';
@@ -44,6 +42,7 @@ import { InvitesModal } from './invites-modal/invites-modal';
 import { DeleteModal } from './delete-modal/delete-modal';
 import { ImportedModal } from './imported-modal/imported-modal';
 import { ChangelogModal } from './changelog-modal/changelog-modal';
+import { ChangelogView } from './changelog-view/changelog-view';
 import { SelectToyModal } from './select-toy-modal/select-toy-modal';
 import { FillOutline } from './fill-outline/fill-outline';
 import { FriendsBox } from './friends-box/friends-box';
@@ -82,6 +81,9 @@ import { SaveActiveTab } from './directives/saveActiveTab';
 import { SiteNamePipe } from './pipes/siteName';
 import { VisitPTButton } from './visit-pt-button/visit-pt-button';
 import { VisitPTPony } from './visit-pt-pony/visit-pt-pony';
+import { VkButton } from './vk-button/vk-button';
+import { VkPony } from './vk-pony/vk-pony';
+import { LeaveSiteModal } from './leave-site-modal/leave-site-modal';
 
 const declarations = [
 	ActionBar,
@@ -100,10 +102,10 @@ const declarations = [
 	SliderBar,
 	SpriteBox,
 	SpriteSelection,
-	DiscordButton,
-	DiscordPony,
 	VisitPTButton,
 	VisitPTPony,
+	VkButton,
+	VkPony,
 	SetSelection,
 	SetOutlineHidden,
 	CheckBox,
@@ -128,7 +130,9 @@ const declarations = [
 	DeleteModal,
 	ImportedModal,
 	ChangelogModal,
+	ChangelogView,
 	SelectToyModal,
+	LeaveSiteModal,
 	KbdKey,
 	PlayBox,
 	PlayNotice,

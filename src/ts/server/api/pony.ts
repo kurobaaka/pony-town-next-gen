@@ -10,6 +10,7 @@ import { isBadCM } from '../cmUtils';
 import { UserError } from '../userError';
 import { CHARACTER_SAVING_ERROR, CHARACTER_LIMIT_ERROR } from '../../common/errors';
 import { decompressPony, compressPony } from '../../common/compressPony';
+import { syncLockedPonyInfoNumber } from '../../common/ponyInfo';
 import { getCharacterLimit } from '../accountUtils';
 import { PLAYER_DESC_MAX_LENGTH } from '../../common/constants';
 
@@ -44,7 +45,8 @@ export const createSavePony =
 				data.id ? findCharacter(data.id, account._id) : undefined,
 				data.site ? findAuth(data.site, account._id, '_id') : undefined,
 			]).catch(error => {
-				throw new UserError('Invalid data', { error, data });
+				const reportedError = error instanceof Error ? error : undefined;
+				throw new UserError('Invalid data', { error: reportedError, data });
 			});
 
 			let suspicious: string[] = [];
@@ -59,7 +61,8 @@ export const createSavePony =
 				}
 
 				const deco = decompressPony(data.info);
-				const info = compressPony(deco);
+				syncLockedPonyInfoNumber(deco);  // Sync locked fills (esp. extraAccessory) to prevent BLACK values
+				const info = compressPony(deco);  // Re-compress with synchronized values
 
 				// if (data.info !== info) {
 				// 	reporter.danger(`Pony info does not match after re-compression`, `original: ${data.info}\nre-compressed: ${info}`);
@@ -92,8 +95,9 @@ export const createSavePony =
 				character.flags = flags;
 				character.lastUsed = new Date();
 			} catch (error) {
+				const reportedError = error instanceof Error ? error : undefined;
 				const message = DEVELOPMENT ? `${CHARACTER_SAVING_ERROR} (${error})` : CHARACTER_SAVING_ERROR;
-				throw new UserError(message, { error, data: { pony: data }, desc: `info: "${data.info}"` });
+				throw new UserError(message, { error: reportedError, data: { pony: data }, desc: `info: "${data.info}"` });
 			}
 
 			const count = created ? await characterCount(account._id) : 0;

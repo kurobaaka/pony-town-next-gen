@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { emojis } from '../../../client/emoji';
 import { getUrl } from '../../../client/rev';
 import { CREDITS, CONTRIBUTORS, Credit } from '../../../client/credits';
-import { CHANGELOG } from '../../../generated/changelog';
+import { isPrivilegedAccount } from '../../../common/changelogUtils';
 import { SUPPORTER_REWARDS_LIST } from '../../../common/constants';
-import { discordLink, contactEmail, contactDiscord } from '../../../client/data';
+import { discordLink, contactEmail, contactDiscord, version, shortVersion } from '../../../client/data';
+import { Model } from '../../services/model';
 
 function toCredit(credit: Credit) {
 	return {
@@ -19,14 +20,32 @@ function toCredit(credit: Credit) {
 	templateUrl: 'about.pug',
 	styleUrls: ['about.scss'],
 })
-export class About {
+export class About implements OnInit {
+	constructor(public model: Model) {}
+
 	readonly title = document.title;
 	readonly emotes = emojis;
 	readonly credits = CREDITS.map(toCredit);
 	readonly contributors = CONTRIBUTORS;
-	readonly changelog = CHANGELOG;
 	readonly rewards = SUPPORTER_REWARDS_LIST;
 	readonly discordLink = discordLink;
 	readonly contactEmail = contactEmail;
 	readonly contactDiscord = contactDiscord;
+	readonly version = version;
+	readonly shortVersion = shortVersion;
+
+	changelogResponse: any = null;
+
+	get isPrivileged() {
+		return isPrivilegedAccount(this.model.account);
+	}
+
+	ngOnInit() {
+		// Fetch changelog from server
+		this.model.fetchChangelog().then(response => {
+			this.changelogResponse = response;
+		}).catch(err => {
+			console.error('Failed to fetch changelog:', err);
+		});
+	}
 }

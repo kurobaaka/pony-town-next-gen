@@ -95,8 +95,8 @@ describe('worldMap', () => {
 			e.ponyState = defaultPonyState();
 			addEntity(game.map, e);
 
-			handleUpdateEntity(game, { ...def, id: 123, options: { speedMultiplier: 2 } as any });
-			expect((e as any).speedMultiplier).equal(2);
+			handleUpdateEntity(game, { ...def, id: 123, options: { speedMultiplier: 2 } });
+			expect(e.speedMultiplier).equal(2);
 		});
 
 		it('overrides right flag for player', () => {

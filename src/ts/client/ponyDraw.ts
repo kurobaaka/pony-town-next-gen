@@ -215,6 +215,11 @@ export function initializeToys(paletteManager: PaletteManager) {
 	}
 }
 
+// export accessor for toy data
+export function getToySprite(id: number): PaletteSpriteSet | undefined {
+	return toys[id];
+}
+
 // const zeroPoint = point(0, 0);
 const wakes = [
 	{ ox: 21, oy: 60, behind: sprites.pony_wake_4, front: sprites.pony_wake_3 },

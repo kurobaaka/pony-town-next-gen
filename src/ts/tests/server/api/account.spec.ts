@@ -288,18 +288,21 @@ describe('api account', () => {
 				filterSwearWords: true,
 				filterCyrillic: true,
 				ignorePartyInvites: true,
+				disableUI: true,
 			});
 
 			expect(acc.settings).eql({
 				filterSwearWords: true,
 				filterCyrillic: true,
 				ignorePartyInvites: true,
+				disableUI: true,
 			});
 			assert.calledWith(updateOne, { _id: acc._id }, {
 				settings: {
 					filterSwearWords: true,
 					filterCyrillic: true,
 					ignorePartyInvites: true,
+					disableUI: true,
 				}
 			});
 		});

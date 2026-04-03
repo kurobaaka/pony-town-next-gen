@@ -20,7 +20,7 @@ export function hasRole(account: AccountRoles | undefined, role: string): boolea
 }
 
 export function isAdmin(account: AccountRoles): boolean {
-	return hasRole(account, 'admin') || hasRole(account, 'superadmin');
+	return hasRole(account, 'admin') || hasRole(account, 'owner');
 }
 
 export function isMod(account: AccountRoles): boolean {

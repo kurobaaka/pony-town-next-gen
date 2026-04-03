@@ -40,7 +40,7 @@ const YAWN: Expression = {
 	muzzle: Muzzle.SmileOpen,
 };
 
-const MENO = 'DBWIzP8imd08//D19fVazSjcwf1GhLNEiMxENSovLy/NsIdJQDnGqYBiSztWQTM6LychEnE/KRX///9WPeE1HbSpBUEIIASwgEIAAAAAbIAgCFMY34AHAAjwgCMRQCVLY38IDhAAwmFBz4fAIxjKM6SjGlaxjWtYgjGI';
+const MENO = 'GAOVlZXapSAvLy8bIEY0hoAT8ABgAMIA4IDBAcABhmZ5nhg=';
 
 @Component({
 	selector: 'visit-pt-pony',

@@ -1,17 +1,43 @@
 @import '../../../styles/partials/variables';
 
+:host {
+	display: block;
+}
+
+:host ::ng-deep .modal-dialog.modal-lg {
+	width: 92vw;
+	max-width: 1100px;
+}
+
+.modal-body.text-large {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	max-height: calc(100vh - 180px);
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding-right: 4px;
+}
+
 .update-about {
-	margin-bottom: 1.5rem;
+	flex-shrink: 0;
+	margin-bottom: 0.5rem;
 	text-align: center;
 }
 
 .image-box {
-	height: 200px;
+	display: block;
 	width: 100%;
-	border-radius: 5px;
-	margin-bottom: 1rem;
-	background-size: cover;
-	background-position: center;
+	height: auto;
+	max-height: 42vh;
+	min-height: 0;
+	border-radius: 8px;
+	margin-bottom: 0.75rem;
+	padding: 0.35rem;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	object-fit: contain;
+	object-position: top center;
 }
 
 .about-text {
@@ -23,39 +49,44 @@
 	}
 }
 
+.changelog-section {
+	& + .changelog-section {
+		margin-top: 1rem;
+	}
+
+	.alert {
+		margin-bottom: 0.75rem;
+		font-size: 0.95rem;
+	}
+}
+
+.section-subtitle {
+	margin-bottom: 0.5rem;
+	color: #fff;
+}
+
+.section-divider {
+	margin: 1rem 0 0.75rem;
+	border-top-color: rgba(255, 255, 255, 0.12);
+}
+
 .changelog-container {
+	flex: 0 0 auto;
+	min-height: 280px;
 	background-color: #1e1e1e;
 	padding: 15px;
 	border-radius: 5px;
+	overflow: visible;
 }
 
 .changelog-list {
-	max-height: 50vh;
-	overflow-y: auto;
-	overflow-x: hidden;
+	max-height: none;
+	overflow: visible;
 	text-align: left;
 	line-height: 1.4;
-	padding-right: 8px;
+	padding-right: 0;
 	word-wrap: break-word;
-}
-
-/* hide scrollbar in webkit browsers but keep functionality */
-.changelog-list::-webkit-scrollbar {
-	width: 0;
-	height: 0;
-}
-
-.changelog-list::-webkit-scrollbar-track {
-	background: transparent;
-}
-
-.changelog-list::-webkit-scrollbar-thumb {
-	background: transparent;
-}
-
-/* for Firefox */
-.changelog-list {
-	scrollbar-width: none;
+	scrollbar-width: auto;
 }
 
 .changelog-list h4 {

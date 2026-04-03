@@ -1,7 +1,7 @@
 import {
 	Says, Rect, SpriteBatch, Sprite, SpriteBorder, MessageType, Entity, Point, Pony, SpriteBatchCommons,
 	PaletteSpriteBatch, Palette, isPartyMessage, PartyInfo, Camera, CommonPalettes, FontPalettes, PaletteManager,
-	isWhisperTo, isWhisper, isThinking, isPublicMessage
+	isWhisperTo, isWhisper, isThinking, isPublicMessage, isTypingIndicatorMessage, getTypingIndicatorFrame
 } from '../common/interfaces';
 import { clamp, contains, intersect, toInt, hasFlag } from '../common/utils';
 import { BLACK, WHITE, OUTLINE_COLOR, getMessageColor, PARTY_COLOR, MESSAGE_COLOR, FRIENDS_COLOR } from '../common/colors';
@@ -17,7 +17,7 @@ import { multiplyColor, colorToCSS } from '../common/color';
 import { getTag, getTagPalette } from '../common/tags';
 import { rect } from '../common/rect';
 import { mockPaletteManager } from '../common/ponyInfo';
-import { sortEntities, isHidden, isFriend } from '../common/entityUtils';
+import { sortEntities, isHidden, isFriend, getChatBubbles } from '../common/entityUtils';
 
 const baloonTaper = [
 	{ w: 1, y: 2 },
@@ -74,12 +74,18 @@ function getMessagePalette(type: MessageType, palettes: FontPalettes) {
 	}
 }
 
-export function drawBaloon(
-	batch: PaletteSpriteBatch, { message, type = MessageType.Chat, timer = 1, total = 10 }: Says,
-	x: number, y: number, bounds: Rect, palettes: CommonPalettes
-) {
-	if (!fontPal)
-		return;
+interface BaloonLayout {
+	message: string;
+	w: number;
+	h: number;
+}
+
+function getBaloonLayout(says: Says, bounds: Rect): BaloonLayout {
+	let message = isTypingIndicatorMessage(says.message) ? getTypingIndicatorFrame(says.created) : says.message;
+
+	if (!fontPal) {
+		return { message, w: 0, h: 0 };
+	}
 
 	let { w, h } = measureText(message, fontPal);
 
@@ -95,7 +101,25 @@ export function drawBaloon(
 		h = size.h;
 	}
 
+	return { message, w, h };
+}
+
+function getBaloonStackHeight(says: Says, bounds: Rect, _showPointer: boolean) {
+	// bubble height (text + vertical padding) + minimal 1px gap to the next bubble above
+	return getBaloonLayout(says, bounds).h + 9;
+}
+
+export function drawBaloon(
+	batch: PaletteSpriteBatch, says: Says,
+	x: number, y: number, bounds: Rect, palettes: CommonPalettes, showPointer = true
+) {
+	if (!fontPal)
+		return;
+
+	const { type = MessageType.Chat, timer = 1, total = 10 } = says;
+	const { message, w, h } = getBaloonLayout(says, bounds);
 	const { dy, alpha } = calcAnimation(timer, total);
+	const screenPad = 8;
 
 	y += dy;
 
@@ -114,29 +138,34 @@ export function drawBaloon(
 		};
 
 		if (isThinking(type)) {
-			drawThinkingBaloon(batch, message, color, options, x, y, w, h, alpha, nippleX);
+			drawThinkingBaloon(batch, message, color, options, x, y, w, h, alpha, nippleX, showPointer);
 		} else if (isWhisper(type) || isWhisperTo(type)) {
-			drawWhisperBaloon(batch, message, color, options, x, y, w, h, alpha, nippleX);
+			drawWhisperBaloon(batch, message, color, options, x, y, w, h, alpha, nippleX, showPointer);
 		} else {
-			drawSpeechBaloon(batch, message, color, options, x, y, w, h, alpha, nippleX);
+			drawSpeechBaloon(batch, message, color, options, x, y, w, h, alpha, nippleX, showPointer);
 		}
 	}
 }
 
 export function drawSpeechBaloon(
 	batch: PaletteSpriteBatch, text: string, color: number, options: TextOptions, x: number, y: number, w: number, h: number,
-	alpha: number, nippleX: number,
+	alpha: number, nippleX: number, showPointer = true,
 ) {
 	const pad = 4;
 	const xx = x - Math.round(w / 2);
 	const yy = y - h;
 	const nipple = sprites.nipple_2.color;
 
-	nippleX = clamp(nippleX, xx + pad, xx + w - pad);
+	if (showPointer) {
+		nippleX = clamp(nippleX, xx + pad, xx + w - pad);
+	}
 
 	batch.globalAlpha = 0.6 * alpha;
 	drawRectBaloon(batch, BLACK, xx - pad, yy - pad, w + pad * 2, h + pad * 2);
-	batch.drawSprite(nipple, BLACK, undefined, nippleX - Math.round(nipple.w / 2), y + pad);
+
+	if (showPointer) {
+		batch.drawSprite(nipple, BLACK, undefined, nippleX - Math.round(nipple.w / 2), y + pad);
+	}
 
 	batch.globalAlpha = alpha;
 	drawText(batch, text, fontPal, color, xx, yy, options);
@@ -145,14 +174,16 @@ export function drawSpeechBaloon(
 
 export function drawWhisperBaloon(
 	batch: PaletteSpriteBatch, text: string, color: number, options: TextOptions, x: number, y: number, w: number, h: number,
-	alpha: number, nippleX: number,
+	alpha: number, nippleX: number, showPointer = true,
 ) {
 	const pad = 4;
 	const xx = x - Math.round(w / 2);
 	const yy = y - h;
 	const nipple = sprites.nipple_alt_2.color;
 
-	nippleX = clamp(nippleX, xx + pad, xx + w - pad);
+	if (showPointer) {
+		nippleX = clamp(nippleX, xx + pad, xx + w - pad);
+	}
 
 	batch.globalAlpha = 0.6 * alpha;
 
@@ -167,20 +198,22 @@ export function drawWhisperBaloon(
 	batch.drawRect(BLACK, left + 1, top + height - 2, width - 2, 1);
 	batch.drawRect(BLACK, left + 2, top + height - 1, width - 4, 1);
 
-	const yyy = top + height + 1;
-	const right = left + width - 1;
+	if (showPointer) {
+		const yyy = top + height + 1;
+		const right = left + width - 1;
 
-	for (let tx = nippleX - 7; (tx + 5) > (left + 1); tx -= 5) {
-		const shorten = Math.max(0, (left + 1) - tx);
-		batch.drawRect(BLACK, tx + shorten, yyy, 4 - shorten, 1);
+		for (let tx = nippleX - 7; (tx + 5) > (left + 1); tx -= 5) {
+			const shorten = Math.max(0, (left + 1) - tx);
+			batch.drawRect(BLACK, tx + shorten, yyy, 4 - shorten, 1);
+		}
+
+		for (let tx = nippleX + 2; tx < right; tx += 5) {
+			const shorten = Math.max(0, (tx + 5) - right);
+			batch.drawRect(BLACK, tx, yyy, Math.min(4, 5 - shorten), 1);
+		}
+
+		batch.drawSprite(nipple, BLACK, undefined, nippleX - 3, y + pad + 2);
 	}
-
-	for (let tx = nippleX + 2; tx < right; tx += 5) {
-		const shorten = Math.max(0, (tx + 5) - right);
-		batch.drawRect(BLACK, tx, yyy, Math.min(4, 5 - shorten), 1);
-	}
-
-	batch.drawSprite(nipple, BLACK, undefined, nippleX - 3, y + pad + 2);
 
 	batch.globalAlpha = alpha;
 	drawText(batch, text, fontPal, color, xx, yy, options);
@@ -189,7 +222,7 @@ export function drawWhisperBaloon(
 
 export function drawThinkingBaloon(
 	batch: PaletteSpriteBatch, text: string, color: number, options: TextOptions, x: number, y: number, w: number, h: number,
-	alpha: number, nippleX: number,
+	alpha: number, nippleX: number, showPointer = true,
 ) {
 	const padX = 6;
 	const padY = 4;
@@ -200,9 +233,12 @@ export function drawThinkingBaloon(
 
 	batch.globalAlpha = 0.6 * alpha;
 	drawRoundBaloon(batch, BLACK, xx - padX, yy - padY, w + padX * 2, h + padY * 2);
-	batch.drawRect(BLACK, ox, oy, 1, 1);
-	batch.drawRect(BLACK, ox - 1, oy - 3, 2, 2);
-	batch.drawRect(BLACK, ox, oy - 7, 3, 3);
+
+	if (showPointer) {
+		batch.drawRect(BLACK, ox, oy, 1, 1);
+		batch.drawRect(BLACK, ox - 1, oy - 3, 2, 2);
+		batch.drawRect(BLACK, ox, oy - 7, 3, 3);
+	}
 
 	batch.globalAlpha = alpha;
 	drawText(batch, text, fontPal, color, xx, yy, options);
@@ -426,41 +462,76 @@ export function drawNames(
 	}
 }
 
-export function getChatBallonXY(e: Entity, camera: Camera): Point {
-	const nameOffsetBase = 12;
+function getChatBalloonLift(entity: Entity, hover: Point | undefined) {
+	const bounds = entity.interactBounds || entity.bounds;
+
+	if (!hover || !bounds || !entity.name || !contains(entity.x, entity.y, bounds, hover)) {
+		return 0;
+	}
+
+	// hovered state matches the original higher placement;
+	// an extra lift is added only when the tag is also visible under the name
+	return 6 + (entity.tag ? 5 : 0);
+}
+
+export function getChatBallonXY(e: Entity, camera: Camera, hover?: Point): Point {
 	const bounds = e.interactBounds || e.bounds;
 	const chatBounds = e.chatBounds || bounds;
 	const screen = worldToScreen(camera, e);
-	const nameOffset = nameOffsetBase - getChatHeight(e);
-	const offset = (nameOffset + 6) + (e.tag ? 5 : 0);
-	const yy = screen.y + (chatBounds ? chatBounds.y : 0) - offset;
+	const baseOffset = 12 - getChatHeight(e);
+	const liftOffset = getChatBalloonLift(e, hover);
+	const yy = screen.y + (chatBounds ? chatBounds.y : 0) - (baseOffset + liftOffset);
 	const x = screen.x + toInt(e.chatX);
 	const y = yy + toInt(e.chatY);
 	return { x, y };
 }
 
-function drawChatBaloon(batch: PaletteSpriteBatch, entity: Entity, camera: Camera, palettes: CommonPalettes) {
-	const { x, y } = getChatBallonXY(entity, camera);
-	drawBaloon(batch, entity.says!, x, y, camera, palettes);
+function getVisibleBubbles(entity: Entity, hidePublic: boolean) {
+	return getChatBubbles(entity).filter(({ type = MessageType.Chat }) => !hidePublic || !isPublicMessage(type));
+}
+
+function drawChatBaloon(
+	batch: PaletteSpriteBatch, entity: Entity, camera: Camera, palettes: CommonPalettes,
+	partyBubbles: boolean, hidePublic: boolean, hover: Point,
+) {
+	const bubbles = getVisibleBubbles(entity, hidePublic);
+
+	if (!bubbles.length)
+		return;
+
+	const { x, y } = getChatBallonXY(entity, camera, hover);
+	let yOffset = 0;
+	const draws = bubbles.map((says, index) => {
+		const showPointer = index === 0;
+		const yy = y - yOffset;
+		yOffset += getBaloonStackHeight(says, camera, showPointer);
+		return { says, yy, showPointer, party: isPartyMessage(says.type || MessageType.Chat) };
+	});
+
+	for (let i = draws.length - 1; i >= 0; i--) {
+		const { says, yy, showPointer, party } = draws[i];
+
+		if (party === partyBubbles) {
+			drawBaloon(batch, says, x, yy, camera, palettes, showPointer);
+		}
+	}
 }
 
 export function drawChat(
 	batch: PaletteSpriteBatch, entities: Entity[], camera: Camera, drawHidden: boolean, palettes: CommonPalettes,
-	hidePublic: boolean
+	hidePublic: boolean, hover: Point,
 ) {
 	sortEntities(entities);
 
 	for (const entity of entities) {
-		if ((!isHidden(entity) || drawHidden) && !isPartyMessage(entity.says!.type || MessageType.Chat)) {
-			if (!hidePublic || !isPublicMessage(entity.says!.type || MessageType.Chat)) {
-				drawChatBaloon(batch, entity, camera, palettes);
-			}
+		if (!isHidden(entity) || drawHidden) {
+			drawChatBaloon(batch, entity, camera, palettes, false, hidePublic, hover);
 		}
 	}
 
 	for (const entity of entities) {
-		if ((!isHidden(entity) || drawHidden) && isPartyMessage(entity.says!.type || MessageType.Chat)) {
-			drawChatBaloon(batch, entity, camera, palettes);
+		if (!isHidden(entity) || drawHidden) {
+			drawChatBaloon(batch, entity, camera, palettes, true, hidePublic, hover);
 		}
 	}
 }
@@ -473,7 +544,7 @@ export const chatAnimationDuration = 0.2;
 
 export function dismissSays(says: Says) {
 	if (says.timer !== undefined) {
-		says.timer = Math.min(says.timer, chatAnimationDuration);
+		says.timer = isTypingIndicatorMessage(says.message) ? 0 : Math.min(says.timer, chatAnimationDuration);
 	}
 }
 

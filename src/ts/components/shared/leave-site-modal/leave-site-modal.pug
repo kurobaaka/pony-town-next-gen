@@ -1,0 +1,9 @@
+.modal-header.d-none.d-sm-block
+	h4.modal-title {{title}}
+
+.modal-body
+	p.mb-3 {{title}} You will be redirected to {{link}}.
+
+.modal-footer.justify-content-end
+	button.btn.btn-outline-secondary((click)="closeModal()") Cancel
+	button.btn.btn-outline-danger((click)="confirmLeave()") {{buttonLabel}}

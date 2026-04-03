@@ -613,7 +613,7 @@ export function createCommands(world: World): Command[] {
 			const arg = parts[0];
 
 			if (!arg || arg.toLowerCase() === 'reset') {
-				(client.pony as any).speedMultiplier = 1;
+				client.pony.speedMultiplier = 1;
 				client.speedMultiplier = 1;
 				updateEntityOptions(client.pony, { speedMultiplier: 1 });
 				saySystem(client, 'Speed reset to 1x');
@@ -627,7 +627,7 @@ export function createCommands(world: World): Command[] {
 				return;
 			}
 
-			(client.pony as any).speedMultiplier = value;
+			client.pony.speedMultiplier = value;
 			client.speedMultiplier = value;
 			updateEntityOptions(client.pony, { speedMultiplier: value });
 			saySystem(client, `Speed set to ${value}x`);

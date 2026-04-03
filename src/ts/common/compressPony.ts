@@ -1,4 +1,4 @@
-import { findLastIndex, isString, isBoolean, isNumber, merge } from 'lodash';
+import { findLastIndex, isString, isBoolean, isNumber, mergeWith } from 'lodash';
 import { fromByteArray, toByteArray } from 'base64-js';
 import { PonyInfoNumber, SpriteSet, PonyInfo, PonyInfoBase, PaletteManager, PalettePonyInfo, ColorExtraSet } from './interfaces';
 import { syncLockedPonyInfoNumber, syncLockedPonyInfo, createBasePony, toPaletteNumber } from './ponyInfo';
@@ -18,7 +18,7 @@ export const VERSION = 6; // previous: 5
 
 const VERSION_BITS = 6; // max 63
 const COLORS_LENGTH_BITS = 10; // max 1024
-const BOOLEAN_FIELDS_LENGTH_BITS = 4; // max 15
+const BOOLEAN_FIELDS_LENGTH_BITS = 5; // max 31
 const NUMBER_FIELDS_LENGTH_BITS = 4; // max 15
 const COLOR_FIELDS_LENGTH_BITS = 4; // max 15
 const SET_FIELDS_LENGTH_BITS = 6; // max 63
@@ -169,7 +169,6 @@ const booleanFields: FieldDefinition<boolean>[] = [
 	{ name: 'unlockBackLegAccessory', omit: info => !!info.lockBackLegAccessory },
 	{ name: 'unlockEyelashColor' },
 	{ name: 'darkenLockedOutlines', omit: info => !info.freeOutlines },
-	{ name: 'lockPreviewBackground' },
 ];
 
 const numberFields: FieldDefinition<number>[] = [
@@ -613,10 +612,23 @@ export function compressPony(info: PonyInfoNumber): string {
 	return writePonyToString(precompressPony(info, BLACK, identity));
 }
 
+function createFallbackPonyNumber(): PonyInfoNumber {
+	const fallbackData = readPonyFromString(compressPonyString(createBasePony()));
+	const fallbackPony = fastPostdecompressPony(fallbackData);
+	return syncLockedPonyInfoNumber(fallbackPony);
+}
+
 export function decompressPony(info: string | Uint8Array): PonyInfoNumber {
-	const data = typeof info === 'string' ? readPonyFromString(info) : readPonyFromBuffer(info);
-	const pony = fastPostdecompressPony(data); // postdecompressPony(data, identity);
-	return syncLockedPonyInfoNumber(pony);
+	try {
+		const data = typeof info === 'string' ? readPonyFromString(info) : readPonyFromBuffer(info);
+		const pony = fastPostdecompressPony(data); // postdecompressPony(data, identity);
+		return syncLockedPonyInfoNumber(pony);
+	} catch (error) {
+		if (typeof console !== 'undefined' && console.warn) {
+			console.warn('Failed to decompress pony data, using default pony. Original error:', error);
+		}
+		return createFallbackPonyNumber();
+	}
 }
 
 // compress (string)
@@ -634,14 +646,53 @@ export function compressPonyString(info: PonyInfo): string {
 }
 
 export function decompressPonyString(info: string, editable = false): PonyInfo {
-	const data = readPonyFromString(info);
-	const pony = postdecompressPony(data, colorToString);
-	const result = editable ? merge(createBasePony(), pony) : pony;
-	return syncLockedPonyInfo(result);
+	try {
+		const data = readPonyFromString(info);
+		const pony = postdecompressPony(data, colorToString);
+		
+		if (editable) {
+			const base = createBasePony();
+			// Merge but preserve locked fill values from base (which may have been BLACK from decompression)
+			// Use mergeWith so arrays are replaced, not merged index-by-index.
+			const result = mergeWith(base, pony, (_objValue, srcValue) => {
+				if (Array.isArray(srcValue)) {
+					return srcValue;
+				}
+				return undefined;
+			});
+			
+			// Restore locked fills in extraAccessory from base, as they're used for dynamic synchronization
+			if (result.extraAccessory && base.extraAccessory && result.extraAccessory.lockFills && result.extraAccessory.fills && base.extraAccessory.fills) {
+				for (let i = 0; i < result.extraAccessory.lockFills.length; i++) {
+					if (result.extraAccessory.lockFills[i]) {
+						result.extraAccessory.fills[i] = base.extraAccessory.fills[i];
+					}
+				}
+			}
+			
+			return syncLockedPonyInfo(result);
+		}
+
+		return syncLockedPonyInfo(pony);
+	} catch (error) {
+		// Safe fallback for corrupted or unsupported pony info strings.
+		if (typeof console !== 'undefined' && console.warn) {
+			console.warn('Failed to decompress pony info, using default pony. Original exception:', error);
+		}
+		const fallback = createBasePony();
+		return syncLockedPonyInfo(fallback);
+	}
 }
 
 // decode
 
 export function decodePonyInfo(info: string | Uint8Array, paletteManager: PaletteManager): PalettePonyInfo {
-	return toPaletteNumber(decompressPony(info), paletteManager);
+	try {
+		return toPaletteNumber(decompressPony(info), paletteManager);
+	} catch (error) {
+		if (typeof console !== 'undefined' && console.warn) {
+			console.warn('Failed to decode pony info, using default pony. Original error:', error);
+		}
+		return toPaletteNumber(createFallbackPonyNumber(), paletteManager);
+	}
 }

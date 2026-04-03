@@ -4,7 +4,7 @@
 }
 
 .character-list-wrapper {
-	max-height: 260px;
+	max-height: 320px;
 	overflow-y: auto;
 	width: 100%;
 
@@ -17,13 +17,19 @@
 
 .import-count-info {
 	background: #f8f9fa;
-	padding: 15px;
+	padding: 12px;
 	border-radius: 4px;
-	margin-bottom: 15px;
+	margin: 10px 0 15px;
 	text-align: center;
+	border: 1px solid #dee2e6;
 
 	p {
-		margin-bottom: 10px;
+		margin-bottom: 8px;
+		font-size: 0.95rem;
+	}
+
+	button {
+		min-width: 220px;
 	}
 }
 

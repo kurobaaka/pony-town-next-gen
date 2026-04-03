@@ -2,28 +2,98 @@
 
 .character-list([class.character-list-searchable]="searchable" [class.in-game]="inGame")
 
-	.dropdown.character-select-search.input-group(
+	.dropdown.character-select-search.input-group.rounded-0(
 		(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
 		(click)="$event.stopPropagation()" (keydown)="keydown($event)")
-		input.form-control(
+		input.form-control.rounded-0(
 			#searchInput type="search" [placeholder]="placeholder" [(ngModel)]="search" (input)="updatePonies()"
 			autocomplete="nope")
-		.input-group-append(*ngIf="tags.length" #tagsDropdown="ag-dropdown" dropdown)
-			button.btn.btn-secondary.rounded-right(dropdownToggle title="Search by tags")
-				fa-icon([icon]="hashIcon")
-			.dropdown-menu.dropdown-menu-right.shadow.tag-list(*dropdownMenu)
-				button.dropdown-item(*ngFor="let tag of tags" (click)="search = tag; tagsDropdown.close(); updatePonies()")
-					| {{tag}}
+		.input-group-append
+			.dropdown(dropdown #supporterDropdown="ag-dropdown")
+				button.btn.btn-secondary.rounded-0(type="button" dropdownToggle title="Supporter perks" (click)="$event.stopPropagation()")
+					fa-icon([icon]="starIcon" [fixedWidth]="true" [style.color]="getSupporterStarColor()")
+				.dropdown-menu.dropdown-menu-right.shadow(*dropdownMenu)
+					div.dropdown-header Supporter perks
+					div.dropdown-item(*ngIf="getSupporterLevel() === 0") No supporter perks. 1000 character base limit.
+					div.dropdown-item(*ngIf="getSupporterLevel() > 0") {{getSupporterInfo()}}
+			.dropdown(dropdown #tagsDropdown="ag-dropdown")
+				button.btn.btn-secondary.rounded-0(type="button" dropdownToggle title="Search by tags" (click)="$event.stopPropagation()")
+					fa-icon([icon]="hashIcon")
+				.dropdown-menu.dropdown-menu-right.shadow.tag-list(*dropdownMenu)
+					ng-container(*ngIf="tags.length")
+						button.dropdown-item(*ngFor="let tag of tags" (click)="search = tag; tagsDropdown.close(); updatePonies(); $event.stopPropagation()")
+							| {{tag}}
+			.dropdown(dropdown #sortDropdown="ag-dropdown")
+				button.btn.btn-secondary.rounded-0(type="button" dropdownToggle title="Sort options" (click)="$event.stopPropagation()")
+					fa-icon([icon]="ellipsisIcon")
+				.dropdown-menu.dropdown-menu-right.shadow(*dropdownMenu)
+					div.dropdown-header Sort by
+					button.dropdown-item(type="button" [class.active]="sortMode==='default'" (click)="setSortMode('default'); sortDropdown.close(); $event.stopPropagation()")
+						| Default
+					button.dropdown-item(type="button" [class.active]="sortMode==='name'" (click)="setSortMode('name'); sortDropdown.close(); $event.stopPropagation()")
+						| Name
+					button.dropdown-item(type="button" [class.active]="sortMode==='creation'" (click)="setSortMode('creation'); sortDropdown.close(); $event.stopPropagation()")
+						| Creation date
+					button.dropdown-item(type="button" [class.active]="sortMode==='recent'" (click)="setSortMode('recent'); sortDropdown.close(); $event.stopPropagation()")
+						| Recently played
+	div.supporter-info-text(*ngIf="supporterInfoText") {{supporterInfoText}}
+			.dropdown(dropdown #tagsDropdown="ag-dropdown")
+				button.btn.btn-secondary.rounded-right(type="button" dropdownToggle title="Search by tags" (click)="$event.stopPropagation()")
+					fa-icon([icon]="hashIcon")
+				.dropdown-menu.dropdown-menu-right.shadow.tag-list(*dropdownMenu)
+					ng-container(*ngIf="tags.length")
+						button.dropdown-item(*ngFor="let tag of tags" (click)="search = tag; tagsDropdown.close(); updatePonies(); $event.stopPropagation()")
+							| {{tag}}
+			.dropdown.ml-1(dropdown #sortDropdown="ag-dropdown")
+				button.btn.btn-secondary(type="button" dropdownToggle title="Sort options" (click)="$event.stopPropagation()")
+					fa-icon([icon]="ellipsisIcon")
+				.dropdown-menu.dropdown-menu-right.shadow(*dropdownMenu)
+					div.dropdown-header Sort by
+					button.dropdown-item(type="button" [class.active]="sortMode==='default'" (click)="setSortMode('default'); sortDropdown.close(); $event.stopPropagation()")
+						| Default
+					button.dropdown-item(type="button" [class.active]="sortMode==='name'" (click)="setSortMode('name'); sortDropdown.close(); $event.stopPropagation()")
+						| Name
+					button.dropdown-item(type="button" [class.active]="sortMode==='creation'" (click)="setSortMode('creation'); sortDropdown.close(); $event.stopPropagation()")
+						| Creation date
+					button.dropdown-item(type="button" [class.active]="sortMode==='recent'" (click)="setSortMode('recent'); sortDropdown.close(); $event.stopPropagation()")
+						| Recently played
 
 	ul.character-select-list(role="listbox" [attr.aria-activedescendant]="'pony-item-' + selectedIndex")
 		li(
-			*ngFor="let p of ponies; let i = index"
+			*ngFor="let p of ponies; let i = index; trackBy: trackByPony"
 			[id]="'pony-item-' + i"
 			[class.active]="i === selectedIndex"
-			[class.selected]="p?.id === selectedPony?.id")
-			a.d-flex(role="option" (click)="select(p)" (mouseenter)="setPreview(p)" (mouseleave)="unsetPreview(p)")
-				span.flex-grow-1.character-name {{p.name}}
-				span.character-desc.text-muted {{p.desc}}
+			[class.selected]="p?.id === selectedPony?.id"
+			[class.selected-line]="i === selectedIndex")
+			a.item-list-divider(role="option" (click)="select(p)" (mouseenter)="setPreview(p)" (mouseleave)="unsetPreview(p)")
+				portrait-box.me-2([pony]="toPalette(p.ponyInfo || createDefaultPony())" size="small" [noBorder]="true")
+				div.entry-with-text.flex-grow-1
+					div.d-flex.align-items-center
+						span.character-name.text-truncate(title="{{p.name}}") {{p.name}}
+						span.char-timestamp.text-muted(*ngIf="sortMode==='recent' && p.lastUsed")   ({{ formatLastUsed(p.lastUsed) }})
+						span.char-timestamp.text-muted(*ngIf="sortMode==='creation'")   ({{ formatCreated(p) }})
+					div.character-desc.text-muted(title="{{p.desc}}")
+						ng-container(*ngFor="let word of (p.desc || '').split(' '); let last = last")
+							span(*ngIf="isTag(word)" class="character-desc-tag")
+								| {{word}}
+							span(*ngIf="!isTag(word)")
+								| {{word}}
+							span(*ngIf="!last") 
+								|  
+				div.character-list-badges
+					div.character-list-badges-main
+						//- Скрытый supportstar + соцсеть на одной строке
+						div.character-supporter-social
+							div(*ngIf="p.hideSupport" [tooltip]="'Supporter tag hidden'" placement="top" class="supporter-hidden-wrapper")
+								fa-icon([icon]="starIcon" [fixedWidth]="true" [style.color]="'#999'" [style.opacity]="'0.5'")
+								fa-icon([icon]="slashIcon" [fixedWidth]="true" class="supporter-hidden-slash" [style.color]="'#999'" [style.opacity]="'0.5'")
+							div.site-icon-wrapper(*ngIf="getSocialSite(p) as site" [tooltip]="site.name" placement="top" containerClass="tooltip-site")
+								fa-icon([icon]="getProviderIcon(site.icon || '')" [fixedWidth]="true" [style.color]="site.color")
+						
+						//- Тег (dev/mod) на отдельной строке
+						ng-container(*ngIf="getCharacterTag(p) as tag")
+							span.badge([ngClass]="'badge-' + tag.className" [tooltip]="tag.name" placement="top") {{ tag.id }}
+
 		li(*ngIf="canNew")
 			a.text-center(role="option" (click)="createNew()")
 				em new pony

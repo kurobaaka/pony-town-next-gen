@@ -2,7 +2,7 @@ import { repeat } from 'lodash';
 import { isForbiddenMessage, createIsSuspiciousMessage } from '../common/security';
 import {
 	ChatType, MessageType, Action, LeaveReason, isPublicChat, isPartyChat, isPublicMessage, isPartyMessage,
-	toMessageType, isWhisper, isWhisperTo
+	toMessageType, isWhisper, isWhisperTo, isTypingIndicatorMessage
 } from '../common/interfaces';
 import { trimRepeatedLetters, urlRegexTexts, ipRegexText, urlExceptionRegex } from '../common/filterUtils';
 import { parseExpression } from '../common/expressionUtils';
@@ -103,6 +103,11 @@ export const createSay =
 			if (whisper && client === target)
 				return;
 
+			if (!command && (args === '.' || isTypingIndicatorMessage(args))) {
+				sayTransientMessage(client, args, type, target, settings);
+				return;
+			}
+
 			const forbidden = command == null && isPublicChat(type) && isForbiddenMessage(args);
 
 			log(client, text, type, forbidden, target);
@@ -190,6 +195,21 @@ export function saySystem(client: IClient, message: string) {
 	sayTo(client, client.pony, message, MessageType.System);
 }
 
+function sayTransientMessage(
+	client: IClient, message: string, type: ChatType, target: IClient | undefined, settings: GameServerSettings
+) {
+	const whisper = type === ChatType.Whisper;
+	const think = type === ChatType.Think || type === ChatType.PartyThink;
+
+	if (isPartyChat(type)) {
+		sayToParty(client, message, think ? MessageType.PartyThinking : MessageType.Party, true);
+	} else if (whisper) {
+		sayWhisper(client, message, message, getMessageType(client, type), target, settings, true);
+	} else {
+		sayToEveryone(client, message, message, getMessageType(client, type), settings);
+	}
+}
+
 function sayToClient(
 	client: IClient, entity: ServerEntity, message: string, censoredMessage: string, type: MessageType,
 	settings: GameServerSettings
@@ -232,19 +252,33 @@ function sayToClient(
 
 function sayWhisper(
 	client: IClient, message: string, censoredMessage: string, type: MessageType,
-	target: IClient | undefined, settings: GameServerSettings
+	target: IClient | undefined, settings: GameServerSettings, silent = false
 ) {
+	const sayToSelf = () => sayTo(client, (target && target.pony) || client.pony, message, toMessageType(type));
+
 	if (target === undefined || target.shadowed || isHiddenBy(client, target)) {
-		saySystem(client, `Couldn't find this player`);
+		if (silent) {
+			sayToSelf();
+		} else {
+			saySystem(client, `Couldn't find this player`);
+		}
 	} else {
 		const friend = isFriend(client, target);
 
 		if (!friend && client.accountSettings.ignoreNonFriendWhispers) {
-			saySystem(client, `You can only whisper to friends`);
+			if (silent) {
+				sayToSelf();
+			} else {
+				saySystem(client, `You can only whisper to friends`);
+			}
 		} else if (!friend && target.accountSettings.ignoreNonFriendWhispers) {
-			saySystem(client, `Can't whisper to this player`);
+			if (silent) {
+				sayToSelf();
+			} else {
+				saySystem(client, `Can't whisper to this player`);
+			}
 		} else {
-			sayTo(client, target.pony, message, toMessageType(type));
+			sayToSelf();
 
 			if (!isMutedOrShadowed(client)) {
 				sayToClient(target, client.pony, message, censoredMessage, type, settings);
@@ -253,9 +287,11 @@ function sayWhisper(
 	}
 }
 
-function sayToParty(client: IClient, message: string, type: MessageType) {
+function sayToParty(client: IClient, message: string, type: MessageType, silent = false) {
 	if (!client.party) {
-		saySystem(client, `you're not in a party`);
+		if (!silent) {
+			saySystem(client, `you're not in a party`);
+		}
 	} else if (isMutedOrShadowed(client)) {
 		sayTo(client, client.pony, message, type);
 	} else {
@@ -289,12 +325,13 @@ export function sayToEveryone(
 }
 
 export function sayToOthers(
-	client: IClient, message: string, type: MessageType, target: IClient | undefined, settings: GameServerSettings
+	client: IClient, message: string, type: MessageType, target: IClient | undefined,
+	settings: GameServerSettings, silent = false
 ) {
 	if (isWhisper(type)) {
-		sayWhisper(client, message, message, type, target, settings);
+		sayWhisper(client, message, message, type, target, settings, silent);
 	} else if (isPartyMessage(type)) {
-		sayToParty(client, message, type);
+		sayToParty(client, message, type, silent);
 	} else {
 		sayToEveryone(client, message, message, type, settings);
 	}

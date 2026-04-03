@@ -34,7 +34,7 @@
 	z-index: 1;
 	padding: 8px;
 	font-size: 14px;
-	padding-right: 65px;
+	padding-right: 73px;
 	padding-left: 90px;
 	border-radius: $border-radius-base;
 	outline: none;
@@ -48,13 +48,22 @@
 	font-size: 14px;
 	user-select: none;
 	cursor: pointer;
+	z-index: 3;
 
-	.chat-party > &, .chat-party-think > & {
+	.chat-party > & {
 		color: $chat-party;
 	}
 
-	.chat-say > &, .chat-think > & {
+	.chat-party-think > & {
+		color: darken($chat-party, 15%);
+	}
+
+	.chat-say > & {
 		color: $chat-color;
+	}
+
+	.chat-think > & {
+		color: darken($chat-color, 15%);
 	}
 
 	.chat-sup > & {
@@ -76,6 +85,117 @@
 	.chat-whisper > & {
 		color: $chat-whisper;
 	}
+
+	.chat-mod > & {
+		color: map-get($chat-colors, mod);
+	}
+
+	.chat-admin > & {
+		color: map-get($chat-colors, admin);
+	}
+}
+
+.chat-type-tooltip {
+	position: absolute;
+	left: -6px;
+	bottom: calc(100% + 8px);
+	padding: 5px 8px;
+	background: rgba(0, 0, 0, 0.96);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: $border-radius-base;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+	font-size: 11px;
+	line-height: 1.2;
+	white-space: nowrap;
+	color: rgba(255, 255, 255, 0.85);
+	pointer-events: none;
+	cursor: default;
+}
+
+.chat-type-menu {
+	position: absolute;
+	left: -6px;
+	bottom: calc(100% + 8px);
+	min-width: 180px;
+	padding: 6px 0;
+	background: rgba(0, 0, 0, 0.96);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: $border-radius-base;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+	cursor: default;
+}
+
+.chat-type-menu-title {
+	padding: 2px 10px 4px;
+	font-size: 10px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.chat-type-menu hr {
+	margin: 6px 0;
+	border: 0;
+	border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.chat-type-option {
+	display: block;
+	width: 100%;
+	padding: 4px 10px;
+	background: transparent;
+	border: 0;
+	outline: 0;
+	text-align: left;
+	font-size: 13px;
+	cursor: pointer;
+	color: $chat-color;
+
+	&:hover,
+	&.active {
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	&.chat-party {
+		color: $chat-party;
+	}
+
+	&.chat-party-think {
+		color: darken($chat-party, 15%);
+	}
+
+	&.chat-say {
+		color: $chat-color;
+	}
+
+	&.chat-think {
+		color: darken($chat-color, 15%);
+	}
+
+	&.chat-sup,
+	&.chat-sup1 {
+		color: $supporter-1;
+	}
+
+	&.chat-sup2 {
+		color: $supporter-2;
+	}
+
+	&.chat-sup3 {
+		color: $supporter-3;
+	}
+
+	&.chat-whisper {
+		color: $chat-whisper;
+	}
+
+	&.chat-mod {
+		color: map-get($chat-colors, mod);
+	}
+
+	&.chat-admin {
+		color: map-get($chat-colors, admin);
+	}
 }
 
 .chat-box-type-name {
@@ -85,6 +205,25 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	vertical-align: bottom;
+}
+
+.chat-char-count {
+	position: absolute;
+	right: 58px;
+	top: 12px;
+	min-width: 12px;
+	font-size: 13px;
+	line-height: 1;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.03em;
+	color: rgba(255, 255, 255, 0.78);
+	pointer-events: none;
+	z-index: 3;
+
+	&.danger {
+		color: #ff6b6b;
+	}
 }
 
 .chat-emoji-button {

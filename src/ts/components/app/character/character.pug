@@ -17,7 +17,7 @@ page-loader(*ngIf="!playing")
 		h1.sr-only(focusTitle) Characters
 		h2.sr-only Character selection
 		.mx-auto(style="max-width: 400px;")
-			discord-button.mb-3
+			vk-button.mb-3
 			visit-pt-button.mb-3
 			character-select(
 			[(error)]="error" [newButton]="true" [removeButton]="true" [emojiButton]="true" (change)="updateMuzzles()"
@@ -110,37 +110,29 @@ page-loader(*ngIf="!playing")
 							[(checked)]="lockBackgroundDefault" [icon]="lockIcon" (checkedChange)="backgroundLockChanged($event)"
 							label="Lock background color" title="Lock background color")
 					.col-sm-8
-					color-picker(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChange)="changed()" [disabled]="lockBackgroundDefault" style="max-width: 240px" [style.opacity]="lockBackgroundDefault ? '0.5' : '1'"):
-					//-.row.form-group
-						label.col-sm-4.col-form-label Effects
-						.col-sm-8.text-muted.pt-1
-							custom-checkbox([(checked)]="info.blush" (checkedChange)="changed()")
-								| Blush
-							custom-checkbox([(checked)]="info.sleeping" (checkedChange)="changed()")
-								| Sleeping
-							custom-checkbox([(checked)]="info.tears" (checkedChange)="changed()")
-								| Tears
-							custom-checkbox([(checked)]="info.crying" (checkedChange)="changed()")
-								| Crying
-							custom-checkbox([(checked)]="info.hearts" (checkedChange)="changed()")
-								| Hearts
+					color-picker(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChange)="changed()" [isDisabled]="lockBackgroundDefault" [style.opacity]="lockBackgroundDefault ? '0.5' : '1'")
 
-					.row.form-group
-						label#social-site-label.col-sm-4.col-form-label Show social site
-						.col-sm-8
-							.dropdown.btn-group(dropdown)
-								button.btn.btn-default.dropdown-toggle(
-									dropdownToggle aria-labelledby="social-site-label" aria-describedby="social-site-help")
-									fa-icon.mr-1(
-										*ngIf="site?.icon" [icon]="icon(site.icon)" [fixedWidth]="true" [style.color]="site.color"
-										size="lg" [attr.aria-label]="site.icon")
-									strong {{site?.name}}
-								.dropdown-menu(*dropdownMenu)
-									a.dropdown-item(*ngFor="let s of sites" (click)="site = s")
-										fa-icon.mr-1(
-											*ngIf="s.icon" [icon]="icon(s.icon)" [fixedWidth]="true" [style.color]="s.color"
-											size="lg" [attr.aria-label]="s.icon")
-										strong {{s.name}}
+			.row.form-group
+				label.col-sm-4.col-form-label Effects (not working)
+				.col-sm-8.text-muted.pt-1
+					custom-checkbox([(checked)]="info.blush" (checkedChange)="changed()")
+						| Blush
+					custom-checkbox([(checked)]="info.sleeping" (checkedChange)="changed()")
+						| Sleeping
+					custom-checkbox([(checked)]="info.tears" (checkedChange)="changed()")
+						| Tears
+					custom-checkbox([(checked)]="info.crying" (checkedChange)="changed()")
+						| Crying
+					custom-checkbox([(checked)]="info.hearts" (checkedChange)="changed()")
+						| Hearts
+						.dropdown(dropdown)
+							button.btn.btn-default.dropdown-toggle(dropdownToggle aria-label="Select social site")
+								fa-icon.mr-1(*ngIf="site?.icon" [icon]="icon(site.icon)" [fixedWidth]="true" [style.color]="site.color" size="lg" [attr.aria-label]="site.icon")
+								strong {{site?.name}}
+							.dropdown-menu(*dropdownMenu)
+								a.dropdown-item(*ngFor="let s of sites" (click)="site = s")
+									fa-icon.mr-1(*ngIf="s.icon" [icon]="icon(s.icon)" [fixedWidth]="true" [style.color]="s.color" size="lg" [attr.aria-label]="s.icon")
+									strong {{s.name}}
 
 							.dropdown.btn-group.ml-1(dropdown *ngIf="tags.length > 1")
 								button.btn.btn-default.dropdown-toggle(dropdownToggle aria-label="Show tag")

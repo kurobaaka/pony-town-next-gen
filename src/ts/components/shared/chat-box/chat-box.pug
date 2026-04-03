@@ -1,10 +1,18 @@
 .chat-box(#chatBox)
 	div(#chatBoxInput)
 		input.chat-input#chat-input(
-			#inputElement [(ngModel)]="message" (keydown)="keydown($event)" [maxlength]="maxSayLength"
+			#inputElement [(ngModel)]="message" (keydown)="keydown($event)" (input)="onMessageChange()" [maxlength]="maxSayLength"
 			aria-label="Chat message")
-		.chat-box-type(#typeBox (click)="toggleChatType()")
+		.chat-box-type(#typeBox (click)="toggleChatType($event)" (contextmenu)="openChatTypeMenu($event)" (touchstart)="onChatTypeTouchStart($event)" (touchend)="onChatTypeTouchEnd($event)" (touchcancel)="onChatTypeTouchEnd($event)" (touchmove)="onChatTypeTouchEnd($event)")
 			| #[span(#typePrefix)][#[span.chat-box-type-name(#typeName)]]:
+			.chat-type-tooltip(*ngIf="chatTypeTooltipVisible && !chatTypeMenuOpen") {{ chatTypeTooltipText }}
+			.chat-type-menu(*ngIf="chatTypeMenuOpen" (mousedown)="$event.preventDefault(); $event.stopPropagation()" (touchstart)="$event.stopPropagation()" (click)="$event.stopPropagation()" (contextmenu)="$event.preventDefault()")
+				div.chat-type-menu-section(*ngFor="let section of chatTypeSections; let last = last")
+					div.chat-type-menu-title {{ section.title }}
+					button.chat-type-option(*ngFor="let item of section.items" type="button" [class.active]="currentChatMode === item.id" [ngClass]="item.className" (mousedown)="selectChatType(item.id, $event)" (touchstart)="selectChatType(item.id, $event)" (click)="$event.preventDefault(); $event.stopPropagation()")
+						| {{ item.label }}
+					hr(*ngIf="!last")
+		.chat-char-count(*ngIf="showRemainingCharacters" [class.danger]="remainingCharactersDanger") {{ remainingCharacters }}
 
 		emoji-picker(
 			[display]="emojiBoxState === 'inline-block'"

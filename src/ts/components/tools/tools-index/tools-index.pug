@@ -1,16 +1,45 @@
-.m-4
-	ul.nav.nav-pills
-		a.nav-link(routerLink="/variants") Variant explorer
-		a.nav-link(routerLink="/animation") Animator
-		a.nav-link(routerLink="/sheet") Sheet generator
-		a.nav-link(routerLink="/expressions") Expressions
-		a.nav-link(routerLink="/entity")  Entity
-		a.nav-link(routerLink="/palette") Palette
-		a.nav-link(routerLink="/ui") UI
-		a.nav-link(routerLink="/chat") Chat
-		a.nav-link(routerLink="/webgl") WebGL
-		a.nav-link(routerLink="/perf") Perf
-		a.nav-link(routerLink="/states") States
-		a.nav-link(routerLink="/regions") Regions
-		a.nav-link(routerLink="/collisions") Collisions
-		a.nav-link(routerLink="/map") Map
+h1.text-center.mb-4 Welcome to Tools
+
+.m-4.d-flex.justify-content-center.flex-wrap
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/variants'")
+		fa-icon.mr-1([icon]="faPaintBrush")
+		| Variant explorer
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/animation'")
+		fa-icon.mr-1([icon]="faPlay")
+		| Animator
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/sheet'")
+		fa-icon.mr-1([icon]="faFileAlt")
+		| Sheet generator
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/expressions'")
+		fa-icon.mr-1([icon]="faCog")
+		| Expressions
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/entity'")
+		fa-icon.mr-1([icon]="faUser")
+		| Entity
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/palette'")
+		fa-icon.mr-1([icon]="faPaintBrush")
+		| Palette
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/ui'")
+		fa-icon.mr-1([icon]="faDesktop")
+		| UI
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/chat'")
+		fa-icon.mr-1([icon]="faComments")
+		| Chat
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/webgl'")
+		fa-icon.mr-1([icon]="faWrench")
+		| WebGL
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/perf'")
+		fa-icon.mr-1([icon]="faChartPie")
+		| Perf
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/states'")
+		fa-icon.mr-1([icon]="faCheckCircle")
+		| States
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/regions'")
+		fa-icon.mr-1([icon]="faMapMarkerAlt")
+		| Regions
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/collisions'")
+		fa-icon.mr-1([icon]="faExclamationCircle")
+		| Collisions
+	button.btn.btn-outline-primary.btn-lg.mr-2.mb-2([routerLink]="'/map'")
+		fa-icon.mr-1([icon]="faMapMarkerAlt")
+		| Map

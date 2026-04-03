@@ -1,12 +1,15 @@
 import { Component, Output, EventEmitter, ViewChild, ElementRef, OnInit, Input, NgZone } from '@angular/core';
 import { uniq } from 'lodash';
 import { Key } from '../../../client/input/input';
-import { PonyObject } from '../../../common/interfaces';
-import { clamp, flatten } from '../../../common/utils';
+import { PonyObject, SocialSiteInfo } from '../../../common/interfaces';
+import { clamp, flatten, findById } from '../../../common/utils';
 import { isMobile } from '../../../client/data';
 import { Model } from '../../services/model';
-import { LATEST_CHARACTER_LIMIT } from '../../../common/constants';
-import { faHashtag } from '../../../client/icons';
+import { faHashtag, faEllipsisV, faStar, faSlash } from '../../../client/icons';
+import { toPalette, createDefaultPony } from '../../../common/ponyInfo';
+import { getTag } from '../../../common/tags';
+import { getProviderIcon } from '../sign-in-box/sign-in-box';
+import { BASE_CHARACTER_LIMIT } from '../../../common/constants';
 
 function getSortTag(pony: PonyObject) {
 	const match = pony.desc && /(?:^| )@(top|end|\d+)(?:$| )/.exec(pony.desc);
@@ -49,6 +52,11 @@ function comparePonies(a: PonyObject, b: PonyObject) {
 })
 export class CharacterList implements OnInit {
 	readonly hashIcon = faHashtag;
+	readonly ellipsisIcon = faEllipsisV;
+	readonly starIcon = faStar;
+	readonly slashIcon = faSlash;
+	readonly toPalette = toPalette;
+	readonly createDefaultPony = createDefaultPony;
 	@Input() inGame = false;
 	@Input() canNew = false;
 	@Output() close = new EventEmitter<void>();
@@ -61,18 +69,79 @@ export class CharacterList implements OnInit {
 	selectedIndex = -1;
 	ponies: PonyObject[] = [];
 	tags: string[] = [];
+	sortMode: 'default' | 'name' | 'creation' | 'recent' = 'default';
+
 	private previewPony: PonyObject | undefined = undefined;
+	readonly getProviderIcon = getProviderIcon;
 	constructor(private model: Model, private zone: NgZone) {
+	}
+	getSocialSite(pony: PonyObject): SocialSiteInfo | undefined {
+		return pony.site ? findById(this.model.sites, pony.site) : undefined;
+	}
+	getCharacterTag(pony: PonyObject) {
+		return getTag(pony.tag);
+	}
+	getSupporterLevel(): number {
+		return (this.model && this.model.supporter) || 0;
+	}
+	getSupporterBonus(): number {
+		if (!this.model) {
+			return 0;
+		}
+		return Math.max(this.model.characterLimit - BASE_CHARACTER_LIMIT, 0);
+	}
+	getSupporterStarColor(): string | undefined {
+		const level = this.getSupporterLevel();
+		if (level === 1) return '#f96955'; // красный (Patreon)
+		if (level === 2) return '#ffa32b'; // бронзовый
+		if (level === 3) return '#ffcf00'; // золотой
+		return undefined;
+	}
+	formatDescriptionWithTags(description?: string): string {
+		if (!description) return '';
+		// Оборачиваем #-теги и @-теги в спецсимволы для разделения в шаблоне
+		return description.replace(/(#\w+|@\w+)/g, '|TAG_START|$1|TAG_END|');
+	}
+	isTag(word: string): boolean {
+		return /^(#|@)\w+$/.test(word);
 	}
 	get selectedPony() {
 		return this.model.pony;
 	}
+	trackByPony(_index: number, pony: PonyObject) {
+		void _index;
+		return pony.id;
+	}
 	get searchable() {
-		return this.model.ponies.length > LATEST_CHARACTER_LIMIT;
+		return true; // always show search input, not only for large lists
 	}
 	get placeholder() {
-		return `search (${this.model.ponies.length} / ${this.model.characterLimit} ponies)`;
+		const total = `${this.model.ponies.length} / ${this.model.characterLimit}`;
+		if (this.sortMode === 'name') {
+			return `alpha sort (a-z)`;
+		}
+		if (this.sortMode === 'creation') {
+			return `newest first`;
+		}
+		if (this.sortMode === 'recent') {
+			return `last used first`;
+		}
+		return `search (${total} ponies)`;
 	}
+
+	getSupporterInfo(): string {
+		const level = this.getSupporterLevel();
+		if (level === 0) {
+			return 'No supporter perks.\n1000 character base limit.';
+		}
+		const bonus = this.getSupporterBonus();
+		let perks = `- +${bonus} character slots`;
+		if (level === 1) perks += '\n- Community perks';
+		if (level === 2) perks += '\n- Priority world pairing';
+		if (level === 3) perks += '\n- Gold support badge\n- Priority world pairing';
+		return `Level ${level} Supporter\n\nPerks:\n${perks}`;
+	}
+
 	ngOnInit() {
 		this.updatePonies();
 
@@ -118,6 +187,118 @@ export class CharacterList implements OnInit {
 			this.previewCharacter.emit(undefined);
 		}
 	}
+	setSortMode(mode: 'default' | 'name' | 'creation' | 'recent') {
+		this.sortMode = mode;
+		this.updatePonies();
+	}
+
+	private getCreatedTime(pony: PonyObject): number {
+		if (!pony.id || pony.id.length !== 24) {
+			return 0;
+		}
+
+		try {
+			const timestamp = parseInt(pony.id.substring(0, 8), 16) * 1000;
+			return Number.isFinite(timestamp) ? timestamp : 0;
+		} catch {
+			return 0;
+		}
+	}
+
+	private sortPonies(items: PonyObject[]) {
+		if (this.sortMode === 'name') {
+			return items.slice().sort((a, b) => a.name.localeCompare(b.name));
+		}
+
+		if (this.sortMode === 'recent') {
+			return items
+				.filter(p => !!p.lastUsed)
+				.sort((a, b) => {
+					const aTime = a.lastUsed ? Number(new Date(a.lastUsed)) : 0;
+					const bTime = b.lastUsed ? Number(new Date(b.lastUsed)) : 0;
+					return bTime - aTime || a.name.localeCompare(b.name);
+				});
+		}
+
+		if (this.sortMode === 'creation') {
+			return items.slice().sort((a, b) => {
+				const aTime = this.getCreatedTime(a);
+				const bTime = this.getCreatedTime(b);
+				return bTime - aTime || a.name.localeCompare(b.name);
+			});
+		}
+
+		return items.slice().sort(comparePonies);
+	}
+
+	formatLastUsed(lastUsed?: string): string | undefined {
+		if (!lastUsed) {
+			return undefined;
+		}
+
+		const time = Number(new Date(lastUsed));
+		if (!time || Number.isNaN(time)) {
+			return undefined;
+		}
+
+		const diff = Date.now() - time;
+		if (diff < 0) {
+			return 'now';
+		}
+
+		const seconds = Math.floor(diff / 1000);
+		if (seconds < 60) {
+			return `last ${seconds}s`;
+		}
+
+		const minutes = Math.floor(seconds / 60);
+		if (minutes < 60) {
+			return minutes === 1 ? '1 minute ago' : `${minutes} min ago`;
+		}
+
+		const hours = Math.floor(minutes / 60);
+		if (hours < 24) {
+			return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+		}
+
+		const days = Math.floor(hours / 24);
+		return days === 1 ? '1 day ago' : `${days} days ago`;
+	}
+
+	formatCreated(pony: PonyObject): string | undefined {
+		if (this.sortMode !== 'creation') {
+			return undefined;
+		}
+
+		const created = this.getCreatedTime(pony);
+		if (!created) {
+			return undefined;
+		}
+
+		const diff = Date.now() - created;
+		if (diff < 0) {
+			return 'just now';
+		}
+
+		const seconds = Math.floor(diff / 1000);
+		if (seconds < 60) {
+			return `created ${seconds}s ago`;
+		}
+
+		const minutes = Math.floor(seconds / 60);
+		if (minutes < 60) {
+			return `created ${minutes}m ago`;
+		}
+
+		const hours = Math.floor(minutes / 60);
+		if (hours < 24) {
+			return `created ${hours}h ago`;
+		}
+
+		const days = Math.floor(hours / 24);
+		return `created ${days}d ago`;
+	}
+
 	updatePonies() {
 		this.zone.run(() => {
 			const query = this.search && this.search.toLowerCase().trim();
@@ -132,15 +313,17 @@ export class CharacterList implements OnInit {
 				return true;
 			}
 
+			const parsedPonies = this.model.ponies.map(pony => this.model.parsePonyObject(pony));
+
 			if (query) {
 				const words = query.split(/ /g).map(x => x.trim());
 
-				this.ponies = this.model.ponies.filter(pony => {
+				this.ponies = this.sortPonies(parsedPonies.filter(pony => {
 					const text = `${pony.name} ${pony.desc || ''}`.toLowerCase();
 					return matchesWords(text, words);
-				}).sort(comparePonies);
+				}));
 			} else {
-				this.ponies = this.model.ponies.slice().sort(comparePonies);
+				this.ponies = this.sortPonies(parsedPonies.slice());
 			}
 
 			this.setSelectedIndex(this.selectedIndex);

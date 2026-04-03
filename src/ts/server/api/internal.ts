@@ -18,6 +18,8 @@ import { formatDuration, invalidEnum } from '../../common/utils';
 import { timingEntries, setTimingEnabled } from '../timing';
 import { toPairs, groupBy } from 'lodash';
 import { getSizeOfMap } from '../serverMap';
+import { createDefaultPony } from '../../common/ponyInfo';
+import { compressPonyString } from '../../common/compressPony';
 import { teleportTo } from '../playerUtils';
 import { getWorldPerfStats } from '../worldPerfStats';
 
@@ -107,6 +109,11 @@ export const createJoin =
 
 			if (!meetsRequirement({ roles: account.roles, supporter: supporterLevel(account), supporterInvited }, server.require)) {
 				throw new UserError('Server is restricted');
+			}
+
+			// If character has no pony info, create default pony
+			if (!character.info) {
+				character.info = compressPonyString(createDefaultPony());
 			}
 
 			await setupPonyAuth(character, account, findAuth);

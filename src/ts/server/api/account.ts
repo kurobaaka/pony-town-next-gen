@@ -123,6 +123,10 @@ function fixAccountSettings(settings: AccountSettings | undefined) {
 			fixed.seeThroughObjects = !!settings.seeThroughObjects;
 		}
 
+		if (settings.disableUI !== undefined) {
+			fixed.disableUI = !!settings.disableUI;
+		}
+
 		if (settings.filterWords !== undefined) {
 			fixed.filterWords = `${settings.filterWords}`;
 		}

@@ -6,5 +6,5 @@ button.btn.btn-lg.btn-pt.btn-outline-primary.btn-block.mb-2(
 	.visit-pt-pony
 		visit-pt-pony(#pony [scale]="2")
 
--// confirmation modal component
-leave-site-modal(*ngIf="showLeaveModal" [title]="'Are you sure?'" [link]="ptLink" [buttonLabel]="'Yes, leave'" (close)="closeLeaveModal()" (confirm)="confirmLeave()")
+ng-template(#leaveSiteModal)
+	leave-site-modal([title]="'Are you sure?'" [link]="ptLink" [buttonLabel]="'Yes, leave'" (close)="closeLeaveModal()" (confirm)="confirmLeave()")

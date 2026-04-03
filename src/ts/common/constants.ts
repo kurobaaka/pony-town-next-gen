@@ -44,6 +44,7 @@ export const LIGHT_VOLUME_SCALE = 0.81;
 export const DEFAULT_CHATLOG_OPACITY = 35;
 export const MAX_CHATLOG_RANGE = 13;
 export const MIN_CHATLOG_RANGE = 2;
+export const CHAT_BUBBLES_LIMIT = 3;
 
 export function isChatlogRangeUnlimited(range: number | undefined) {
 	return !range || range < MIN_CHATLOG_RANGE || range >= MAX_CHATLOG_RANGE;
@@ -138,7 +139,7 @@ export const MONTH_NAMES_EN = [
 	'December',
 ];
 
-export const OFFLINE_PONY = 'DAKVlZUvLy82QIxomgCfgAYAGIAoQGEBwAEERFEUEA==';
+export const OFFLINE_PONY = 'GAOVlZXapSAvLy8bIEY0hoAT8ABgAMIA4IDBAcABhmZ5nhg=';
 export const SUPPORTER_PONY = 'CAfz9PUFLUnapSD/1wD5aFT////+hHM2QIJkJ8AQLkkADAA6jXrsBT1Iw+wBMJOqoW1C2oW1AAI=';
 export const DISCORD_PONY = 'EAlyidplAf/U7f/r9//09vf///9//9QsLzOXp+E2QQJiBLQBPwAMADqNANFZmyFFGhKgorM8ICAEIBAgJGZyzAzMzMzAwMzMzAAAwA==';
 

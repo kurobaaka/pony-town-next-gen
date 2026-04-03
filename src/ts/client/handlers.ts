@@ -5,6 +5,7 @@ import {
 	Entity, Region, Pony, EntityState, PonyOptions, MessageType, isNonIgnorableMessage, EntityPlayerState,
 	EntityOrPonyOptions, isPublicMessage, FakeEntity, Action, WorldMap, DoAction, UpdateType, DecodedUpdate,
 	PonyData, WorldStateFlags, FriendStatusData, FriendStatusFlags, isWhisper, isWhisperTo,
+	isTypingIndicatorMessage, typingIndicatorDuration,
 } from '../common/interfaces';
 import { bitmask, setFlag, findById, distance, hasFlag, distanceXY, invalidEnum, removeItem } from '../common/utils';
 import { isChatVisible } from '../common/camera';
@@ -652,19 +653,25 @@ export function handleSay(game: PonyTownGame, entity: Entity | FakeEntity, messa
 			dismissSays(entity.says);
 		}
 	} else {
+		const typingIndicator = isTypingIndicatorMessage(message);
+
+		if (typingIndicator && game.settings.account.showTypingIndicator === false) {
+			return;
+		}
+
 		const bubbleEntity = isWhisperTo(type) ? game.player : entity;
 
 		if (bubbleEntity && !bubbleEntity.fake && game.map.entitiesById.has(bubbleEntity.id)) {
-			const total = getSaysTime(message);
+			const total = typingIndicator ? typingIndicatorDuration : getSaysTime(message);
 			addChatBubble(game.map, bubbleEntity, { message, type, total, timer: total, created: Date.now() });
 		}
 
-		if (isWhisper(type)) {
+		if (!typingIndicator && isWhisper(type)) {
 			const friend = game.model.friends && game.model.friends.find(f => f.entityId === entity.id);
 			game.lastWhisperFrom = { entityId: entity.id, accountId: friend && friend.accountId };
 		}
 
-		if (shouldShowChatMessageInChatlog(game, entity, type)) {
+		if (!typingIndicator && shouldShowChatMessageInChatlog(game, entity, type)) {
 			const { id, name = '', crc } = entity;
 			game.messageQueue.push({ id, crc, name, message, type });
 		}
@@ -741,6 +748,10 @@ function createEntityOrPony(
 
 function updateEntityOptionsInternal(entity: Entity, options: Partial<EntityOrPonyOptions>, game: PonyTownGame) {
 	Object.assign(entity, options);
+
+	if ('tag' in options && !options.tag) {
+		entity.tag = undefined;
+	}
 
 	if (isPony(entity) && 'hold' in options) {
 		updatePonyHold(entity, game);

@@ -1,7 +1,7 @@
 import '../lib';
 import { expect } from 'chai';
 import { stub, assert, SinonStub } from 'sinon';
-import { ChatType, Action, MessageType, LeaveReason } from '../../common/interfaces';
+import { ChatType, Action, MessageType, LeaveReason, typingIndicatorMessage } from '../../common/interfaces';
 import { GameServerSettings } from '../../common/adminInterfaces';
 import { World } from '../../server/world';
 import { createServerMap } from '../../server/serverMap';
@@ -200,6 +200,21 @@ describe('chat', () => {
 			say(client, '/t test', ChatType.Say, undefined, {});
 
 			expect(client.saysQueue).eql([[client.pony.id, 'test', MessageType.Thinking]]);
+		});
+
+		it('sends typing indicator without logging or spam checks', () => {
+			say(client, typingIndicatorMessage, ChatType.Say, undefined, {});
+
+			assert.notCalled(log);
+			assert.notCalled(checkSpam);
+			expect(client.saysQueue).eql([[client.pony.id, typingIndicatorMessage, MessageType.Chat]]);
+		});
+
+		it('dismisses whisper typing indicator without missing target errors', () => {
+			say(client, '.', ChatType.Whisper, undefined, {});
+
+			assert.notCalled(log);
+			expect(client.saysQueue).eql([[client.pony.id, '.', MessageType.WhisperTo]]);
 		});
 
 		it('ignores empty say command', () => {

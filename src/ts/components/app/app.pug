@@ -1,4 +1,4 @@
-#app-game.app-game([hidden]="!playing")
+#app-game.app-game([hidden]="!playing" [class.ui-disabled]="account?.settings?.disableUI")
 	canvas#canvas.unselectable.pixelart
 	span#stats.d-none.d-sm-inline
 	pony-box#pony-box(*ngIf="selected" [pony]="selected" (sendMessage)="messageToPony(chatBox, $event)")
@@ -33,9 +33,8 @@
 
 	footer.text-muted.text-nowrap(*ngIf="!playing")
 		.app-version
-			| version #[b {{version}}]
-			p.mt-1
-			a.changelog-link((click)="openChangelog()") changelog
+			| Status #[b {{version}}] | 
+			a.changelog-link((click)="openChangelog()") Changelog
 		.text-right
 			.d-flex.flex-wrap
 				//- .text-nowrap.mr-2
@@ -43,10 +42,8 @@
 					|  #[a.text-muted.mr-1([href]="twitterLink" target="_blank") {{copyright}}] | 
 				.text-nowrap
 					a.text-muted.mr-2(*ngIf="twitterLink" [href]="twitterLink" target="_blank" title="Twitter")
-						fa-icon([icon]="twitterIcon" [fixedWidth]="true")
-					a.text-muted.mr-2(*ngIf="telegramLink" [href]="telegramLink" target="_blank" title="Telegram")
-						fa-icon([icon]="telegramIcon" [fixedWidth]="true")
-					a.text-muted.mr-2(*ngIf="contactEmail" href="mailto:{{contactEmail}}" target="_blank" title="Email")
+					fa-icon([icon]="twitterIcon" [fixedWidth]="true")
+				a.text-muted.mr-2(*ngIf="contactEmail" href="mailto:{{contactEmail}}" target="_blank" title="Email")
 						fa-icon([icon]="emailIcon" [fixedWidth]="true")
 			div
 				a.text-muted.privacy-policy(href="/privacypolicy.html" target="_blank" rel="noopener") privacy policy

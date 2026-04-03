@@ -21,7 +21,18 @@ export class ImportedModal {
 	}
 
 	get displayPonies(): PonyObject[] {
-		return this.showAllPreviews ? this.ponies : (this.shouldShowPreviews ? this.ponies : []);
+		if (this.shouldShowPreviews || this.showAllPreviews) {
+			return this.ponies;
+		}
+		return this.ponies.slice(0, 3);
+	}
+
+	get hasManyPonies(): boolean {
+		return this.ponies.length > 3;
+	}
+
+	get previewToggleLabel(): string {
+		return this.showAllPreviews ? `Hide additional preview` : `Show all preview (${this.ponies.length})`;
 	}
 
 	getPonyTag(pony: PonyObject) {

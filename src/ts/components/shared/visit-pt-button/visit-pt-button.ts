@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-
+import { Component, ViewChild, TemplateRef } from '@angular/core';
+import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 
 @Component({
 	selector: 'visit-pt-button',
@@ -9,16 +9,18 @@ import { Component } from '@angular/core';
 export class VisitPTButton {
 	readonly ptLink = 'http://pony.town';
 	readonly enableVisitPTButton = true;
-	showLeaveModal = false;
-	constructor() {
+	currentModalRef?: BsModalRef;
+	@ViewChild('leaveSiteModal', { static: true }) leaveSiteModalTpl!: TemplateRef<any>;
+	constructor(private modalService: BsModalService) {
 	}
 
 	openLeaveModal() {
-		this.showLeaveModal = true;
+		this.currentModalRef = this.modalService.show(this.leaveSiteModalTpl, { class: 'modal-sm' });
 	}
 
 	closeLeaveModal() {
-		this.showLeaveModal = false;
+		this.currentModalRef && this.currentModalRef.hide();
+		this.currentModalRef = undefined;
 	}
 
 	confirmLeave() {

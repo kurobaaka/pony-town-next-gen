@@ -146,6 +146,13 @@ ng-template(#modal)
 								party-list(style="position: absolute;")
 
 					.ml-5(style="width: 400px")
+						h3 Character Preview
+						.mb-3
+							.form-group
+								custom-checkbox([(checked)]="showCharacterPreview") show pony for tag preview
+							.form-group(*ngIf="showCharacterPreview")
+								character-preview([pony]="pony" name="Offline Pony" [tag]="selected.tag" [noBackground]="true" [scale]="3")
+
 						h3 Pony box
 						.mb-3
 							.form-group.py-4
@@ -281,5 +288,10 @@ ng-template(#modal)
 						button.btn.btn-default((click)="virtualItems2.push({ name: 'An item ' + virtualItems2.length })") Add
 						button.btn.btn-default.ml-1((click)="virtualItems2.pop()") Remove
 						button.btn.btn-default.ml-1((click)="virtualItems2.push(virtualItems2.shift())") Move
+
+		tab(title="Icons")
+			ng-template(tabContent)
+				.mt-3
+					icon-gallery
 
 #range-indicator

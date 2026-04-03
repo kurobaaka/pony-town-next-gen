@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -33,6 +33,7 @@ import { ToolsUI } from './tools-ui/tools-ui';
 import { ToolsCollisions } from './tools-collisions/tools-collisions';
 import { ToolsMap } from './tools-map/tools-map';
 import { ToolsIndex } from './tools-index/tools-index';
+import { IconGallery } from './icon-gallery/icon-gallery';
 import { ToolsApp } from './tools';
 
 export const routes: Routes = [
@@ -59,6 +60,7 @@ export const routes: Routes = [
 		BrowserModule,
 		RouterModule,
 		FormsModule,
+		ReactiveFormsModule,
 		HttpClientModule,
 		SharedModule,
 		PopoverModule.forRoot(),
@@ -87,6 +89,7 @@ export const routes: Routes = [
 		ToolsCollisions,
 		ToolsMap,
 		ToolsUI,
+		IconGallery,
 		ToolsIndex,
 		ToolsApp,
 	],

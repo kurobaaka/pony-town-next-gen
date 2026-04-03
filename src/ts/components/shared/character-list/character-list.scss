@@ -1,8 +1,15 @@
 @import '../../../../styles/partials/variables';
 
+$character-list-width: 300px;
+$character-list-max-width: calc(100vw - 70px);
+$character-list-item-height: 48px;
+$character-list-item-padding: 6px 10px;
+$character-list-selected-border: $text-muted;
+$character-list-selected-bg: $nav-tabs-link-active-color;
+
 .character-list {
-	width: 300px;
-	max-width: calc(100vw - 70px);
+	width: $character-list-width;
+	max-width: $character-list-max-width;
 }
 
 .character-list.in-game {
@@ -12,7 +19,7 @@
 .character-select-search {
 	height: 30px;
 	padding: 0 5px;
-	display: none;
+	display: flex;
 	position: relative;
 
 	> .form-control {
@@ -28,9 +35,7 @@
 		}
 	}
 
-	.character-list-searchable > & {
-		display: flex;
-	}
+	// always display search block here
 }
 
 .hash-button {
@@ -39,6 +44,33 @@
 	top: 5px;
 	font-size: 16px;
 	padding: 0 10px;
+}
+
+.supporter-badge {
+	font-size: 0.8em;
+	color: #333;
+	background: #f8f8f8;
+	border-color: #ddd;
+	border-left: 0;
+	padding: 2px 6px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	border-radius: 3px;
+	min-width: 32px;
+	justify-content: center;
+}
+
+.supporter-info-text {
+	font-size: 0.78em;
+	color: #555;
+	margin-top: 2px;
+	margin-bottom: 4px;
+	line-height: 1.1;
+}
+
+.dropdown-item {
+	white-space: pre-line;
 }
 
 .character-select-list {
@@ -54,29 +86,45 @@
 	overflow-y: auto;
 
 	> li {
-		&.active {
-			background: $nav-tabs-link-active-color;
+		min-height: $character-list-item-height;
+		border-bottom: 1px solid #eee;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		border-left: 4px solid transparent;
+
+		&:last-child {
+			border-bottom: none;
 		}
 
-		&.selected > a {
-			font-weight: bold;
+		&.active,
+		&.selected,
+		&.selected-line {
+			background: $character-list-selected-bg;
+			border-left-color: $character-list-selected-border;
 		}
 
-		> a {
-			display: block;
-			padding: 3px 20px;
-			clear: both;
+		> a.item-list-divider {
+			display: flex;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+			padding: $character-list-item-padding;
+			flex: 1;
+
+			> portrait-box {
+				margin-right: 6px !important;
+			}
 			font-weight: normal;
-			line-height: $line-height-base;
 			color: $dropdown-link-color;
-			white-space: nowrap;
 			cursor: pointer;
+			text-decoration: none;
 			overflow: hidden;
-			text-overflow: ellipsis;
+			transition: background-color .2s, color .2s;
 
 			&:hover,
 			&:focus {
-				text-decoration: none;
 				color: $dropdown-link-hover-color;
 				background-color: $dropdown-link-hover-bg;
 			}
@@ -89,20 +137,135 @@
 	}
 }
 
-.character-desc {
-	font-size: smaller;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	margin-top: 4px;
-	margin-left: 10px;
+.entry-with-text {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-width: 0;
+	margin-right: 14px;
 }
 
 .character-name {
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex: 0 1 auto;
+}
+
+.char-timestamp {
+	font-size: 0.75em;
+	color: #888;
+	white-space: nowrap;
+	margin-left: 2px;
+}
+
+.character-desc {
+	font-size: smaller;
+	color: $text-muted;
+	margin-top: 2px;
+	white-space: normal;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	max-height: 2.4em;
+}
+
+.site-icon-wrapper {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 6px;
+}
+
+.character-list-badges {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	height: 100%;
+	margin-left: auto;
+	gap: 2px;
+	min-width: 80px;
+}
+
+.character-list-badges-main {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	justify-content: center;
+	gap: 2px;
+}
+
+.character-supporter-social {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	justify-content: flex-end;
+}
+
+.supporter-hidden-wrapper {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+}
+
+.supporter-hidden-slash {
+	position: absolute;
+	font-size: 0.75em;
+}
+
+.character-list-badges .badge {
+	margin: 0;
+	margin-top: 2px;
+}
+
+.character-list-badges .site-icon-wrapper {
+	margin-left: 0;
+}
+
+.site-icon-wrapper {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	margin-left: 10px;
+	flex-shrink: 0;
+	line-height: 1;
+	padding: 2px;
+	border-radius: 50%;
+	background: #f6f7f8;
+	color: inherit;
+	cursor: default;
+
+	&:hover {
+		background: #eef2f5;
+	}
+}
+
+.character-desc-tag {
+	display: inline-block;
+	background: #e8e8e8;
+	color: #333;
+	padding: 1px 4px;
+	border-radius: 3px;
+	font-size: 0.85em;
+	margin: 0 2px;
 	white-space: nowrap;
 }
 
-.tag-list {
-	max-height: 400px;
-	overflow-y: auto;
+// Звезда supporter видна в поиске
+.d-flex .fa-star {
+	font-size: 1em;
+	line-height: 1.5;
 }
+
+.site-icon-wrapper:hover {
+	background: #eef2f5;
+}
+

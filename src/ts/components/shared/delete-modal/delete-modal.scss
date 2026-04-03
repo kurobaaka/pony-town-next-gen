@@ -1,21 +1,36 @@
-.character-preview-wrapper {
-	text-align: center;
-	margin-top: 10px;
+:host {
+	display: block;
 	width: 100%;
 }
 
-.modal-body {
+.delete-modal-body {
+	width: 100%;
+
 	p {
 		margin-bottom: 10px;
 	}
+}
+
+.character-preview-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: center;
 	width: 100%;
+	max-width: 240px;
+	height: 170px;
+	margin: 0 auto;
+	overflow: hidden;
+}
+
+.delete-modal-preview {
+	display: block;
+	width: 100%;
+	height: 100%;
 }
 
 .modal-footer {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 	width: 100%;
-}
-
-.row {
-	width: 100%;
-	margin: 0;
 }

@@ -63,6 +63,16 @@ footer {
 	overflow: hidden;
 }
 
+.app-game.ui-disabled > :not(#canvas):not(#game-announcer):not(#settings-box):not(#chat-box) {
+	display: none !important;
+}
+
+.app-game.ui-disabled #chat-box,
+.app-game.ui-disabled #settings-box {
+	opacity: .45;
+	pointer-events: auto;
+}
+
 #canvas {
 	left: 0;
 	top: 0;
@@ -199,9 +209,13 @@ $chat-pad: 5px;
 	left: 0;
 	top: 0;
 	right: 0;
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
 	display: flex;
 	justify-content: center;
 	text-align: center;
+	transition: opacity .25s ease, visibility .25s ease;
 
 	>div {
 		font-size: 16px;
@@ -214,6 +228,33 @@ $chat-pad: 5px;
 	}
 }
 
+#game-announcer.show {
+	opacity: 1;
+	visibility: visible;
+}
+
+.app-game.ui-disabled #editor,
+.app-game.ui-disabled #party-list,
+.app-game.ui-disabled #swap-box,
+.app-game.ui-disabled #build-box,
+.app-game.ui-disabled #chat-log,
+.app-game.ui-disabled #action-bar,
+.app-game.ui-disabled #friends-box {
+	display: none !important;
+}
+
+.app-game.ui-disabled #chat-box,
+.app-game.ui-disabled #settings-box {
+	opacity: .45;
+}
+
+
+.app-version a.changelog-link {
+	cursor: pointer;
+	text-decoration: none;
+}
+
 .app-version a.changelog-link:hover {
 	color: $link-color;
+	text-decoration: underline;
 }

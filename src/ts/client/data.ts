@@ -1,6 +1,8 @@
 import { toByteArray } from 'base64-js';
 import { ClientOptions, createBinaryReader, readObject } from 'ag-sockets/dist/browser';
 import { OAuthProvider } from '../common/interfaces';
+import { normalizeVersion, VersionInfo, parseVersion, formatVersion } from '../common/version';
+import { parseChangelogVersion } from '../common/changelogUtils';
 
 /* istanbul ignore next */
 function attr(name: string): string | undefined {
@@ -22,10 +24,14 @@ export const sw = attr('data-sw') === 'true';
 export const host = attr('data-host')!;
 export const local = attr('data-local') === 'true';
 export const token = attr('data-token');
-export const version = attr('data-version');
+export const rawVersion = attr('data-version') || '';
+export const version = normalizeVersion(rawVersion);
+const changelogParsed = parseChangelogVersion(version);
+export const shortVersion = changelogParsed ? changelogParsed.shortVersion : (parseVersion(version) ? formatVersion(parseVersion(version) as VersionInfo) : version);
 export const isPublic = attr('data-public') === 'true';
 export const discordLink = attr('data-discord-link');
 export const twitterLink = attr('data-twitter-link');
+export const vkLink = attr('data-vk-link');
 export const contactEmail = attr('data-email');
 export const copyrightName = attr('data-copyright');
 export const contactDiscord = attr('data-contact-discord');

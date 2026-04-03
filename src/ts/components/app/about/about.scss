@@ -31,3 +31,26 @@
 		border-radius: 50%;
 	}
 }
+
+.update-about {
+	margin-bottom: 1.5rem;
+	text-align: center;
+}
+
+.image-box {
+	height: 200px;
+	width: 100%;
+	border-radius: 5px;
+	margin-bottom: 1rem;
+	background-size: cover;
+	background-position: center;
+}
+
+.about-text {
+	color: #9c9c9c;
+	font-size: 0.95rem;
+	p {
+		margin: 0;
+		margin-bottom: 0.5rem;
+	}
+}

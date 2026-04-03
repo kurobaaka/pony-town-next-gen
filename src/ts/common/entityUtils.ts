@@ -1,6 +1,7 @@
 import { sort } from 'timsort';
 import {
-	Entity, EntityState, BodyAnimation, Point, EntityFlags, IMap, Pony, Says, EntityPlayerState, WorldMap
+	Entity, EntityState, BodyAnimation, Point, EntityFlags, IMap, Pony, Says, EntityPlayerState, WorldMap,
+	isTypingIndicatorMessage,
 } from './interfaces';
 import { hasFlag, distance, pushUniq, setFlag } from './utils';
 import { stand, sit, lie, fly, flyBug, swim } from '../client/ponyAnimations';
@@ -9,7 +10,7 @@ import { toScreenX, toScreenY } from './positionUtils';
 import { releasePalette } from '../graphics/paletteManager';
 import { rect } from './rect';
 import { addOrRemoveFromEntityList } from './worldMap';
-import { PONY_TYPE } from './constants';
+import { PONY_TYPE, CHAT_BUBBLES_LIMIT } from './constants';
 import { isStaticCollision } from './collision';
 
 export function releaseEntity(entity: Entity) {
@@ -24,8 +25,30 @@ export function releaseEntity(entity: Entity) {
 	}
 }
 
+export function getChatBubbles(entity: Entity): Says[] {
+	if (entity.chatBubbles !== undefined) {
+		return entity.chatBubbles;
+	} else if (entity.says !== undefined) {
+		return [entity.says];
+	} else {
+		return [];
+	}
+}
+
+function syncChatBubbles(entity: Entity, bubbles: Says[]) {
+	if (bubbles.length) {
+		entity.chatBubbles = bubbles;
+		entity.says = bubbles[0];
+	} else {
+		entity.chatBubbles = undefined;
+		entity.says = undefined;
+	}
+}
+
 export function addChatBubble(map: WorldMap, entity: Entity, says: Says) {
-	entity.says = says;
+	const bubbles = getChatBubbles(entity).filter(bubble => !isTypingIndicatorMessage(bubble.message));
+	bubbles.unshift(says);
+	syncChatBubbles(entity, bubbles.slice(0, CHAT_BUBBLES_LIMIT));
 	pushUniq(map.entitiesWithChat, entity);
 }
 

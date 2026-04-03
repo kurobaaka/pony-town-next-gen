@@ -7,6 +7,8 @@ import { version } from '../config';
 import { isServerOffline } from '../serverUtils';
 import { StatsTracker } from '../stats';
 import { MIN_ADULT_AGE } from '../../common/constants';
+import { CHANGELOG_PUBLIC, CHANGELOG_DEV } from '../../generated/changelog';
+import { isAdmin, isDev, isMod } from '../../common/accountUtils';
 
 function isServerSafe(server: InternalGameServerState) {
 	return server.state.alert !== '18+';
@@ -65,6 +67,16 @@ export default function (settings: Settings, live: ServerLiveSettings, statsTrac
 	app.post('/csp', offline(settings), (_, res) => {
 		//logger.warn('CSP report', getIPFromRequest(req), req.body['csp-report']);
 		res.sendStatus(200);
+	});
+
+	app.get('/changelog', offline(settings), (req, res) => {
+		const user = req.user as any;
+		const isPrivileged = !!user && (isAdmin(user) || isMod(user) || isDev(user));
+
+		res.json({
+			public: CHANGELOG_PUBLIC,
+			dev: isPrivileged ? CHANGELOG_DEV : [],
+		});
 	});
 
 	return app;

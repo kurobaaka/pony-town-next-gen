@@ -97,7 +97,8 @@ describe('move', () => {
 		});
 
 		it('respects speed multiplier', () => {
-			(const client.pony as any).speedMultiplier = 2;
+			// speedMultiplier is now a proper field on ServerEntity
+			client.pony.speedMultiplier = 2;
 			const [a, b, c, d, e] = encodeMovement(12, 34, 2, EntityState.PonyTrotting, 456, camera);
 
 			move(client, 0, a, b, c, d, e, {});

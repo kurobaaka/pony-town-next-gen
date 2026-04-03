@@ -98,8 +98,7 @@ describe('updateEncoder', () => {
 		});
 
 		it('encodes speed multiplier in options', () => {
-			region.entityUpdates.push({ ...def, entity: entity(123), flags: UpdateFlags.Options, options: { speedMultiplier: 1.5 } as any });
-
+		region.entityUpdates.push({ ...def, entity: entity(123), flags: UpdateFlags.Options, options: { speedMultiplier: 1.5 } });
 			testEncodeDecode(region, { ...exp, updates: [{ ...out, id: 123, options: { speedMultiplier: 1.5 } }] });
 		});
 

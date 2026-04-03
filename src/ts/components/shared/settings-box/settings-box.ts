@@ -6,6 +6,7 @@ import { Action } from '../../../common/interfaces';
 import { GameService } from '../../services/gameService';
 import { Model } from '../../services/model';
 import { PonyTownGame } from '../../../client/game';
+import { isMobile } from '../../../client/data';
 import { Dropdown } from '../directives/dropdown';
 import {
 	emptyIcon, faCog, faSearch, faSignOutAlt, faVolumeOff, faVolumeUp, faVolumeDown, faPlus, faMinus,
@@ -75,6 +76,17 @@ export class SettingsBox implements OnInit, OnDestroy {
 	}
 	get settings() {
 		return this.model.account && this.model.account.settings || {};
+	}
+	get isMobile() {
+		return isMobile;
+	}
+	get seeThroughButtonText() {
+		const label = this.settings.seeThroughObjects ? 'Hide obstacles' : 'Show obstacles';
+		return !this.isMobile ? `${label} (F4)` : label;
+	}
+	get disableUIButtonText() {
+		const label = this.settings.disableUI ? 'Enable UI' : 'Disable UI';
+		return !this.isMobile ? `${label} (F6)` : label;
 	}
 	get track() {
 		return this.game.audio.trackName;
@@ -189,6 +201,24 @@ export class SettingsBox implements OnInit, OnDestroy {
 	}
 	unhideAllHiddenPlayers() {
 		this.game.send(server => server.action(Action.UnhideAllHiddenPlayers));
+		this.dropdown.close();
+	}
+	toggleSeeThrough() {
+		this.settings.seeThroughObjects = !this.settings.seeThroughObjects;
+		this.settingsService.saveAccountSettings(this.settings);
+		const message = this.settings.seeThroughObjects
+			? 'Включён показ сквозь объекты'
+			: 'Отключён показ сквозь объекты';
+		this.game.announcements.next(message);
+		this.dropdown.close();
+	}
+	toggleDisableUI() {
+		this.settings.disableUI = !this.settings.disableUI;
+		this.settingsService.saveAccountSettings(this.settings);
+		const message = this.settings.disableUI
+			? 'Отключён интерфейс'
+			: 'Включён интерфейс';
+		this.game.announcements.next(message);
 		this.dropdown.close();
 	}
 	openModal(template: TemplateRef<any>) {

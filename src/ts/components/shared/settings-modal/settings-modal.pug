@@ -23,6 +23,11 @@
 						| See through obstacles
 				.form-group
 					custom-checkbox(
+						[(checked)]="account.disableUI"
+						help="Hide HUD and controls while in-game (F6)")
+						| Disable UI (F6)
+				.form-group
+					custom-checkbox(
 						[(checked)]="browser.walkByDefault"
 						help="Uses walking speed by default and run when pressing shift key")
 						| Prefer walking to running

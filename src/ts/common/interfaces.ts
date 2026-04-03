@@ -593,6 +593,9 @@ export interface Pony extends Entity {
 	paletteManager: PaletteManager;
 	magicColor: number;
 
+	// movement modifier applied by server (/speed command)
+	speedMultiplier?: number;
+
 	// player info
 	name: string | undefined;
 	tag: string | undefined;
@@ -668,6 +671,7 @@ export interface AccountSettings {
 	ignoreNonFriendWhispers?: boolean;
 	chatlogOpacity?: number;
 	seeThroughObjects?: boolean;
+	disableUI?: boolean;
 	chatlogRange?: number;
 	actions?: string;
 	hidden?: boolean;
@@ -809,6 +813,8 @@ export interface PonyOptions {
 	extra?: boolean; // TODO: move to flags ?
 	hold?: number;
 	toy?: number;
+	/** Allows temporarily modifying movement speed (1.0 = normal). */
+	speedMultiplier?: number;
 	// mod/extra info
 	site?: SocialSite;
 	modInfo?: ModInfo;
@@ -1780,11 +1786,15 @@ export const defaultDrawOptions: DrawOptions = {
 export interface PonyEntityOptions {
 	hold?: number;
 	extra?: boolean;
+	/** sent with entity updates to inform clients about server-side speed changes */
+	speedMultiplier?: number;
 }
 
 export interface SpiderEntityOptions {
 	height: number;
 	time: number;
+	/** optional speed multiplier, currently only used for ponies but added to keep union assignments happy */
+	speedMultiplier?: number;
 }
 
 export interface SignEntityOptions {
@@ -1795,6 +1805,8 @@ export interface SignEntityOptions {
 		s?: number[];
 		e?: number[];
 	};
+	/** optional speed multiplier for compatibility with EntityOrPonyOptions union */
+	speedMultiplier?: number;
 }
 
 export interface EntityDescriptor {

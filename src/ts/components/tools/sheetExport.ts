@@ -1,4 +1,4 @@
-import { max, compact } from 'lodash';
+import { compact } from 'lodash';
 import { saveAs } from 'file-saver';
 import { Psd, writePsd, Layer } from 'ag-psd';
 import { SpriteSet, PonyInfoNumber, PaletteSpriteSet, NoDraw } from '../../common/interfaces';
@@ -23,7 +23,17 @@ const patternColors = [RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, BLACK];
 const whiteColors = [WHITE, WHITE, WHITE, WHITE, WHITE, WHITE, WHITE];
 
 function maxPatterns(sprites: Sets): number {
-	return max(sprites.map(s => s && s.length ? max(s.map(x => x ? x.length : 0)) : 0))!;
+	let best = 0;
+	for (const s of sprites) {
+		if (s && s.length) {
+			for (const x of s) {
+				if (x && x.length > best) {
+					best = x.length;
+				}
+			}
+		}
+	}
+	return best;
 }
 
 const backupSprites: any = {
@@ -62,8 +72,15 @@ export function getRows(sheet: Sheet) {
 		return sheet.rows;
 	} else {
 		const sets = getSetsForFirstKey(sheet);
-		const maxFrames = sets && max(sets.map(f => f ? f.length : 0));
-		return (maxFrames || 0) + 1;
+		let maxFrames = 0;
+		if (sets) {
+			for (const f of sets) {
+				if (f && f.length > maxFrames) {
+					maxFrames = f.length;
+				}
+			}
+		}
+		return maxFrames + 1;
 	}
 }
 

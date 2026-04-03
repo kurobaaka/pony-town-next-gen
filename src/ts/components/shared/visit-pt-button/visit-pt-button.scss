@@ -15,15 +15,22 @@
 .btn-pt {
 	padding: 1.0rem;
 	font-weight: 500;
+	font-size: 1.1rem;
 	//height: 60px;
 }
 
 .pt-logo {
 	position: absolute;
-	left: 8px;
-	top: 6px;
-	width: 37px;
-	height: 47px;
+	left: 6px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 56px;
+	height: 46px;
+
+	fa-icon {
+		font-size: 40px;
+		line-height: 1;
+	}
 
 	@media (max-width: 320px) {
 		display: none;

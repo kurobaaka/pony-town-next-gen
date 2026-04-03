@@ -33,6 +33,7 @@ export interface AppConfig {
 	assetsPath?: string;
 	season?: string;
 	holiday?: string;
+	displayVersion?: string;
 	oauth: { [key: string]: any };
 	servers: ServerConfig[];
 	facebookAppId?: string;
@@ -59,8 +60,11 @@ export interface AppArgs {
 }
 
 export const args = argv as AppArgs;
-export const { version, description }: AppPackage = require('../../../package.json');
+export const { version: packageVersion, description }: AppPackage = require('../../../package.json');
 export const config: AppConfig = require('../../../config.json');
+
+// Use displayVersion for UI display, fallback to package version
+export const version = config.displayVersion || packageVersion;
 
 // append / to host if the server op forgot it
 if (!config.host.endsWith('/')) {

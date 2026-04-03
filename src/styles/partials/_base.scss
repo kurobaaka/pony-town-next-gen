@@ -135,4 +135,14 @@ html, body {
 	padding-left: 6px;
 	color: rgb(225, 145, 6);
 	animation: spin_4991 7s infinite;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+@keyframes spin_4991 {
+	0% { opacity: 0; }
+	10% { opacity: 1; }
+	90% { opacity: 1; }
+	100% { opacity: 0; }
 }

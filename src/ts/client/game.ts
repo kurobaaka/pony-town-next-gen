@@ -488,6 +488,21 @@ export class PonyTownGame implements Game {
 				if (!this.settings.browser.disableFKeys) {
 					this.settings.account.seeThroughObjects = !this.settings.account.seeThroughObjects;
 					this.settings.saveAccountSettings(this.settings.account);
+					const message = this.settings.account.seeThroughObjects
+						? 'Включён показ сквозь объекты'
+						: 'Отключён показ сквозь объекты';
+					this.announcements.next(message);
+				}
+			});
+
+			this.input.onPressed(Key.F6, () => {
+				if (!this.settings.browser.disableFKeys) {
+					this.settings.account.disableUI = !this.settings.account.disableUI;
+					this.settings.saveAccountSettings(this.settings.account);
+					const message = this.settings.account.disableUI
+						? 'Отключён интерфейс'
+						: 'Включён интерфейс';
+					this.announcements.next(message);
 				}
 			});
 
@@ -931,7 +946,8 @@ export class PonyTownGame implements Game {
 			const walk = input.isMovementFromButtons ? (this.settings.browser.walkByDefault ? !shift : shift) : false;
 			const flags = getMovementFlag(x, y, walk);
 			// apply server-provided speed multiplier if present (default 1)
-			const speed = flagsToSpeed(flags) * ((player as any).speedMultiplier || 1);
+			// apply optional server-specified speed multiplier
+		const speed = flagsToSpeed(flags) * (player.speedMultiplier || 1);
 			const vx = vec.x * speed;
 			const vy = vec.y * speed;
 

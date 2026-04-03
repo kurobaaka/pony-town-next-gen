@@ -9,7 +9,7 @@ import {
 	getRegionTileIndex, worldToRegionX, worldToRegionY, generateRegionCollider, invalidateRegionsCollider
 } from './region';
 import { weatherRain, splash } from './entities';
-import { releaseEntity, isMoving, isHidden, isDrawable, isPonyFlying } from './entityUtils';
+import { releaseEntity, isMoving, isHidden, isDrawable, isPonyFlying, getChatBubbles } from './entityUtils';
 import { updatePonyEntity, invalidatePalettesForPony, ensurePonyInfoDecoded, isPony, isPonyOnTheGround } from './pony';
 import { getTileHeight, updateTileIndices, isInWater } from '../client/tileUtils';
 import { toScreenX, toScreenY, toScreenYWithZ, rectToScreen, toWorldZ } from './positionUtils';
@@ -635,16 +635,28 @@ export function updateEntities(game: PonyTownGame, gameTime: number, delta: numb
 
 	for (let i = map.entitiesWithChat.length - 1; i >= 0; i--) {
 		const entity = map.entitiesWithChat[i];
-		const says = entity.says!;
+		const bubbles = getChatBubbles(entity).slice();
 
-		if (says.timer) {
-			says.timer -= delta;
+		for (let j = bubbles.length - 1; j >= 0; j--) {
+			const says = bubbles[j];
 
-			if (says.timer < 0) {
-				says.timer = 0;
-				entity.says = undefined;
-				map.entitiesWithChat.splice(i, 1);
+			if (says.timer) {
+				says.timer -= delta;
+
+				if (says.timer < 0) {
+					says.timer = 0;
+					bubbles.splice(j, 1);
+				}
 			}
+		}
+
+		if (bubbles.length) {
+			entity.chatBubbles = bubbles;
+			entity.says = bubbles[0];
+		} else {
+			entity.chatBubbles = undefined;
+			entity.says = undefined;
+			map.entitiesWithChat.splice(i, 1);
 		}
 	}
 

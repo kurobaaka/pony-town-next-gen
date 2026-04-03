@@ -158,6 +158,10 @@ export class SettingsModal implements OnInit, OnDestroy {
 			this.account.filterWords = '';
 		}
 
+		if (this.account.showTypingIndicator === undefined) {
+			this.account.showTypingIndicator = true;
+		}
+
 		if (this.browser.graphicsQuality === undefined) {
 			this.browser.graphicsQuality = this.maxGraphicsQualityValue;
 		}

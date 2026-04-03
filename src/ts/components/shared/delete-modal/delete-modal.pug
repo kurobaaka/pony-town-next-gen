@@ -1,13 +1,11 @@
 .modal-header.d-none.d-sm-block
 	h4.modal-title Delete Character
 
-.modal-body
+.modal-body.delete-modal-body
 	p.mb-3 Are you sure you want to delete <strong>{{name}}</strong>? This will permanently remove the character without possibility of recovery.
 
-.row.justify-content-center
-	.col-12.col-sm-6.col-md-5
-		.character-preview-wrapper
-			character-preview([pony]="pony" [noBackground]="true" [noShadow]="true" [scale]="3")
+	.character-preview-wrapper
+		character-preview.delete-modal-preview([pony]="pony" [noBackground]="true" [noShadow]="true" [scale]="3")
 
 .modal-footer.justify-content-end
 	button.btn.btn-outline-secondary((click)="closeModal()") Cancel

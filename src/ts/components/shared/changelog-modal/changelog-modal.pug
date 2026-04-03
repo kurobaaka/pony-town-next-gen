@@ -5,18 +5,14 @@
 			span(aria-hidden='true') ×
 
 .modal-body.text-large
-	-// About section with update GIF
+	-// About section with update PNG
 	.update-about
-		.image-box(style="background: url('/assets/images/update-a54dc07f62.gif') 0% 0% / cover;")
+		.image-box(style="background: url('/assets/images/update_previews/season1.png') 0% 0% / cover;")
 		.about-text
 			p Welcome to a new update!
 
 	.changelog-container
-		.changelog-list
-			div(*ngFor="let v of changelog")
-				h4 {{v.version}}
-				ul
-					li(*ngFor="let c of v.changes" [innerHTML]="c")
+		changelog-view(*ngIf="changelogResponse" [changelogResponse]="changelogResponse")
 
 	//- Debug option: always show after loading
 	.mt-4(*ngIf="debug")

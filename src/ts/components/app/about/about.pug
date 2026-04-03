@@ -1,5 +1,6 @@
 h1(focusTitle) About
 
+
 .row.text-large
 	.col-lg-7
 		p.lead A Pony Town custom server
@@ -21,7 +22,9 @@ h1(focusTitle) About
 			server with WebSockets for communication.
 			User interface is built using #[a(href="https://angular.io/") Angular]
 			framework and the game itself is using WebGL for rendering graphics.
-
+		p.
+		strong Game Version:
+			| {{ shortVersion || version }}
 		div(*ngIf="credits.length")
 			h2 The Team
 
@@ -53,11 +56,18 @@ h1(focusTitle) About
 	.col-lg-5
 
 		h2 Changelog
+		-// About section with update PNG
+		.update-about
+			.image-box(style="background: url('/assets/images/update_previews/season1.png') 0% 0% / cover;")
+			.about-text
+				p Welcome to a new update!
 
-		div(*ngFor="let v of changelog")
-			h4 {{v.version}}
-			ul
-				li(*ngFor="let c of v.changes" [innerHTML]="c")
+		changelog-view(*ngIf="changelogResponse" [rawEntries]="changelogResponse.public")
+
+		hr
+
+		h2 Dev Changelog
+		changelog-view(*ngIf="changelogResponse" [rawEntries]="changelogResponse.dev")
 
 .text-center.text-muted
 	.tinyface

@@ -64,6 +64,12 @@ ng-template(#toyModal)
 			a.dropdown-item((click)="unhideAllHiddenPlayers()").mb-1
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| Unhide players (temporary)
+			a.dropdown-item((click)="toggleSeeThrough()").mb-1
+				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
+				| {{ seeThroughButtonText }}
+			a.dropdown-item((click)="toggleDisableUI()").mb-1
+				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
+				| {{ disableUIButtonText }}
 			a.dropdown-item((click)="openSettings()").mb-1
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| Settings

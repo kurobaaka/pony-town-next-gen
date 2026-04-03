@@ -33,17 +33,17 @@ export class ToolsChat implements AfterViewInit {
 	readonly starIcon = faStar;
 	@ViewChild('canvas', { static: true }) element!: ElementRef;
 	messages: Message[] = [
-		{ label: 'Chat message', color: getMessageColor(MessageType.Chat) },
-		{ label: 'System message', color: getMessageColor(MessageType.System) },
-		{ label: 'Admin message', color: getMessageColor(MessageType.Admin) },
-		{ label: 'Mod message', color: getMessageColor(MessageType.Mod) },
-		{ label: 'Announcement message', color: getMessageColor(MessageType.Announcement) },
-		{ label: 'Party message', color: getMessageColor(MessageType.Party) },
-		{ label: 'Thinking message', color: getMessageColor(MessageType.Thinking) },
-		{ label: 'PartyThinking message', color: getMessageColor(MessageType.PartyThinking) },
-		{ label: 'PartyAnnouncement message', color: getMessageColor(MessageType.PartyAnnouncement) },
+		{ label: 'Сообщение чата', color: getMessageColor(MessageType.Chat) },
+		{ label: 'Системное сообщение', color: getMessageColor(MessageType.System) },
+		{ label: 'Сообщение администратора', color: getMessageColor(MessageType.Admin) },
+		{ label: 'Сообщение модератора', color: getMessageColor(MessageType.Mod) },
+		{ label: 'Сообщение анонса', color: getMessageColor(MessageType.Announcement) },
+		{ label: 'Сообщение пати', color: getMessageColor(MessageType.Party) },
+		{ label: 'Сообщение размышления', color: getMessageColor(MessageType.Thinking) },
+		{ label: 'Сообщение размышления пати', color: getMessageColor(MessageType.PartyThinking) },
+		{ label: 'Сообщение анонса пати', color: getMessageColor(MessageType.PartyAnnouncement) },
 		// {
-		// 	label: 'PartyAnnouncement msg ⚧', color: WHITE,
+		{ label: 'PartyAnnouncement msg ⚧', color: WHITE, },
 		// 	palette: () => mockPaletteManager.add([
 		// 		TRANSPARENT,
 		// 		ANNOUNCEMENT_COLOR,
@@ -82,6 +82,12 @@ export class ToolsChat implements AfterViewInit {
 		{ label: 'DEVELOPER tag', color: ADMIN_COLOR, font: () => fontSmallPal },
 		{ label: 'SUPPORTER tag', color: PATREON_COLOR, font: () => fontSmallPal },
 		{ label: 'HIDDEN tag', color: ANNOUNCEMENT_COLOR, font: () => fontSmallPal },
+		{ label: 'Announcement name', color: ANNOUNCEMENT_COLOR, font: () => fontPal },
+		{ label: 'МОДЕРАТОР tag', color: MOD_COLOR, font: () => fontSmallPal },
+		{ label: 'РАЗРАБОТЧИК tag', color: ADMIN_COLOR, font: () => fontSmallPal },
+		{ label: 'САППОРТЕР tag', color: PATREON_COLOR, font: () => fontSmallPal },
+		{ label: 'СКРЫТЫЙ tag', color: ANNOUNCEMENT_COLOR, font: () => fontSmallPal },
+		
 	];
 	private bg = GRASS_COLOR;
 	private initialized = false;
@@ -115,13 +121,17 @@ export class ToolsChat implements AfterViewInit {
 			// ---
 
 			drawOutlinedText(
-				batch, '<SUPPORTER>', fontSmallPal, PATREON_COLOR, OUTLINE_COLOR, 190, 120, { palette: palettes.smallFont.white });
-
+				batch, '', fontSmallPal, PATREON_COLOR, OUTLINE_COLOR, 190, 120, { palette: palettes.smallFont.white });
 			// names
 
-			drawNamePlate(batch, 'Some name 1', 220, 150, DrawNameFlags.None, palettes, 'sup1');
-			drawNamePlate(batch, 'Some name 2', 220, 175, DrawNameFlags.None, palettes, 'sup2');
-			drawNamePlate(batch, 'Some name 3', 220, 200, DrawNameFlags.None, palettes, 'sup3');
+			drawNamePlate(batch, 'Тег красного саппа', 220, 170, DrawNameFlags.None, palettes, 'sup1');
+			drawNamePlate(batch, 'Тег бронзового саппа', 220, 195, DrawNameFlags.None, palettes, 'sup2');
+			drawNamePlate(batch, 'Тег золотого саппа', 220, 220, DrawNameFlags.None, palettes, 'sup3');
+			drawNamePlate(batch, 'Тег разработчика', 220, 245, DrawNameFlags.None, palettes, 'dev');
+			drawNamePlate(batch, 'Тег художника', 220, 270, DrawNameFlags.None, palettes, 'dev:art');
+			drawNamePlate(batch, 'Тег музыканта', 220, 295, DrawNameFlags.None, palettes, 'dev:music');
+			drawNamePlate(batch, 'Тег модератора', 220, 320, DrawNameFlags.None, palettes, 'mod');
+			drawNamePlate(batch, 'Тег скрытого игрока', 220, 345, DrawNameFlags.None, palettes, 'hidden');
 
 			// speech baloons
 
@@ -159,7 +169,7 @@ export class ToolsChat implements AfterViewInit {
 			drawText(batch, '<SUPPÓĄ⚧RTER>', fontSmallPal, WHITE, 20, 210, { palette: palette3 });
 		});
 
-		const canvas3 = drawCanvas(500, 400, sprites.paletteSpriteSheet, undefined, batch => {
+		const canvas3 = drawCanvas(900, 400, sprites.paletteSpriteSheet, undefined, batch => {
 			/* tslint:disable */
 			const loremIpsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce scelerisque interdum scelerisque. Suspendisse malesuada, enim in viverra ornare, dui ex laoreet ipsum, at mollis orci felis vitae ipsum. In faucibus venenatis augue, ac ornare libero. Etiam vitae aliquet neque.';
 			const text = lineBreak(loremIpsum, fontPal, 200);

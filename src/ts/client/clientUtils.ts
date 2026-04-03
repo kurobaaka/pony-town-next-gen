@@ -95,6 +95,13 @@ function isValidForName(c: number): boolean {
 	return isValid(c) && !isInvalid(c);
 }
 
+export function initLoader() {
+	const words = document.querySelectorAll('.word');
+	words.forEach((word, index) => {
+		(word as HTMLElement).style.animationDelay = `${index * 0.2}s`;
+	});
+}
+
 function isValidForMessage(c: number): boolean {
 	return (isValid(c) || isValid2(c)) && !isInvalid(c);
 }
@@ -448,7 +455,7 @@ export function hasFeatureFlag(flag: keyof ServerFeatureFlags) {
 
 export function hardReload() {
 	unregisterServiceWorker()
-		.then(() => location.reload(true));
+		.then(() => location.reload());
 }
 
 const LOGGING = false;

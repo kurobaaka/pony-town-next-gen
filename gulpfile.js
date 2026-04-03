@@ -96,17 +96,27 @@ const sprites = () => Promise.resolve() // del(['tools/output/images/*'])
 		.pipe(gulp.dest('assets/images')));
 
 const changelog = cb => {
-	const changelog = readFile('CHANGELOG.md');
-	const tree = markdownTree(changelog);
-	const object = config.nochangelog ? [] : tree.children.map(c => ({
-		version: c.text,
-		changes: c.tokens
-			.map(t => t.text)
-			.filter(x => x)
-			.map(x => x.replace(/^\[test\]/, '<span class="badge badge-secondary">test</span>')),
-	}));
+	const parseFile = (path) => {
+		if (!fs.existsSync(path)) {
+			return [];
+		}
+
+		const text = readFile(path);
+		const tree = markdownTree(text);
+		return tree.children.map(c => ({
+			version: (c.text || '').trim(),
+			changes: c.tokens
+				.map(t => t.text)
+				.filter(x => x)
+				.map(x => x.replace(/^\[test\]/, '<span class="badge badge-secondary">test</span>')),
+		}));
+	};
+
+	const publicEntries = config.nochangelog ? [] : parseFile('CHANGELOG.md');
+	const devEntries = config.nochangelog ? [] : parseFile('DEVCHANGELOG.md');
+
 	const type = `{ version: string; changes: string[]; }[]`;
-	const code = `/* tslint:disable */\n\nexport const CHANGELOG: ${type} = ${JSON.stringify(object, null, 2)};\n`;
+	const code = `/* tslint:disable */\n\nexport const CHANGELOG_PUBLIC: ${type} = ${JSON.stringify(publicEntries, null, 2)};\n\nexport const CHANGELOG_DEV: ${type} = ${JSON.stringify(devEntries, null, 2)};\n\nexport const CHANGELOG_ALL: ${type} = ${JSON.stringify([...publicEntries, ...devEntries], null, 2)};\n`;
 	fs.writeFile('src/ts/generated/changelog.ts', code, 'utf8', cb);
 };
 
@@ -114,32 +124,14 @@ const icons = cb => {
 	const root1 = path.join('node_modules', '@fortawesome', 'free-solid-svg-icons');
 	const root2 = path.join('node_modules', '@fortawesome', 'free-brands-svg-icons');
 
-	// read all icon names used in the client icons.ts file
+	const getIconCode = src => JSON.stringify(require(`./${src}`).definition);
 	const iconsTs = readFile('src/ts/client/icons.ts');
 	const matched = _.uniq(iconsTs.match(/\bfa[A-Z]\S*\b/g));
 
-	// helper that attempts to require a fontawesome module, returns null on failure
-	const getIconCode = src => {
-		try {
-			return JSON.stringify(require(`./${src}`).definition);
-		} catch (e) {
-			console.warn(`warning: failed to load icon ${src}`);
-			return null;
-		}
-	};
-
-	const icons = matched.map(m => {
-		const solid = path.join(root1, `${m}.js`);
-		const brands = path.join(root2, `${m}.js`);
-		let code = null;
-		if (fs.existsSync(solid)) {
-			code = getIconCode(solid);
-		} else if (fs.existsSync(brands)) {
-			code = getIconCode(brands);
-		}
-		if (!code) return null;
-		return { name: m, code };
-	}).filter(x => x).sort((a, b) => a.name.localeCompare(b.name));
+	const icons = matched.map(m => ({
+		name: m,
+		code: fs.existsSync(path.join(root1, `${m}.js`)) ? getIconCode(path.join(root1, `${m}.js`)) : getIconCode(path.join(root2, `${m}.js`)),
+	})).sort((a, b) => a.name.localeCompare(b.name));
 
 	const code = `/* tslint:disable */\n\n${icons.map(({ name, code }) => `export const ${name} = ${code};`).join('\n')}`;
 	fs.writeFile('src/ts/generated/fa-icons.ts', lintCode(code), 'utf8', cb);

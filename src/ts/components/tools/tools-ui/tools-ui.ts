@@ -16,7 +16,7 @@ import { decompressPonyString } from '../../../common/compressPony';
 import { getAllTags } from '../../../common/tags';
 import { Model } from '../../services/model';
 import { isPartyLeader } from '../../../client/partyUtils';
-import { createPony } from '../../../common/pony';
+import { createPony, getPaletteInfo } from '../../../common/pony';
 import { serializeActions, deserializeActions } from '../../../client/buttonActions';
 import { initializeToys } from '../../../client/ponyDraw';
 import { ACTION_EXPRESSION_BG, updateActionColor } from '../../../common/colors';
@@ -78,6 +78,10 @@ export class ToolsUI implements OnInit, OnDestroy {
 	animationFrame: any;
 	virtualItems = times(1000, i => ({ value: i, name: `This is item ${i}`, color: colors[i % colors.length] }));
 	virtualItems2 = [{ name: 'An item 0' }];
+	get previewPony() {
+		return this.selected ? getPaletteInfo(this.selected) : this.pony;
+	}
+	showCharacterPreview = false;
 	constructor(
 		private game: PonyTownGame,
 		private zone: NgZone,

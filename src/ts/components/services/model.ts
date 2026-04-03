@@ -7,8 +7,7 @@ import { HASH } from '../../generated/hash';
 import {
 	AccountData, UpdateAccountData, AccountSettings, GameStatus, SocialSiteInfo, PonyObject, JoinResponse,
 	OAuthProvider, EntitiesEditorInfo, FriendData, PalettePonyInfo, HiddenPlayer
-} from '../../common/interfaces';
-import { createDefaultPony, syncLockedPonyInfo, mockPaletteManager } from '../../common/ponyInfo';
+} from '../../common/interfaces';import { ChangelogResponse } from '../../common/changelogUtils';import { createDefaultPony, syncLockedPonyInfo, mockPaletteManager } from '../../common/ponyInfo';
 import { removeById, observableToPromise, delay, computeFriendsCRC } from '../../common/utils';
 import { isMod, getSupporterInviteLimit, getCharacterLimit } from '../../common/accountUtils';
 import {
@@ -350,6 +349,9 @@ export class Model {
 	}
 	getFriends() {
 		return this.post<FriendData[]>('/api/get-friends', {});
+	}
+	fetchChangelog() {
+		return observableToPromise(this.http.get<ChangelogResponse>('/api2/changelog'));
 	}
 	// ponies
 	savePony(pony: PonyObject, fast = false) {

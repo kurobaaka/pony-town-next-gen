@@ -21,14 +21,20 @@
 				.row.justify-content-center.mb-3
 					.col-12.col-sm-6.col-md-5
 						.character-preview-wrapper
-							character-preview(
-								[pony]="pony.ponyInfo"
-								[name]="pony.name"
-								[tag]="getPonyTag(pony)"
-								[noBackground]="false"
-								[noShadow]="false"
-								[scale]="2")
+							character-preview(*ngIf="pony.ponyInfo"
+							[pony]="pony.ponyInfo"
+							[name]="pony.name"
+							[tag]="getPonyTag(pony)"
+							[noBackground]="false"
+							[noShadow]="false"
+							[scale]="3")
 				hr(*ngIf="!$last")
+
+	div.import-count-info(*ngIf="hasManyPonies")
+		p
+			| You have imported more than 3 ponies. Click the button below to toggle preview mode.
+		button.btn.btn-sm.btn-default((click)="toggleShowPreviews()")
+			| {{ previewToggleLabel }}
 
 .modal-footer.justify-content-end
 	button.btn.btn-outline-secondary((click)="closeModal()") Cancel

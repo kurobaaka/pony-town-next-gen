@@ -169,60 +169,56 @@ h1(focusTitle) Help
 						li <code>/removetoolbox</code> - removes toolbox from the house (need to be alone in the house or a party leader)
 						li <code>/restoretoolbox</code> - restores toolbox to the house (need to be alone in the house or a party leader)
 					
-				-// supporter commands
-				li(*ngIf="isSupporter || isMod")
-					strong Supporter commands (visible for supporters and staff)
-				li(*ngIf="isSupporter || isMod") <code>/swap &lt;name&gt;</code> - switch to one of your characters
-				li(*ngIf="isSupporter || isMod")
+			h3.mt-3(*ngIf="isSupporter || isMod") Supporter commands (visible for supporters and staff)
+			ul.spaced-list(*ngIf="isSupporter || isMod")
+				li <code>/swap &lt;name&gt;</code> - switch to one of your characters
+				li
 					small Supporter chat: use <code>/ss</code> for global supporter chat, and <code>/s1</code>, <code>/s2</code>, <code>/s3</code> for level‑specific supporter channels
 
-				-// moderator commands
-				li(*ngIf="isMod")
-					strong Moderator commands (visible only to mods/admins)
-				li(*ngIf="isMod") <code>/m &lt;message&gt;</code> - send a moderated broadcast
-				li(*ngIf="isMod") <code>/emotetest</code> - list all emotes for testing
-				li(*ngIf="isMod") <code>/goto &lt;map&gt; [instance]</code> - teleport to any map spawn
-				li(*ngIf="isMod") <code>/speed &lt;value|reset&gt;</code> - adjust your movement speed
-				li(*ngIf="isMod") <code>/tp &lt;location|x y|to &lt;player&gt;|here &lt;player&gt;|?</code> - teleport helper
-				li(*ngIf="isMod") <code>/locations</code> - list named spawns on current map
-				li(*ngIf="isMod") <code>/players</code> - list players on map and server
-				li(*ngIf="isMod") <code>/maps</code> - list all server maps
-				li(*ngIf="isMod") <code>/map</code> - show info about current map
+			h3.mt-3(*ngIf="isMod") Moderator commands (visible only to mods/admins)
+			ul.spaced-list(*ngIf="isMod")
+				li <code>/m &lt;message&gt;</code> - send a moderated broadcast
+				li <code>/emotetest</code> - list all emotes for testing
+				li <code>/goto &lt;map&gt; [instance]</code> - teleport to any map spawn
+				li <code>/speed &lt;value|reset&gt;</code> - adjust your movement speed
+				li <code>/tp &lt;location|x y|to &lt;player&gt;|here &lt;player&gt;|?</code> - teleport helper
+				li <code>/locations</code> - list named spawns on current map
+				li <code>/players</code> - list players on map and server
+				li <code>/maps</code> - list all server maps
+				li <code>/map</code> - show info about current map
 
-				-// admin commands
-				li(*ngIf="isAdmin || isSuperadmin")
-					strong Admin commands (requires admin or higher)
-				li(*ngIf="isAdmin || isSuperadmin") <code>/a &lt;message&gt;</code> - send announcement
-				li(*ngIf="isAdmin || isSuperadmin") <code>/time &lt;HH:MM|day|night|?&gt;</code> - change server time (includes freeze and help)
-				li(*ngIf="isAdmin || isSuperadmin") <code>/collect &lt;kind&gt; [amount|clear]</code> - adjust counters (gift/egg/etc.)
-				li(*ngIf="isAdmin || isSuperadmin") <code>/setplaytime &lt;sec|reset&gt;</code> - modify your recorded playtime (admin only)
-				li(*ngIf="isAdmin || isSuperadmin") <code>/setcreated &lt;YYYY-MM-DD|reset&gt;</code> - change account creation date (admin only)
-				li(*ngIf="isAdmin || isSuperadmin") <code>/togglerestore</code> - toggle terrain restoration option
-				li(*ngIf="isAdmin || isSuperadmin") <code>/resettiles</code> - reset tiles in current map to original
-				li(*ngIf="isAdmin || isSuperadmin") <code>/season &lt;season&gt; [&lt;holiday&gt;]</code> - change world season (BETA)
-				li(*ngIf="isAdmin || isSuperadmin") <code>/weather &lt;none|rain&gt;</code> - change map weather (BETA)
+			h3.mt-3(*ngIf="isAdmin || isSuperadmin") Admin commands (requires admin or higher)
+			ul.spaced-list(*ngIf="isAdmin || isSuperadmin")
+				li <code>/a &lt;message&gt;</code> - send announcement
+				li <code>/time &lt;HH:MM|day|night|?&gt;</code> - change server time (includes freeze and help)
+				li <code>/collect &lt;kind&gt; [amount|clear]</code> - adjust counters (gift/egg/etc.)
+				li <code>/setplaytime &lt;sec|reset&gt;</code> - modify your recorded playtime (admin only)
+				li <code>/setcreated &lt;YYYY-MM-DD|reset&gt;</code> - change account creation date (admin only)
+				li <code>/togglerestore</code> - toggle terrain restoration option
+				li <code>/resettiles</code> - reset tiles in current map to original
+				li <code>/season &lt;season&gt; [&lt;holiday&gt;]</code> - change world season (BETA)
+				li <code>/weather &lt;none|rain&gt;</code> - change map weather (BETA)
 
-				-// superadmin commands
-				li(*ngIf="isSuperadmin")
-					strong Superadmin commands (highest privilege)
-				li(*ngIf="isSuperadmin") <code>/update</code> - prepare server for update
-				li(*ngIf="isSuperadmin") <code>/shutdown</code> - shutdown the server
-				li(*ngIf="isSuperadmin") <code>/loadmap &lt;name&gt;</code> - load a saved map from store
-				li(*ngIf="isSuperadmin") <code>/savemap &lt;name&gt;</code> - save current map as JSON
-				li(*ngIf="isSuperadmin") <code>/savemapbin &lt;name&gt;</code> - save map as binary variant
-				li(*ngIf="isSuperadmin") <code>/saveentities &lt;name&gt;</code> - dump current entities
-				li(*ngIf="isSuperadmin") <code>/savehides</code> - export hide data
-				li(*ngIf="isSuperadmin") <code>/test</code> - developer debug command
-				li(*ngIf="isSuperadmin") <code>/spamchat</code> - toggle spam messages (BETA)
-				li(*ngIf="isSuperadmin") <code>/noclouds</code> - remove clouds (BETA)
-				li(*ngIf="isSuperadmin") <code>/msg</code> - send a debug message via special entities (BETA)
-				li(*ngIf="isSuperadmin") <code>/hold &lt;name&gt;</code> - hold specific item (BETA)
-				li(*ngIf="isSuperadmin") <code>/toy &lt;number&gt;</code> - hold toy by id (BETA)
-				li(*ngIf="isSuperadmin") <code>/dc</code> - disconnect without saving (superadmin)
-				li(*ngIf="isSuperadmin") <code>/disconnect</code> - normal disconnect (superadmin)
-				li(*ngIf="isSuperadmin") <code>/info &lt;id&gt;</code> - inspect an entity (superadmin)
-				li(*ngIf="isSuperadmin") <code>/collider</code> - save collider data for current region (superadmin)
-				li(*ngIf="isSuperadmin") <code>/testparty</code> - debug party invitations (superadmin)
+			h3.mt-3(*ngIf="isSuperadmin") Superadmin commands (highest privilege)
+			ul.spaced-list(*ngIf="isSuperadmin")
+				li <code>/update</code> - prepare server for update
+				li <code>/shutdown</code> - shutdown the server
+				li <code>/loadmap &lt;name&gt;</code> - load a saved map from store
+				li <code>/savemap &lt;name&gt;</code> - save current map as JSON
+				li <code>/savemapbin &lt;name&gt;</code> - save map as binary variant
+				li <code>/saveentities &lt;name&gt;</code> - dump current entities
+				li <code>/savehides</code> - export hide data
+				li <code>/test</code> - developer debug command
+				li <code>/spamchat</code> - toggle spam messages (BETA)
+				li <code>/noclouds</code> - remove clouds (BETA)
+				li <code>/msg</code> - send a debug message via special entities (BETA)
+				li <code>/hold &lt;name&gt;</code> - hold specific item (BETA)
+				li <code>/toy &lt;number&gt;</code> - hold toy by id (BETA)
+				li <code>/dc</code> - disconnect without saving (superadmin)
+				li <code>/disconnect</code> - normal disconnect (superadmin)
+				li <code>/info &lt;id&gt;</code> - inspect an entity (superadmin)
+				li <code>/collider</code> - save collider data for current region (superadmin)
+				li <code>/testparty</code> - debug party invitations (superadmin)
 
 		section
 			h2 Chat emojis

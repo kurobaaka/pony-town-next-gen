@@ -1,0 +1,19 @@
+div.changelog-view
+	div.changelog-view-controls.mb-3
+		button.btn.btn-outline-secondary.mr-2(type='button' [disabled]='!canShowPrevious' (click)='showPreviousPatch()')
+			| Показать пред патч
+		button.btn.btn-outline-secondary(type='button' [disabled]='!canShowAll' (click)='showAllPatches()')
+			| Показать все патчи и сезоны
+
+	div.changelog-season(*ngFor='let season of seasonGroups')
+		h2.changelog-season-title Season {{season.season}}
+		img.changelog-season-image([src]='getSeasonImageUrl(season.season)' [alt]="'Season ' + season.season")
+
+		div(changelog-season-patch="")
+			div.changelog-patch(*ngFor='let patch of season.patches; let i = index')
+				div(*ngIf="isPatchVisible(patch)")
+					h4.changelog-patch-title {{patch.extraTitle}}
+					ul
+						li(*ngFor='let change of patch.changes' [innerHTML]='change')
+					div(*ngIf="i < season.patches.length - 1")
+						hr

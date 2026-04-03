@@ -5,7 +5,8 @@ import { range } from 'lodash';
 import { getWriterBuffer } from 'ag-sockets';
 import { encodeString } from 'ag-sockets/dist/utf8';
 import {
-	ChatType, TileType, Action, PlayerAction, ModAction, Eye, Muzzle, SelectFlags, InfoFlags
+	ChatType, TileType, Action, PlayerAction, ModAction, Eye, Muzzle, SelectFlags, InfoFlags,
+	typingIndicatorMessage, MessageType
 } from '../../common/interfaces';
 import { CharacterState, ServerConfig, GameServerSettings } from '../../common/adminInterfaces';
 import { IClient, AccountService } from '../../server/serverInterfaces';
@@ -162,6 +163,18 @@ describe('ServerActions', () => {
 			serverActions.say(0, 'hello', ChatType.Say);
 
 			assert.calledWith(say, client, 'hello', ChatType.Say, undefined, settings);
+		});
+
+		it('sends typing indicator start using message type', () => {
+			serverActions.typing(0, MessageType.Chat, true);
+
+			assert.calledWith(say, client, typingIndicatorMessage, ChatType.Say, undefined, settings);
+		});
+
+		it('sends typing indicator dismiss using message type', () => {
+			serverActions.typing(0, MessageType.Chat, false);
+
+			assert.calledWith(say, client, '.', ChatType.Say, undefined, settings);
 		});
 
 		it('throws if message is not a string', () => {

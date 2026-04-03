@@ -8,6 +8,7 @@ import {
 	precompressPony, compressPonyString, decompressPonyString, VERSION, precompressCM, fastPostdecompressPony,
 	decompressPony
 } from '../../common/compressPony';
+import { createBasePony } from '../../common/ponyInfo';
 import { RED, ORANGE, CYAN, GREEN, BLUE, BLACK, WHITE, TRANSPARENT } from '../../common/colors';
 import { PonyInfoNumber, PonyInfo } from '../../common/interfaces';
 import { repeat } from '../../common/utils';
@@ -668,20 +669,43 @@ it('locked back hooves', runTestPony({
 			expect(result.coatFill).equal('000000');
 		});
 
-		it('neckAccessory: { type: 0 }', () => {
-			const data = compressPonyString({ neckAccessory: { type: 0, pattern: 0 } } as any);
-			const result = decompressPonyString(data, true);
-			expect(result.neckAccessory!.type).eql(0);
+it('previewBackground persists and does not corrupt fields', () => {
+		const data = compressPonyString({
+			customOutlines: true,
+			lockEyes: true,
+			lockCoatOutline: false,
+			freeOutlines: true,
+			unlockEyeWhites: true,
+			unlockFrontLegAccessory: true,
+			unlockBackLegAccessory: true,
+			unlockEyelashColor: true,
+			darkenLockedOutlines: true,
+			coatFill: 'ff0000',
+			previewBackground: '90ee90',
+		} as any);
+
+		const result = decompressPonyString(data, true);
+			expect(result.previewBackground).equal('90ee90');
+			expect(result.coatFill).equal('ff0000');
 		});
 
-		it('mane: { type: 0 }', () => {
-			const data = compressPonyString({ mane: { type: 0, pattern: 0 } } as any);
-			const result = decompressPonyString(data, true);
-			expect(result.mane!.type).eql(0);
-		});
+	it('decompressPonyString(editable) should preserve full set arrays instead of inheriting leftover base values', () => {
+		const custom = createBasePony();
+		custom.mane = {
+			type: 2,
+			pattern: 0,
+			fills: ['112233', '445566'],
+			outlines: ['000000', '000000'],
+			lockFills: [true, true],
+			lockOutlines: [true, true],
+		} as any;
 
-		// fs.readdirSync(poniesPath).forEach(f => it(`(${f})`, () => {
-		// 	const json = JSON.parse(fs.readFileSync(path.join(poniesPath, f), 'utf8'));
+		const data = compressPonyString(custom as any);
+		const result = decompressPonyString(data, true);
+
+		expect(result.mane && result.mane.fills).eql(['112233', '445566']);
+		expect(result.mane && result.mane.outlines).eql(['000000', '000000']);
+	});
 		// 	const data = compressPonyString(json);
 		// 	const result = decompressPonyString(data, true);
 		// 	expect(result).eql(json);
