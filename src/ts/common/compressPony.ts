@@ -14,7 +14,7 @@ import {
 } from '../client/ponyUtils';
 import { CM_SIZE } from './constants';
 
-export const VERSION = 6; // previous: 5
+export const VERSION = 7; // previous: 6
 
 const VERSION_BITS = 6; // max 63
 const COLORS_LENGTH_BITS = 10; // max 1024
@@ -81,6 +81,10 @@ function empty<T>(set: SpriteSet<T> | undefined): boolean {
 	return !set || !set.type;
 }
 
+function emptyMarking<T>(set: SpriteSet<T> | undefined): boolean {
+	return !set || (toInt(set.type) === 0 && toInt(set.pattern) === 0);
+}
+
 function omitMane(info: PonyInfoNumber) {
 	return empty(info.mane) && emptyOrUnlocked(info.backMane)
 		&& emptyOrUnlocked(info.tail) && emptyOrUnlocked(info.facialHair);
@@ -96,6 +100,10 @@ function omitSleeves(info: PonyInfoNumber) {
 
 function omitFrontHooves(info: PonyInfoNumber) {
 	return empty(info.frontHooves) && emptyOrUnlocked(info.backHooves);
+}
+
+function omitFrontLegs(info: PonyInfoNumber) {
+	return emptyMarking(info.frontLegs) && emptyMarking(info.backLegs);
 }
 
 function readTimes(read: ReadBits, count: number, bitsPerItem: number): number[] {
@@ -142,6 +150,92 @@ const setFields: SetDefinition[] = [
 		sets: sprites.backLegAccessories[1]!,
 		omit: info => !info.unlockBackLegAccessory || !!info.lockBackLegAccessory,
 	},
+	{
+		name: 'earsRight',
+		sets: sprites.ears!,
+		omit: info => !info.unlockEars,
+	},
+	{
+		name: 'wingsRight',
+		sets: sprites.wings[0]!,
+		omit: info => !info.unlockWings,
+	},
+	{
+		name: 'frontHoovesRight',
+		sets: frontHooves[1]!,
+		preserveOnZero: true,
+		minColors: 1,
+		omit: info => !info.unlockFrontHooves,
+	},
+	{
+		name: 'backHoovesRight',
+		sets: sprites.backLegHooves[1]!,
+		omit: info => !info.unlockBackHooves || !!info.lockBackHooves,
+	},
+	{
+		name: 'sleeveAccessoryRight',
+		sets: sprites.frontLegSleeves[1]!,
+		preserveOnZero: true,
+		omit: info => !info.unlockSleeveAccessory || omitSleeves(info),
+	},
+	{
+		name: 'waistAccessoryRight',
+		sets: sprites.waistAccessories[1]!,
+		omit: info => !info.unlockWaistAccessory,
+	},
+	{
+		name: 'waistAccessoryExtra',
+		sets: sprites.waistAccessories[1]!,
+		omit: info => !info.useExtraWaistAccessory,
+	},
+	{
+		name: 'neckAccessoryExtra',
+		sets: sprites.neckAccessories[1]!,
+		omit: info => !info.useExtraNeckAccessory,
+	},
+	{
+		name: 'facePatternExtra',
+		sets: sprites.head0[1]!,
+		preserveOnZero: true,
+		omit: info => !info.useExtraFacePattern,
+	},
+	{
+		name: 'earAccessoryExtra',
+		sets: sprites.earAccessories!,
+		omit: info => !info.earAccessoryExtra || !info.earAccessoryExtra.type,
+	},
+	{
+		name: 'faceAccessoryExtra',
+		sets: sprites.faceAccessories!,
+		omit: info => !info.faceAccessoryExtra || !info.faceAccessoryExtra.type,
+	},
+	{ name: 'body', sets: sprites.body[1]!, preserveOnZero: true },
+	{ name: 'frontLegs', sets: sprites.frontLegs[1]!, preserveOnZero: true, minColors: 1, omit: omitFrontLegs },
+	{ name: 'backLegs', sets: sprites.backLegs[1]!, omit: info => info.lockBackLegs !== false },
+	{
+		name: 'bodyRight',
+		sets: sprites.body[1]!,
+		preserveOnZero: true,
+		omit: info => !info.unlockBody,
+	},
+	{
+		name: 'bodyExtra',
+		sets: sprites.body[1]!,
+		preserveOnZero: true,
+		omit: info => !info.useExtraBody,
+	},
+	{
+		name: 'frontLegsRight',
+		sets: sprites.frontLegs[1]!,
+		preserveOnZero: true,
+		minColors: 1,
+		omit: info => !info.unlockFrontLegs,
+	},
+	{
+		name: 'backLegsRight',
+		sets: sprites.backLegs[1]!,
+		omit: info => !info.unlockBackLegs || info.lockBackLegs !== false,
+	},
 ];
 
 const booleanFields: FieldDefinition<boolean>[] = [
@@ -155,6 +249,7 @@ const booleanFields: FieldDefinition<boolean>[] = [
 			empty(info.frontLegAccessoryRight) && empty(info.backLegAccessoryRight)
 	},
 	{ name: 'eyeshadow' },
+	{ name: 'eyeshadowLeft', omit: info => !info.unlockEyeshadowColor },
 	{ name: 'blush' },
 	{ name: 'sleeping' },
 	{ name: 'tears' },
@@ -164,10 +259,29 @@ const booleanFields: FieldDefinition<boolean>[] = [
 	{ name: 'flip' },
 	{ name: 'headTurned' },
 	{ name: 'unlockEyeWhites' },
+	{ name: 'unlockEyeshadowColor' },
 	{ name: 'freeOutlines' },
 	{ name: 'unlockFrontLegAccessory' },
 	{ name: 'unlockBackLegAccessory', omit: info => !!info.lockBackLegAccessory },
 	{ name: 'unlockEyelashColor' },
+	{ name: 'lockBackHooves' },
+	{ name: 'unlockFrontHooves' },
+	{ name: 'unlockBackHooves', omit: info => !!info.lockBackHooves },
+	{
+		name: 'lockBackLegs',
+		omit: info => emptyMarking(info.frontLegs) && emptyMarking(info.backLegs),
+	},
+	{ name: 'unlockBody' },
+	{ name: 'useExtraBody' },
+	{ name: 'unlockFrontLegs' },
+	{ name: 'unlockBackLegs', omit: info => info.lockBackLegs !== false },
+	{ name: 'unlockEars' },
+	{ name: 'unlockWings' },
+	{ name: 'unlockSleeveAccessory' },
+	{ name: 'unlockWaistAccessory' },
+	{ name: 'useExtraWaistAccessory' },
+	{ name: 'useExtraNeckAccessory' },
+	{ name: 'useExtraFacePattern' },
 	{ name: 'darkenLockedOutlines', omit: info => !info.freeOutlines },
 ];
 
@@ -188,6 +302,8 @@ const colorFields: FieldDefinition<number>[] = [
 	{ name: 'eyeColorLeft', omit: info => !!info.lockEyeColor },
 	{ name: 'eyeWhites', default: WHITE },
 	{ name: 'eyeshadowColor', omit: info => !info.eyeshadow },
+	{ name: 'eyeshadowColorLeft', omit: info => !info.unlockEyeshadowColor || !info.eyeshadowLeft },
+	{ name: 'blushColor', omit: info => !info.blush },
 	{ name: 'frecklesColor', omit: info => !info.freckles, dontSave: true }, // TODO: remove
 	{ name: 'eyeWhitesLeft', default: WHITE, omit: info => !info.unlockEyeWhites },
 	{ name: 'eyelashColor' },

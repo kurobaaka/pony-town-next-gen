@@ -47,6 +47,24 @@ td, th {
 	border: solid 1px #ddd;
 }
 
+.card-body {
+	min-height: 360px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.character-preview-box {
+	display: inline-block;
+	width: 100%;
+	max-width: 460px;
+}
+
+character-preview {
+	width: 100% !important;
+	height: 350px !important;
+}
+
 .frames-locked {
 	opacity: 0.5;
 	pointer-events: none;
@@ -96,4 +114,54 @@ td, th {
 	text-align: center;
 	font-size: 10px;
 	font-weight: bold;
+}
+
+// Sticky character preview styles
+.character-preview-sticky {
+	position: relative;
+	min-height: 400px;
+}
+
+.character-preview-box {
+	transition: all 0.3s ease;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	overflow: hidden;
+
+	&.fixed {
+		position: fixed;
+		top: 20px;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 1000;
+		width: 400px;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+		background: rgba(255, 255, 255, 0.95) !important;
+		backdrop-filter: blur(10px);
+
+		character-preview {
+			height: 350px !important;
+		}
+	}
+}
+
+// Responsive adjustments
+@media (max-width: 991px) {
+	.character-preview-box.fixed {
+		width: 300px !important;
+
+		character-preview {
+			height: 280px !important;
+		}
+	}
+}
+
+@media (max-width: 767px) {
+	.character-preview-box.fixed {
+		width: 250px !important;
+
+		character-preview {
+			height: 220px !important;
+		}
+	}
 }

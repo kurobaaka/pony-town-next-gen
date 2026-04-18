@@ -32,9 +32,7 @@ h1(focusTitle) Account settings
 		div(style="margin-bottom: 100px;")
 			.form-group
 				h3.mb-3(style="color: #fff;") Account info
-				div(
-					style="background-color: #222; padding: 15px; border-radius: 5px;"
-				)
+				div.account-info-block
 					.mb-2(style="color: #9c9c9c;")
 						strong Account ID:
 						code {{account?.id || '-'}}
@@ -90,6 +88,62 @@ h1(focusTitle) Account settings
 					| Account removed successfully
 
 	.col-md-6
+		div(style="margin-bottom: 100px;")
+			.clearfix.account-supporter-section(*ngIf="showSupporter")
+				.form-group
+					h3.mb-3(style="color: #fff;")
+						fa-icon.mr-2([icon]="starIcon" [ngClass]="supporterClass")
+						| {{ isPastSupporter ? 'Past supporter' : 'Thank you for your support' }}
+
+					div.supporter-pony.float-right(*ngIf="supporterPonyInfo" (mouseenter)="supporterPony.select()" (mouseout)="supporterPony.reset()")
+						visit-pt-pony(#supporterPony [pony]="supporterPonyInfo" [name]="supporterPonyName" [tag]="supporterPonyTag" [showName]="false" [showTag]="showSupporterTag" [noShadow]="false" [topOffset]="10" [scale]="3")
+
+					div.account-info-block
+						ng-container(*ngIf="!isPastSupporter; else pastSupporterText")
+							p Your reward tier: #[b {{supporterTitle}}]
+							p Your rewards include:
+							ul
+								li(*ngFor="let r of supporterRewards") {{r}}
+
+							p.text-muted(*ngIf="supporter > 0")
+								| Use 
+								code([ngClass]="supporterClass") /ss hello
+								|  to send a message with your current supporter tier color.
+
+							p.text-muted(*ngIf="supporter > 1")
+								| Use 
+								code([ngClass]="commandClass(1)") /s1 hello
+								|  · 
+								code([ngClass]="commandClass(2)") /s2 hello
+								|  to use lower tier supporter chat colors when needed.
+
+							p.text-muted(*ngIf="supporter > 2")
+								| Use 
+								code([ngClass]="commandClass(3)") /s3 hello
+								|  to post with the tier 3 supporter chat color.
+
+							p.text-muted(*ngIf="supporter > 3")
+								| Use 
+								code([ngClass]="commandClass(4)") /s4 hello
+								|  to post with the tier 4 supporter chat color.
+
+						ng-template(#pastSupporterText)
+							p Thanks for supporting us!
+							p
+								| By now your supporter status has expired. If your Patreon subscription is still active but you no longer receive game benefits,
+								|  please contact support and we'll help you figure it out.
+
+			.clearfix.account-supporter-section(*ngIf="showSupporterInfo")
+				.form-group
+					h3.mb-3(style="color: #fff;") Supporter info
+
+					div.account-info-block
+						p.
+							You've successfully connected your Patreon account to Pony Town.
+							If you support Pony Town on Patreon your supporter info will show up here.
+						p.
+							It should take no longer than 10 minutes to register your Patreon pledges.
+
 		div(style="margin-bottom: 100px;")
 			.form-group
 				.float-right

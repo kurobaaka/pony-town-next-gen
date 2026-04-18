@@ -5,6 +5,7 @@
 	position: relative;
 	width: 100px;
 	height: 100px;
+	max-width: calc(100vw - 16px);
 }
 
 .pony-box-tags {
@@ -12,10 +13,41 @@
 	top: -1px;
 	left: 50px;
 	display: flex;
+	max-width: calc(100vw - 70px);
+	overflow: hidden;
+	z-index: 1;
+}
+
+.pony-box-tags.tag-label-collapse-1 .pony-box-tag:nth-last-child(-n + 1) .pony-box-tag-label,
+.pony-box-tags.tag-label-collapse-2 .pony-box-tag:nth-last-child(-n + 2) .pony-box-tag-label,
+.pony-box-tags.tag-label-collapse-3 .pony-box-tag:nth-last-child(-n + 3) .pony-box-tag-label,
+.pony-box-tags.tag-label-collapse-4 .pony-box-tag:nth-last-child(-n + 4) .pony-box-tag-label,
+.pony-box-tags.tag-label-collapse-5 .pony-box-tag:nth-last-child(-n + 5) .pony-box-tag-label,
+.pony-box-tags.tag-label-collapse-6 .pony-box-tag:nth-last-child(-n + 6) .pony-box-tag-label {
+	display: none;
+}
+
+.pony-box-tags.tag-label-collapse-1 .pony-box-tag:nth-last-child(-n + 1) > fa-icon,
+.pony-box-tags.tag-label-collapse-1 .pony-box-tag:nth-last-child(-n + 1) > .fa-icon,
+.pony-box-tags.tag-label-collapse-2 .pony-box-tag:nth-last-child(-n + 2) > fa-icon,
+.pony-box-tags.tag-label-collapse-2 .pony-box-tag:nth-last-child(-n + 2) > .fa-icon,
+.pony-box-tags.tag-label-collapse-3 .pony-box-tag:nth-last-child(-n + 3) > fa-icon,
+.pony-box-tags.tag-label-collapse-3 .pony-box-tag:nth-last-child(-n + 3) > .fa-icon,
+.pony-box-tags.tag-label-collapse-4 .pony-box-tag:nth-last-child(-n + 4) > fa-icon,
+.pony-box-tags.tag-label-collapse-4 .pony-box-tag:nth-last-child(-n + 4) > .fa-icon,
+.pony-box-tags.tag-label-collapse-5 .pony-box-tag:nth-last-child(-n + 5) > fa-icon,
+.pony-box-tags.tag-label-collapse-5 .pony-box-tag:nth-last-child(-n + 5) > .fa-icon,
+.pony-box-tags.tag-label-collapse-6 .pony-box-tag:nth-last-child(-n + 6) > fa-icon,
+.pony-box-tags.tag-label-collapse-6 .pony-box-tag:nth-last-child(-n + 6) > .fa-icon {
+	margin-right: 0;
 }
 
 .pony-box-tag {
 	background: #777;
+	display: inline-flex;
+	align-items: center;
+	cursor: default;
+	user-select: none;
 	text-transform: uppercase;
 	color: white;
 	font-size: 11px;
@@ -26,6 +58,14 @@
 	border-top-left-radius: 5px;
 	margin-left: 5px;
 	white-space: nowrap;
+
+	> fa-icon, > .fa-icon {
+		font-size: 0.9em;
+		width: 1em;
+		height: 1em;
+		line-height: 1;
+		margin-right: 0.2rem;
+	}
 
 	&:first-child {
 		border-top-left-radius: 0;
@@ -39,6 +79,12 @@
 
 	&.tag-mod {
 		background: $mod;
+	}
+
+	&.tag-owner {
+		background: darken($owner, 7%);
+		background: linear-gradient(to bottom, #ff9999, #ff4444 10%, #cc0000);
+		color: #3b2f1a;
 	}
 
 	&.tag-sup1 {
@@ -56,9 +102,30 @@
 		background: linear-gradient(to bottom, #fffda4, #ffde3b 10%, #fdbb0b);
 		color: #49391c;
 	}
-
+	&.tag-sup4 {
+		background: darken($supporter-4, 7%);
+		background: linear-gradient(to bottom, #b8f2c8, #8ae6a0 12.5%, #5cd98c 25%, #2ecc71 37.5%, #27ae60 50%, #229954 62.5%, #1e8449 75%, #196f3d);
+		color: #0d4d2a;
+	}
 	&.tag-friend {
 		background: $friends-color;
+	}
+
+	&.tag-party-pending {
+		background: desaturate(lighten($party-color, 8%), 35%);
+		color: #fff;
+		opacity: 0.85;
+	}
+
+	&.tag-party-member {
+		background: $party-color;
+		color: #fff;
+	}
+
+	&.tag-friend-request {
+		background: desaturate(lighten($friends-color, 8%), 35%);
+		color: #fff;
+		opacity: 0.85;
 	}
 }
 
@@ -67,21 +134,123 @@
 	position: absolute;
 	top: 15px;
 	left: 50px;
-	width: 250px;
+	width: auto;
+	min-width: 250px;
+	max-width: #{'min(560px, calc(100vw - 70px))'};
 	height: 60px;
 	border-top-right-radius: 15px;
 	border-bottom-right-radius: 15px;
 	padding-left: 58px;
+	padding-right: 8px;
+	box-sizing: border-box;
+	overflow: visible;
 	box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+	z-index: 1;
+}
+
+.pony-box:not(.pony-box-resized) .pony-box-rect {
+	transition: width 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pony-box.pony-box-wide .pony-box-rect {
+	max-width: #{'min(760px, calc(100vw - 70px))'};
+}
+
+.pony-box.pony-box-wide.pony-box-resized .pony-box-rect {
+	min-width: 110px;
+}
+
+.pony-box-resizer {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 14px;
+	z-index: 3;
+	cursor: ew-resize;
+	user-select: none;
+	background: transparent;
+	transition: transform 0.15s ease;
+}
+
+.pony-box-resizer::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 4px;
+	height: 28px;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.22);
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.pony-box-resizer:hover {
+	transform: translateX(1px);
+
+	&::after {
+		background: rgba(0, 0, 0, 0.42);
+		box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 0 6px rgba(0, 0, 0, 0.18);
+	}
+}
+
+.pony-box-name-row {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding-top: 3px;
+	padding-right: 5px;
+	min-width: 0;
 }
 
 .pony-box-name {
 	font-size: 20px;
-	padding-top: 3px;
-	padding-right: 5px;
+	flex: 1;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.pony-box-statuses {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.pony-box-status-badge {
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	line-height: 1;
+	padding: 2px 6px;
+	border-radius: 10px;
+	background: #ffd54f;
+	color: #5b4300;
+	user-select: none;
+}
+
+.pony-box-status-icon {
+	font-size: 0.98rem;
+	line-height: 1;
+}
+
+.pony-box-status-icon-afk {
+	display: none;
+	color: #8a6d00;
+}
+
+.pony-box-status-icon-offline {
+	color: #2f343a;
+	filter: drop-shadow(0 0 0.2px rgba(0, 0, 0, 0.55));
+}
+
+.pony-box-status-icon-modal {
+	color: #0b6b7f;
+	filter: drop-shadow(0 0 0.2px rgba(0, 0, 0, 0.55));
 }
 
 .pony-box-buttons {
@@ -101,6 +270,16 @@
 
 .pony-box-avatar {
 	position: absolute;
+	z-index: 2;
+}
+
+.pony-box-avatar.pony-box-avatar-draggable {
+	cursor: grab;
+	user-select: none;
+}
+
+.pony-box-avatar.pony-box-avatar-draggable.dragging {
+	cursor: grabbing;
 }
 
 .remove-confirmation {
@@ -110,4 +289,115 @@
 	top: 0;
 	right: 0;
 	height: 100%;
+}
+
+.pony-action-icon-party {
+	color: $party-color;
+}
+
+.pony-action-icon-party-remove {
+	color: #dc3545;
+}
+
+.pony-action-icon-whisper {
+	color: $chat-whisper;
+}
+
+.pony-menu-name {
+	display: flex;
+	align-items: center;
+	padding: 0.4rem 0.75rem;
+	gap: 0.5rem;
+}
+
+.pony-menu-name .name-text {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 180px;
+}
+
+.pony-menu-name .name-badges {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-left: auto;
+}
+
+
+
+.pony-box.pony-box-wide.pony-box-compact .pony-box-rect {
+	min-width: 110px;
+}
+
+.pony-box.pony-box-wide.pony-box-compact .pony-box-name {
+	max-width: 4.2ch;
+	flex: 0 1 4.2ch;
+}
+
+.pony-box.pony-box-wide.pony-box-compact .pony-box-status-badge {
+	display: none;
+}
+
+.pony-box.pony-box-wide.pony-box-compact .pony-box-status-icon-afk {
+	display: inline-flex;
+}
+
+.pony-box.pony-box-wide.pony-box-compact .pony-box-statuses {
+	gap: 0.25rem;
+}
+
+
+::ng-deep .pony-box.pony-box-wide.pony-box-compact .site-info b {
+	display: none;
+}
+
+::ng-deep .pony-box.pony-box-wide.pony-box-compact .site-info .mr-1,
+::ng-deep .pony-box.pony-box-wide.pony-box-compact .site-info .me-1 {
+	margin-right: 0 !important;
+}
+
+@media (max-width: 560px) {
+	.pony-box.pony-box-wide .pony-box-rect {
+		max-width: calc(100vw - 16px);
+	}
+
+	.pony-box.pony-box-wide .pony-box-tag {
+		padding: 1px 6px 2px 6px;
+	}
+
+	.pony-box.pony-box-wide .pony-box-tag:first-child {
+		padding-left: 40px;
+	}
+
+	.pony-box.pony-box-wide .pony-box-tag-label {
+		display: none;
+	}
+
+	.pony-box.pony-box-wide .pony-box-tag > fa-icon,
+	.pony-box.pony-box-wide .pony-box-tag > .fa-icon {
+		margin-right: 0;
+	}
+
+	.pony-box.pony-box-wide .pony-box-status-badge {
+		display: none;
+	}
+
+	.pony-box.pony-box-wide .pony-box-status-icon-afk {
+		display: inline-flex;
+	}
+
+	.pony-box.pony-box-wide .pony-box-statuses {
+		gap: 0.25rem;
+	}
+
+	:host ::ng-deep .pony-box.pony-box-wide .site-info b {
+		display: none;
+	}
+
+	:host ::ng-deep .pony-box.pony-box-wide .site-info .mr-1,
+	:host ::ng-deep .pony-box.pony-box-wide .site-info .me-1 {
+		margin-right: 0 !important;
+	}
 }

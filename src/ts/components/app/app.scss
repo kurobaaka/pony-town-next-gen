@@ -88,6 +88,15 @@ footer {
 	left: 10px;
 }
 
+.pony-box-floating {
+	position: fixed;
+	z-index: 3;
+}
+
+.pony-box-floating.dragging {
+	z-index: 4;
+}
+
 $chat-pad: 5px;
 
 #chat-box {

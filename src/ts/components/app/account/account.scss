@@ -15,3 +15,67 @@
 		background: rgba(255, 255, 255, 0.05);
 	}
 }
+
+.account-info-block {
+	background-color: #222;
+	padding: 15px;
+	border-radius: 5px;
+}
+
+.account-supporter-section {
+	.supporter-pony.float-right {
+		margin-left: 15px;
+		margin-bottom: 15px;
+		display: block;
+		cursor: pointer;
+		overflow: visible;
+
+		visit-pt-pony {
+			display: block;
+		}
+	}
+
+	code {
+		padding: 0.1rem 0.35rem;
+		border-radius: 4px;
+		background: rgba(0, 0, 0, 0.22);
+		color: #f2f2f2;
+
+		&.supporter-1,
+		&.supporter-2,
+		&.supporter-3,
+		&.supporter-4,
+		&.supporter-past {
+			font-weight: 600;
+		}
+	}
+
+	ul {
+		padding-left: 1.1rem;
+	}
+
+	p:last-child,
+	ul:last-child {
+		margin-bottom: 0;
+	}
+}
+
+.supporter-1 {
+	color: #f96955;
+}
+
+.supporter-2 {
+	color: #ffa32b;
+}
+
+.supporter-3 {
+	color: #ffcf00;
+}
+
+.supporter-4 {
+	color: #50c878;
+}
+
+.supporter-past {
+	color: #9fb4c7;
+}

@@ -14,7 +14,7 @@ import { UserError } from '../userError';
 import * as entities from '../../common/entities';
 import { includes, clamp, createValidBirthDate, parseISODate, formatISODate } from '../../common/utils';
 import { getAccountAlertMessage } from '../accountUtils';
-import { getAge } from '../../common/adminUtils';
+import { getAge, supporterLevel } from '../../common/adminUtils';
 
 export type GetAccountCharacters = ReturnType<typeof createGetAccountCharacters>;
 export type UpdateAccount = ReturnType<typeof createUpdateAccount>;
@@ -79,7 +79,32 @@ function fixUpdateAccountData(update: UpdateAccountData | undefined) {
 	return fixed;
 }
 
-function fixAccountSettings(settings: AccountSettings | undefined) {
+const DEFAULT_AFK_STATUS_MINUTES = 2;
+const DEFAULT_AFK_SLEEP_MINUTES = 5;
+const DEFAULT_AFK_KICK_MINUTES = 15;
+
+function getMaxAfkKickMinutes(level: number) {
+	if (level >= 4) return 0; // unlimited
+	if (level >= 3) return 45;
+	if (level >= 2) return 30;
+	return 15;
+}
+
+function normalizeAfkSettings(settings: AccountSettings, level: number) {
+	const maxKick = getMaxAfkKickMinutes(level);
+	const rawStatus = settings.afkStatusMinutes !== undefined ? (settings.afkStatusMinutes | 0) : DEFAULT_AFK_STATUS_MINUTES;
+	const rawSleep = settings.afkSleepMinutes !== undefined ? (settings.afkSleepMinutes | 0) : DEFAULT_AFK_SLEEP_MINUTES;
+	const rawKick = settings.afkKickMinutes !== undefined ? (settings.afkKickMinutes | 0) : DEFAULT_AFK_KICK_MINUTES;
+
+	const kick = maxKick === 0 ? Math.max(0, rawKick) : clamp(rawKick, 1, maxKick);
+	const kickLimit = kick === 0 ? 60 * 24 : kick;
+	const status = clamp(rawStatus, 1, kickLimit);
+	const sleep = clamp(rawSleep, status, kickLimit);
+
+	return { status, sleep, kick };
+}
+
+function fixAccountSettings(settings: AccountSettings | undefined, level: number) {
 	const fixed: Partial<AccountSettings> = {};
 
 	if (settings) {
@@ -137,6 +162,25 @@ function fixAccountSettings(settings: AccountSettings | undefined) {
 
 		if (settings.hidden !== undefined) {
 			fixed.hidden = !!settings.hidden;
+		}
+
+		if (settings.visibleTestingMessages !== undefined) {
+			fixed.visibleTestingMessages = !!settings.visibleTestingMessages;
+		}
+
+		if (settings.powerSaveModeInBackground !== undefined) {
+			fixed.powerSaveModeInBackground = !!settings.powerSaveModeInBackground;
+		}
+
+		if (
+			settings.afkStatusMinutes !== undefined ||
+			settings.afkSleepMinutes !== undefined ||
+			settings.afkKickMinutes !== undefined
+		) {
+			const afk = normalizeAfkSettings(settings, level);
+			fixed.afkStatusMinutes = afk.status;
+			fixed.afkSleepMinutes = afk.sleep;
+			fixed.afkKickMinutes = afk.kick;
 		}
 	}
 
@@ -232,7 +276,7 @@ export const createUpdateSettings =
 	(findAccount: FindAccountSafe) =>
 		async (account: IAccount, settings: AccountSettings | undefined) => {
 			const a = await findAccount(account._id);
-			account.settings = a.settings = { ...a.settings, ...fixAccountSettings(settings) };
+			account.settings = a.settings = { ...a.settings, ...fixAccountSettings(settings, supporterLevel(a)) };
 			await Account.updateOne({ _id: account._id }, { settings: account.settings }).exec();
 			return toAccountData(a);
 		};

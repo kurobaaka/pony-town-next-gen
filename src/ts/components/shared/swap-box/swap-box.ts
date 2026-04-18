@@ -3,7 +3,6 @@ import { PonyTownGame } from '../../../client/game';
 import { PonyObject, Action } from '../../../common/interfaces';
 import { Dropdown } from '../directives/dropdown';
 import { faClock, faExchangeAlt } from '../../../client/icons';
-import { toPalette, mockPaletteManager } from '../../../common/ponyInfo';
 import { Model } from '../../services/model';
 // import { SWAP_TIMEOUT, SECOND } from '../../../common/constants';
 
@@ -15,7 +14,6 @@ import { Model } from '../../services/model';
 export class SwapBox {
 	readonly swapIcon = faExchangeAlt;
 	readonly timerIcon = faClock;
-	previewInfo: any;
 	@ViewChild('dropdown', { static: true }) dropdown!: Dropdown;
 	timeout = false;
 	constructor(private game: PonyTownGame, private zone: NgZone, private model: Model) {
@@ -35,9 +33,5 @@ export class SwapBox {
 		// 	this.timeout = true;
 		// 	setTimeout(() => this.timeout = false, SWAP_TIMEOUT + SECOND);
 		// }
-	}
-	preview(pony: PonyObject | undefined) {
-		const info = pony && pony.ponyInfo;
-		this.previewInfo = info && toPalette(info, mockPaletteManager);
 	}
 }

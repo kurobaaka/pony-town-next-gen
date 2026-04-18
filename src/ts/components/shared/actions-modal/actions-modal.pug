@@ -1,16 +1,35 @@
-.modal-header.d-none.d-sm-block.d-none-for-low-height
-	h4.modal-title(labelledBy=".modal")
-		| Actions
+chat-log#chat-log
 
-.modal-body.modal-checkboxes
+.modal-header.d-none.d-sm-flex.d-none-for-low-height
+	h4.modal-title.unselectable(labelledBy=".modal")
+		| Actions
+		span.text-vmuted.ms-1 ({{actionsCount}}/{{actionsLimit}})
+	button.btn-close(aria-label="Close" (click)="ok()")
+
+.modal-body.modal-checkboxes.unselectable
 	tabset.fixed-height(
-		type="pills" saveActiveTab="testing-save-tab" [destroyOnHide]="false"
+		type="pills" saveActiveTab="actions-active-tab" [destroyOnHide]="false"
 		(activeIndexChange)="tabIndex = $event")
+		tab(title="Emotes" [icon]="emotesIcon")
+			#emojiListContainer.action-columns(*tabContent cdkDropListGroup)
+				.d-flex.align-items-center.mb-2(*ngFor="let a of emotes")
+					.cdk-drop-list-wrapper(cdkDropList cdkDropListSortingDisabled)
+						action-button.mb-0.draggable([draggableItem]="a" [action]="a" [shadow]="false")
+					b.description {{a.title}}
+
 		tab(title="Actions" [icon]="actionsIcon")
-			.action-columns(*tabContent)
-				.d-flex.align-items-center.mb-2(*ngFor="let a of actions")
-					action-button.mb-0.mr-2([draggableItem]="a" [action]="a" [shadow]="false")
-					b {{a.title}}
+			#actionsListContainer.action-columns(*tabContent cdkDropListGroup)
+				.d-flex.align-items-center.mb-2(*ngFor="let a of bodyActions")
+					.cdk-drop-list-wrapper(cdkDropList cdkDropListSortingDisabled)
+						action-button.mb-0.draggable([draggableItem]="a" [action]="a" [shadow]="false")
+					b.description {{a.title}}
+
+		tab(title="Building" [icon]="buildingIcon")
+			#buildingListContainer.action-columns(*tabContent cdkDropListGroup)
+				.d-flex.align-items-center.mb-2(*ngFor="let a of buildingActions")
+					.cdk-drop-list-wrapper(cdkDropList cdkDropListSortingDisabled)
+						action-button.mb-0.draggable([draggableItem]="a" [action]="a" [shadow]="false")
+					b.description {{a.title}}
 
 		tab(title="Expressions" [icon]="expressionsIcon")
 			div(*tabContent)
@@ -27,7 +46,7 @@
 						sprite-selection(
 							[(selected)]="eyeRight" [sprites]="eyesRight" [fill]="eyeColor"
 							[circle]="coatFill" [reverseExtra]="true" [skip]="1"
-							[invisible]="tabIndex !== 1 || activeTab !== 'right-eye'"
+							[invisible]="tabIndex !== 3 || activeTab !== 'right-eye'"
 							(selectedChange)="changed(lockEyes)")
 
 					div([class.inactive-tab]="activeTab !== 'left-eye'")
@@ -36,26 +55,26 @@
 						sprite-selection(
 							[(selected)]="eyeLeft" [sprites]="eyesLeft" [fill]="eyeColor" [disabled]="lockEyes"
 							[circle]="coatFill" [reverseExtra]="true" [skip]="1"
-							[invisible]="tabIndex !== 1 || activeTab !== 'left-eye'"
+							[invisible]="tabIndex !== 3 || activeTab !== 'left-eye'"
 							(selectedChange)="changed(lockEyes)")
 
 					div([class.inactive-tab]="activeTab !== 'mouth'")
 						sprite-selection#expression-selection(
 							[(selected)]="muzzle" [sprites]="muzzles" [fill]="noseFills"
 							[outline]="noseOutlines" [circle]="coatFill"
-							[invisible]="tabIndex !== 1 || activeTab !== 'mouth'"
+							[invisible]="tabIndex !== 3 || activeTab !== 'mouth'"
 							(selectedChange)="changed(lockEyes)")
 
 					div([class.inactive-tab]="activeTab !== 'extra'")
 						sprite-selection.mb-2(
 							[(selected)]="irisRight" [sprites]="irisesRight" [fill]="eyeColor"
-							[invisible]="tabIndex !== 1 || activeTab !== 'extra'"
+							[invisible]="tabIndex !== 3 || activeTab !== 'extra'"
 							[circle]="coatFill" [reverseExtra]="true" (selectedChange)="changed(lockEyes)")
 						custom-checkbox([(checked)]="lockIrises" (checkedChange)="changed(lockEyes)")
 							| Use the same as right one
 						sprite-selection.mt-2(
 							[(selected)]="irisLeft" [sprites]="irisesLeft" [fill]="eyeColor" [disabled]="lockIrises"
-							[invisible]="tabIndex !== 1 || activeTab !== 'extra'"
+							[invisible]="tabIndex !== 3 || activeTab !== 'extra'"
 							[circle]="coatFill" [reverseExtra]="true" (selectedChange)="changed(lockEyes)")
 						.d-flex.flex-wrap.mt-3
 							label.text-muted.mr-3 Other options
@@ -66,10 +85,11 @@
 							custom-checkbox.ml-4([(checked)]="hearts" (checkedChange)="changed(lockEyes)") Hearts
 
 		tab(title="Chat" [icon]="chatIcon")
-			.action-columns(*tabContent)
+			#chatListContainer.action-columns(*tabContent cdkDropListGroup)
 				.d-flex.align-items-center.mb-2(*ngFor="let a of commands")
-					action-button.mb-0.mr-2([draggableItem]="a" [action]="a" [shadow]="false")
-					b {{a.title}}
+					.cdk-drop-list-wrapper(cdkDropList cdkDropListSortingDisabled)
+						action-button.mb-0.draggable([draggableItem]="a" [action]="a" [shadow]="false")
+					b.description {{a.title}}
 
 		tab(title="Options" [icon]="optionsIcon")
 			div(*tabContent)
@@ -96,6 +116,7 @@
 					action-button(*ngFor="let a of entityActions" [draggableItem]="a" [action]="a")
 
 .modal-footer.d-flex
+	label.drag-action-label.text-muted.unselectable
 	.flex-grow-1
 		em.text-muted Drag actions to the action bar
 	button.btn.btn-outline-secondary((click)="ok()")

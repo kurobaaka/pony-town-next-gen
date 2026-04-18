@@ -40,10 +40,21 @@ code {
 // badge
 
 .badge {
-	padding: 4px 6px;
+	padding: 4px 8px;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	font-size: 0.85rem;
 }
 
-.badge-dev, .badge-mod {
+.badge > fa-icon, .badge > .fa-icon {
+	font-size: 0.9em;
+	width: 1em;
+	height: 1em;
+	line-height: 1;
+}
+
+.badge-dev, .badge-mod, .badge-owner {
 	text-transform: uppercase;
 }
 
@@ -61,6 +72,10 @@ code {
 
 .badge-mod {
 	@include badge-variant($mod);
+}
+
+.badge-owner {
+	@include badge-variant($owner);
 }
 
 .badge-forbidden {
@@ -95,6 +110,47 @@ code {
 .dropdown-item, .dropdown-item:active {
 	color: inherit;
 	background-color: inherit;
+}
+
+.ag-dropdown-menu {
+	.dropdown-item {
+		position: relative;
+		border-radius: 6px;
+
+		&::before {
+			content: '';
+			position: absolute;
+			left: 3px;
+			top: 4px;
+			bottom: 4px;
+			width: 4px;
+			border-radius: 999px;
+			background: transparent;
+			transition: background-color .18s ease;
+		}
+
+		&:hover,
+		&:focus {
+			&::before {
+				background: rgba(0, 0, 0, 0.35);
+			}
+		}
+
+		&.active,
+		&.ag-selected,
+		&:active {
+			&::before {
+				background: rgba(0, 0, 0, 0.7);
+			}
+		}
+
+		&.disabled,
+		&:disabled {
+			&::before {
+				background: transparent;
+			}
+		}
+	}
 }
 
 .dropdown-toggle {
@@ -334,6 +390,17 @@ tabset.fixed-height {
 		margin-top: 0;
 		margin-bottom: 0;
 	}
+}
+
+.modal-content {
+	max-height: calc(100vh - 1rem);
+	display: flex;
+	flex-direction: column;
+}
+
+.modal-body {
+	overflow-y: auto;
+	min-height: 0;
 }
 
 /* Add subtle scrollbar to modal backdrop to prevent page shift when modal overflows */

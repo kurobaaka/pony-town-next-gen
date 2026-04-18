@@ -6,16 +6,102 @@
 	tabset(type="pills")
 		tab(title="Game" [icon]="gameIcon")
 			div(*tabContent)
-				.form-group
-					custom-checkbox(
-						[(checked)]="account.ignorePartyInvites"
-						help="Useful when other players bother you with unwanted party invites (does not apply to friends)")
-						| Ignore party invites
-				.form-group
-					custom-checkbox(
-						[(checked)]="account.ignoreFriendInvites"
-						help="Useful when other players bother you with unwanted friend requests")
-						| Ignore friend requests
+				.form-group.unselectable.ms-4
+					label.me-2 AFK timeout
+					.btn-group.dropdown(dropdown)
+						button.btn.btn-sm.btn-default.dropdown-toggle(type="button" dropdownToggle) {{afkKickText}}
+						.dropdown-menu.dropdown-narrow(*dropdownMenu)
+							button.dropdown-item.dropdown-item-radio(
+								type="button"
+								*ngFor="let option of afkKickOptions"
+								(click)="setAfkKickMinutes(option.value)"
+								[class.checked]="account.afkKickMinutes === option.value"
+								[class.d-flex]="!!option.requiredTier"
+								[class.pe-auto]="!!option.requiredTier"
+								[class.text-muted]="isAfkOptionDisabled(option, 'kick')"
+								[disabled]="isAfkOptionDisabled(option, 'kick')"
+								[title]="optionTierTitle(option)")
+								div.flex-grow-1 {{option.label}}
+								fa-icon.ms-2(*ngIf="option.requiredTier" [icon]="starIcon" [ngClass]="optionTierClass(option)")
+							div.position-relative
+								button.dropdown-item.dropdown-item-radio(type="button" (click)="setCustomAfkKickMinutes()") Custom...
+					label.ms-2 minutes
+					small.form-text.text-muted.mt-0 How long you'd stay in game while being inactive
+
+				.form-group.unselectable.ms-4
+					label.me-2 Show away status after
+					.btn-group.dropdown(dropdown)
+						button.btn.btn-sm.btn-default.dropdown-toggle(type="button" dropdownToggle) {{afkStatusText}}
+						.dropdown-menu.dropdown-narrow(*dropdownMenu)
+							button.dropdown-item.dropdown-item-radio(
+								type="button"
+								*ngFor="let option of afkStatusOptions"
+								(click)="setAfkStatusMinutes(option.value)"
+								[class.checked]="account.afkStatusMinutes === option.value"
+								[class.d-flex]="!!option.requiredTier"
+								[class.pe-auto]="!!option.requiredTier"
+								[class.text-muted]="isAfkOptionDisabled(option, 'status')"
+								[disabled]="isAfkOptionDisabled(option, 'status')"
+								[title]="optionTierTitle(option)")
+								div.flex-grow-1 {{option.label}}
+								fa-icon.ms-2(*ngIf="option.requiredTier" [icon]="starIcon" [ngClass]="optionTierClass(option)")
+							div.position-relative
+								button.dropdown-item.dropdown-item-radio(type="button" (click)="setCustomAfkStatusMinutes()") Custom...
+					label.ms-2 minutes of inactivity
+					small.form-text.text-muted.mt-0 Automatically display away status when you're inactive (does not override busy status)
+
+				.form-group.unselectable.ms-4
+					label.me-2 Fall asleep after
+					.btn-group.dropdown(dropdown)
+						button.btn.btn-sm.btn-default.dropdown-toggle(type="button" dropdownToggle) {{afkSleepText}}
+						.dropdown-menu.dropdown-narrow(*dropdownMenu)
+							button.dropdown-item.dropdown-item-radio(
+								type="button"
+								*ngFor="let option of afkSleepOptions"
+								(click)="setAfkSleepMinutes(option.value)"
+								[class.checked]="account.afkSleepMinutes === option.value"
+								[class.d-flex]="!!option.requiredTier"
+								[class.pe-auto]="!!option.requiredTier"
+								[class.text-muted]="isAfkOptionDisabled(option, 'sleep')"
+								[disabled]="isAfkOptionDisabled(option, 'sleep')"
+								[title]="optionTierTitle(option)")
+								div.flex-grow-1 {{option.label}}
+								fa-icon.ms-2(*ngIf="option.requiredTier" [icon]="starIcon" [ngClass]="optionTierClass(option)")
+							div.position-relative
+								button.dropdown-item.dropdown-item-radio(type="button" (click)="setCustomAfkSleepMinutes()") Custom...
+					label.ms-2 minutes of inactivity
+					small.form-text.text-muted.mt-0 Automatically fall asleep when you're inactive
+
+				.form-group.unselectable.ms-4
+					label.me-2 Allow party invites from
+					.btn-group.dropdown(dropdown)
+						button.btn.btn-sm.btn-default.dropdown-toggle(type="button" dropdownToggle) {{partyInvitesPolicyText}}
+						.dropdown-menu.dropdown-narrow(*dropdownMenu)
+							button.dropdown-item.dropdown-item-radio(
+								type="button"
+								(click)="setPartyInvitesPolicy('everyone')"
+								[class.checked]="partyInvitesPolicy === 'everyone'") Everyone
+							button.dropdown-item.dropdown-item-radio(
+								type="button"
+								(click)="setPartyInvitesPolicy('friends')"
+								[class.checked]="partyInvitesPolicy === 'friends'") Friends only
+					small.form-text.text-muted.mt-0 Useful when other players bother you with unwanted party invites
+
+				.form-group.unselectable.ms-4
+					label.me-2 Allow friend requests from
+					.btn-group.dropdown(dropdown)
+						button.btn.btn-sm.btn-default.dropdown-toggle(type="button" dropdownToggle) {{friendRequestsPolicyText}}
+						.dropdown-menu.dropdown-narrow(*dropdownMenu)
+							button.dropdown-item.dropdown-item-radio(
+								type="button"
+								(click)="setFriendRequestsPolicy('everyone')"
+								[class.checked]="friendRequestsPolicy === 'everyone'") Everyone
+							button.dropdown-item.dropdown-item-radio(
+								type="button"
+								(click)="setFriendRequestsPolicy('nobody')"
+								[class.checked]="friendRequestsPolicy === 'nobody'") Nobody
+					small.form-text.text-muted.mt-0 Useful when other players bother you with unwanted friend requests
+
 				.form-group
 					custom-checkbox(
 						[(checked)]="account.seeThroughObjects"
@@ -31,6 +117,14 @@
 						[(checked)]="browser.walkByDefault"
 						help="Uses walking speed by default and run when pressing shift key")
 						| Prefer walking to running
+				.form-group
+					custom-checkbox(
+						[(checked)]="account.powerSaveModeInBackground"
+						(checkedChange)="onPowerSaveModeInBackgroundChanged()"
+						help="Uses old background to reduce performance cost while loading and in menus")
+						| Power save mode in background
+					.alert.alert-info.mt-2.mb-0
+						| New background may stutter and is not optimized for weaker devices.
 
 		tab(title="Graphics" [icon]="graphicsIcon")
 			div(*tabContent)
@@ -69,12 +163,12 @@
 						[(checked)]="account.ignorePublicChat"
 						help="Don't show any public chat messages, only party chat and whispes will be visible")
 						| Hide all public chat messages
+	
 				.form-group
 					custom-checkbox(
-						[(checked)]="account.ignoreNonFriendWhispers"
-						help="Don't show any whispers from players who are not on your friends list")
-						| Only allow whispers from friends
-					.form-group
+						[(checked)]="account.visibleTestingMessages"
+						help="Show development testing messages from debugData in chat log")
+						| Visible testing messages
 				.form-group
 					label#chatlog-opacity-label Timestamp
 					div

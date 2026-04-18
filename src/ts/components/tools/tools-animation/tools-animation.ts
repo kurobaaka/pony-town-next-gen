@@ -1,15 +1,16 @@
 import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { flatMap, dropRightWhile, compact } from 'lodash';
+import { saveAs } from 'file-saver';
+import { flatMap, compact } from 'lodash';
 import {
 	BodyAnimation as IBodyAnimation,
 	BodyAnimationFrame as IBodyAnimationFrame,
 	HeadAnimation as IHeadAnimation,
 	HeadAnimationFrame as IHeadAnimationFrame,
-	ColorExtraSet, PonyInfo, PonyObject, BodyShadow, PonyEye, HeadAnimationProperties
+	ColorExtraSet, PonyInfo, PonyObject, BodyShadow, PonyEye, Iris
 } from '../../../common/interfaces';
-import { removeItem, repeat, isKeyEventInvalid, cloneDeep, array, hasFlag } from '../../../common/utils';
+import { removeItem, repeat, isKeyEventInvalid, cloneDeep, array } from '../../../common/utils';
 import { toPalette, createDefaultPony, syncLockedPonyInfo } from '../../../common/ponyInfo';
 import { Key } from '../../../client/input/input';
 import { defaultPonyState, defaultDrawPonyOptions } from '../../../client/ponyHelpers';
@@ -25,7 +26,7 @@ import { drawPony } from '../../../client/ponyDraw';
 import {
 	faLock, faHome, faArrowRight, faArrowLeft, faPause, faPlay, faChevronRight, faChevronLeft, faRetweet,
 	faClone, faPlus, faAngleDoubleDown, faAngleDoubleUp, faAngleDoubleRight, faAngleDoubleLeft,
-	faCode, faShare, faTrash, faCopy, faFile, faStop, faRedo, faSync
+	faCode, faShare, faTrash, faCopy, faFile, faStop, faRedo, faSync, faDownload, faUpload
 } from '../../../client/icons';
 import { FrameService, FrameLoop } from '../../services/frameService';
 import { StorageService } from '../../services/storageService';
@@ -45,7 +46,10 @@ interface BodyAnimationFrame extends IBodyAnimationFrame, BaseAnimationFrame {
 	shadowFrame: number;
 }
 
-interface HeadAnimationFrame extends IHeadAnimationFrame, BaseAnimationFrame { }
+interface HeadAnimationFrame extends IHeadAnimationFrame, BaseAnimationFrame {
+	rightIris?: Iris;
+	leftIris?: Iris;
+}
 
 interface BaseAnimation {
 	name: string;
@@ -57,14 +61,15 @@ interface BaseAnimation {
 interface BodyAnimation extends BaseAnimation {
 	lockFrontLegs?: boolean;
 	lockBackLegs?: boolean;
+	disableHeadTurnFrames?: number;
 	frames: BodyAnimationFrame[];
 }
 
 interface HeadAnimation extends BaseAnimation {
 	lockEyes?: boolean;
+	lockIrises?: boolean;
+	properties?: number;
 	frames: HeadAnimationFrame[];
-	dontOpenEyes?: boolean;
-	dontCloseMouth?: boolean;
 }
 
 interface AnimationsData {
@@ -103,6 +108,8 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 	readonly nextIcon = faChevronRight;
 	readonly switchIcon = faRetweet;
 	readonly fileIcon = faFile;
+	readonly downloadIcon = faDownload;
+	readonly uploadIcon = faUpload;
 	readonly copyIcon = faCopy;
 	readonly trashIcon = faTrash;
 	readonly shareIcon = faShare;
@@ -135,6 +142,8 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 	mouths: ColorExtraSet = sprites.noses
 		.map(m => m[0][0])
 		.map(({ color, colors, mouth }) => ({ color, colors, extra: mouth, palette: sprites.defaultPalette }));
+	leftIrises: ColorExtraSet = compact(Array.from({ length: Iris.COUNT }, (_, i: number) => createEyeSprite(sprites.eyeLeft[1]![0]!, i, sprites.defaultPalette)));
+	rightIrises: ColorExtraSet = compact(Array.from({ length: Iris.COUNT }, (_, i: number) => createEyeSprite(sprites.eyeRight[1]![0]!, i, sprites.defaultPalette)));
 	flip = false;
 	switch = false;
 	mode: AnimationMode;
@@ -203,13 +212,6 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 			if (!this.playing) {
 				if (this.mode === 'body') {
 					this.state.animationFrame = this.frame;
-
-					if (this.state.headAnimation) {
-						const headFrames = this.state.headAnimation.frames.length;
-						let headFrame = Math.floor(this.frame / this.state.animation.frames.length * headFrames);
-						headFrame = Math.min(headFrame, headFrames - 1);
-						this.state.headAnimationFrame = headFrame;
-					}
 				} else {
 					this.state.headAnimationFrame = this.frame;
 				}
@@ -310,7 +312,7 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 		if (this.mode === 'body') {
 			return { name: 'new animation', loop: true, fps: 24, frames: [createDefaultBodyFrame()] };
 		} else {
-			return { name: 'new animation', loop: true, fps: 24, frames: [createDefaultHeadFrame()] };
+			return { name: 'new animation', loop: true, fps: 24, properties: 0, frames: [createDefaultHeadFrame()] };
 		}
 	}
 	newAnimation() {
@@ -457,37 +459,104 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 		}
 	}
 	export() {
-		if (this.mode === 'body') {
-			const frames = this.bodyAnimation.frames
-				.map(f => [f.duration, '[' + compressBodyFrame(f).join(', ') + ']'])
-				.map(([repeat, frame]) => repeat > 1 ? `...repeat(${repeat}, ${frame})` : frame);
-			console.log(`frames: [\n${frames.map(x => `\t${x}`).join(',\n')}\n]`);
+		const data = this.mode === 'body'
+			? { type: 'body', name: this.animation.name, animation: this.bodyAnimation }
+			: { type: 'head', name: this.animation.name, animation: this.headAnimation };
 
-			if (this.bodyAnimation.frames.some(f => !!f.shadowFrame || !!f.shadowOffset)) {
-				const shadow = this.bodyAnimation.frames.map(f => [f.shadowFrame, f.shadowOffset]);
-				console.log(`shadow: [${shadow.map(x => `[${x.join(', ')}]`).join(', ')}]`);
-			}
-		} else {
-			const frames = this.headAnimation.frames
-			.map(f => [f.duration, '[' + compressHeadFrame(f).join(', ') + ']'])
-			.map(([repeat, frame]) => repeat > 1 ? `...repeat(${repeat}, ${frame})` : frame);
-			console.log(`frames: [\n${frames.map(x => `\t${x}`).join(',\n')}\n]`);
+		const json = JSON.stringify(data, null, 2);
+		const blob = new Blob([json], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `${this.animation.name}.txt`;
+		link.click();
+		URL.revokeObjectURL(url);
+	}
+	exportCode() {
+		if (this.mode !== 'body') {
+			alert('Code export is currently supported only for body animations');
+			return;
 		}
+
+		const animation = toBodyAnimation(this.bodyAnimation, true, false);
+		const code = createBodyAnimationCode(animation, this.animation.name);
+		const blob = new Blob([code], { type: 'text/plain' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `${this.animation.name}.code.txt`;
+		link.click();
+		URL.revokeObjectURL(url);
+	}
+	importClick() {
+		const input = document.getElementById('import-animation') as HTMLInputElement;
+		input && input.click();
+	}
+	import(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files && input.files[0];
+
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			try {
+				const json = (e.target && (e.target as any).result) as string;
+				const data = JSON.parse(json);
+
+				if (data.type === 'body' && data.animation && data.name) {
+					const anim = { ...data.animation, builtin: false, disableHeadTurnFrames: 0 } as BodyAnimation;
+					anim.name = data.name;
+					this.bodyAnimations.push(anim);
+					this.selectBodyAnimation(anim);
+					this.sortAnimations();
+					this.update();
+				} else if (data.type === 'head' && data.animation && data.name) {
+					const anim = { ...data.animation, builtin: false, properties: 0 } as HeadAnimation;
+					anim.name = data.name;
+					this.headAnimations.push(anim);
+					this.selectHeadAnimation(anim);
+					this.sortAnimations();
+					this.update();
+				} else {
+					alert('Invalid animation file format');
+				}
+			} catch (err) {
+				alert('Error reading animation file: ' + err);
+			}
+		};
+		reader.readAsText(file);
+		input.value = ''; // Reset input for re-importing same file
 	}
 	png(scale = 1) {
 		const { canvas } = this.createAnimationSprites(scale);
 		saveCanvas(canvas, `${this.animation.name}.png`);
 	}
 	gif(scale = 1) {
-		const { canvas, empty } = this.createAnimationSprites(scale);
-		const wnd = window.open('')!;
+		const { canvas, empty, cols, frames } = this.createAnimationSprites(scale);
 		const width = scale * ponyWidth;
 		const height = scale * ponyHeight;
 		const fps = this.animation.fps || 24;
 		const image = canvas.toDataURL();
 
-		this.http.post<{ name: string; }>('/api-tools/animation-gif', { image, width, height, fps, remove: empty })
-			.subscribe(({ name }) => wnd.location.href = `/api-tools/animation/${name}.gif`);
+		this.http.post<{ name: string; }>('/api-tools/animation-gif', { image, width, height, fps, remove: empty, cols, frames })
+			.subscribe({
+				next: ({ name }) => this.downloadGeneratedFile(`${name}.gif`, `${this.animation.name}.gif`),
+				error: error => alert(`GIF export failed: ${formatRequestError(error)}`),
+			});
+	}
+	mp4(scale = 1) {
+		const { canvas, empty, cols, frames } = this.createAnimationSprites(scale);
+		const width = scale * ponyWidth;
+		const height = scale * ponyHeight;
+		const fps = this.animation.fps || 24;
+		const image = canvas.toDataURL();
+
+		this.http.post<{ name: string; }>('/api-tools/animation-mp4', { image, width, height, fps, remove: empty, cols, frames })
+			.subscribe({
+				next: ({ name }) => this.downloadGeneratedFile(`${name}.mp4`, `${this.animation.name}.mp4`),
+				error: error => alert(`MP4 export failed: ${formatRequestError(error)}`),
+			});
 	}
 	sortAnimations() {
 		this.bodyAnimations.sort(compareAnimations);
@@ -495,7 +564,15 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 	}
 	private update() {
 		if (this.headAnimation && this.headAnimation.lockEyes) {
-			this.headAnimation.frames.forEach(f => f.left = f.right);
+			this.headAnimation.frames.forEach(f => {
+				f.left = f.right;
+			});
+		}
+
+		if (this.headAnimation && this.headAnimation.lockIrises) {
+			this.headAnimation.frames.forEach(f => {
+				f.leftIris = f.rightIris;
+			});
 		}
 
 		if (this.bodyAnimation) {
@@ -541,11 +618,9 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 		if (this.playing) {
 			this.time += delta;
 
-			const isBodyMode = this.mode === 'body';
-
-			if (isBodyMode) {
+			if (this.mode === 'body') {
 				if (this.state.animation) {
-					const frame = Math.floor(this.time * this.state.animation.fps);
+					const frame = this.time * this.state.animation.fps;
 
 					if (frame > this.state.animation.frames.length && !this.state.animation.loop) {
 						this.bodyAnimationPlaying = (this.bodyAnimationPlaying + 1) % this.bodyAnimationsToPlay.length;
@@ -553,15 +628,22 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 						this.state.animationFrame = 0;
 						this.time = 0;
 					} else {
-						this.state.animationFrame = frame % this.state.animation.frames.length;
+						this.state.animationFrame = Math.floor(frame) % this.state.animation.frames.length;
 					}
+				}
+			} else {
+				if (this.state.headAnimation) {
+					const frame = Math.floor(this.time * this.state.headAnimation.fps);
+					this.state.headAnimationFrame = frame % this.state.headAnimation.frames.length;
 				}
 			}
 
-			if (this.state.headAnimation) {
-				const fps = this.state.headAnimation.fps;
-				const frame = Math.floor(this.time * fps) + (isBodyMode && !this.state.headAnimation.loop ? fps : 0);
-				this.state.headAnimationFrame = frame % this.state.headAnimation.frames.length;
+			// Sync both animations if both are set
+			if (this.state.animation && this.state.headAnimation) {
+				const bodyFrame = Math.floor(this.time * this.state.animation.fps) % this.state.animation.frames.length;
+				const headFrame = Math.floor(this.time * this.state.headAnimation.fps) % this.state.headAnimation.frames.length;
+				this.state.animationFrame = bodyFrame;
+				this.state.headAnimationFrame = headFrame;
 			}
 		}
 	}
@@ -577,10 +659,9 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 		return this.storage.getJSON<AnimationsData>('tools-animations', {});
 	}
 	private createAnimationSprites(scale: number) {
-		const isBodyMode = this.mode === 'body';
 		const animation = toBodyAnimation(this.bodyAnimation, true, this.switch);
 		const headAnimation = toHeadAnimation(this.headAnimation, true);
-		const frames = isBodyMode ? animation.frames.length : headAnimation.frames.length;
+		const frames = this.mode === 'body' ? animation.frames.length : headAnimation.frames.length;
 		const buffer = createCanvas(ponyWidth, ponyHeight);
 		const batch = new ContextSpriteBatch(buffer);
 		const info = toPalette(this.pony.info);
@@ -596,23 +677,14 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 			const x = i % cols;
 			const y = Math.floor(i / cols);
 
-			let headFrame = 0;
-			if (isBodyMode) {
-				let animTime = i / animation.fps;
-				if (!headAnimation.loop) {
-					animTime += 1;
-				}
-				headFrame = Math.floor(animTime * headAnimation.fps);
-			}
-
 			batch.start(sprites.paletteSpriteSheet, 0);
 
 			drawPony(batch, info, {
 				...defaultPonyState(),
 				animation,
-				animationFrame: isBodyMode ? i : 0,
-				headAnimation: headAnimation,
-				headAnimationFrame: isBodyMode ? headFrame : i,
+				animationFrame: this.mode === 'body' ? i : 0,
+				headAnimation: this.mode === 'head' ? headAnimation : undefined,
+				headAnimationFrame: this.mode === 'head' ? i : 0,
 				blinkFrame: 1,
 			}, ponyWidth / 2, ponyHeight - 10, options);
 
@@ -620,11 +692,30 @@ export class ToolsAnimation implements OnInit, OnDestroy {
 			context.drawImage(buffer, x * ponyWidth, y * ponyHeight);
 		}
 
-		return { canvas, empty };
+		return { canvas, empty, cols, frames };
+	}
+	private downloadGeneratedFile(sourceName: string, downloadName: string) {
+		this.http.get(`/api-tools/animation/${encodeURIComponent(sourceName)}`, { responseType: 'blob' })
+			.subscribe({
+				next: blob => saveAs(blob, downloadName),
+				error: error => alert(`Download failed: ${formatRequestError(error)}`),
+			});
 	}
 }
 
 // helper methods
+
+function formatRequestError(error: any) {
+	if (error && error.error && error.error.error) {
+		return error.error.error;
+	}
+
+	if (error && error.message) {
+		return error.message;
+	}
+
+	return String(error);
+}
 
 function compareAnimations<T extends { name: string; }>(a: T, b: T): number {
 	return a.name.localeCompare(b.name);
@@ -684,8 +775,8 @@ function toBodyAnimation({ name, loop, fps, frames }: BodyAnimation, full: boole
 		name,
 		loop,
 		fps,
-		shadow,
 		disableHeadTurnFrames: 0,
+		shadow,
 		frames: flatMap(frames, f => repeat(full ? f.duration : 1, {
 			body: f.body,
 			head: f.head,
@@ -707,17 +798,8 @@ function toBodyAnimation({ name, loop, fps, frames }: BodyAnimation, full: boole
 			backLegY: switchFarClose ? f.backFarLegY : f.backLegY,
 			backFarLegX: switchFarClose ? f.backLegX : f.backFarLegX,
 			backFarLegY: switchFarClose ? f.backLegY : f.backFarLegY,
-		}))
+		})),
 	};
-}
-
-function compressBodyFrame(f: BodyAnimationFrame): number[] {
-	return dropRightWhile([
-		f.body, f.head, f.wing, f.tail, f.frontLeg, f.frontFarLeg, f.backLeg, f.backFarLeg,
-		f.bodyX, f.bodyY, f.headX, f.headY,
-		f.frontLegX, f.frontLegY, f.frontFarLegX, f.frontFarLegY,
-		f.backLegX, f.backLegY, f.backFarLegX, f.backFarLegY,
-	], x => !x);
 }
 
 function fromHeadAnimation({ name, fps, loop, properties, frames }: IHeadAnimation, index: number): HeadAnimation {
@@ -726,7 +808,8 @@ function fromHeadAnimation({ name, fps, loop, properties, frames }: IHeadAnimati
 	frames.forEach(f => {
 		const l = fs[fs.length - 1];
 
-		if (l && l.headX === f.headX && l.headY === f.headY && l.left === f.left && l.right === f.right && l.mouth === f.mouth) {
+		if (l && l.headX === f.headX && l.headY === f.headY && l.left === f.left && l.right === f.right && l.mouth === f.mouth
+			&& (l.leftIris || 0) === (f.leftIris || 0) && (l.rightIris || 0) === (f.rightIris || 0)) {
 			l.duration++;
 		} else {
 			fs.push({ duration: 1, ...f });
@@ -737,36 +820,22 @@ function fromHeadAnimation({ name, fps, loop, properties, frames }: IHeadAnimati
 		builtin: true,
 		fps,
 		loop,
-		dontOpenEyes: hasFlag(properties, HeadAnimationProperties.DontIncreaseEyeOpenness),
-		dontCloseMouth: hasFlag(properties, HeadAnimationProperties.DontDecreaseMouthOpenness),
+		properties: properties || 0,
 		name: `# builtin ${index.toString().padStart(2, '0')} # ${name}`,
 		frames: fs,
 	};
 }
 
-function toHeadAnimation({ name, frames, fps, loop, dontOpenEyes, dontCloseMouth }: HeadAnimation, full: boolean):
-	IHeadAnimation {
+function toHeadAnimation({ name, frames, fps, loop, properties }: HeadAnimation, full: boolean): IHeadAnimation {
 	const fs = (full && !loop) ? repeat(fps, createDefaultHeadFrame()).concat(frames) : frames;
-
-	let properties = HeadAnimationProperties.None;
-	if (dontOpenEyes) {
-		properties |= HeadAnimationProperties.DontIncreaseEyeOpenness;
-	}
-	if (dontCloseMouth) {
-		properties |= HeadAnimationProperties.DontDecreaseMouthOpenness;
-	}
 
 	return {
 		name,
 		fps,
 		loop,
-		properties,
+		properties: properties || 0,
 		frames: flatMap(fs, f => repeat(full ? f.duration : 1, f)),
 	};
-}
-
-function compressHeadFrame({ headX, headY, left, right, mouth }: IHeadAnimationFrame) {
-	return [headX, headY, left, right, mouth];
 }
 
 function createDefaultBodyFrame(): BodyAnimationFrame {
@@ -774,7 +843,7 @@ function createDefaultBodyFrame(): BodyAnimationFrame {
 }
 
 function createDefaultHeadFrame(): HeadAnimationFrame {
-	return { duration: 1, ...createHeadFrame([0, 0, 1, 1, 0]) };
+	return { duration: 1, rightIris: Iris.Forward, leftIris: Iris.Forward, ...createHeadFrame([0, 0, 1, 1, 0]) };
 }
 
 // fixing helpers
@@ -823,8 +892,9 @@ function fixHeadAnimation(a: HeadAnimation): HeadAnimation {
 		name: a.name || '',
 		fps: a.fps || 24,
 		loop: a.loop || false,
+		properties: a.properties || 0,
 		lockEyes: a.lockEyes || false,
-		dontOpenEyes: a.dontOpenEyes || false,
+		lockIrises: a.lockIrises || false,
 		frames: (a.frames || []).map(fixHeadFrame),
 	};
 }
@@ -837,5 +907,71 @@ function fixHeadFrame(f: HeadAnimationFrame): HeadAnimationFrame {
 		left: f.left || 0,
 		right: f.right || 0,
 		mouth: f.mouth || 0,
+		rightIris: f.rightIris || 0,
+		leftIris: f.leftIris || 0,
 	};
+}
+
+function trimTrailingZeros(values: number[]) {
+	let i = values.length;
+
+	while (i > 0 && values[i - 1] === 0) {
+		i--;
+	}
+
+	return values.slice(0, i);
+}
+
+function bodyFrameToArray(frame: IBodyAnimationFrame): number[] {
+	return trimTrailingZeros([
+		frame.body,
+		frame.head,
+		frame.wing,
+		frame.tail,
+		frame.frontLeg,
+		frame.frontFarLeg,
+		frame.backLeg,
+		frame.backFarLeg,
+		frame.bodyX,
+		frame.bodyY,
+		frame.headX,
+		frame.headY,
+		frame.frontLegX,
+		frame.frontLegY,
+		frame.frontFarLegX,
+		frame.frontFarLegY,
+		frame.backLegX,
+		frame.backLegY,
+		frame.backFarLegX,
+		frame.backFarLegY,
+	]);
+}
+
+function shadowToArray(shadow: BodyShadow) {
+	return [shadow.frame, shadow.offset];
+}
+
+function createBodyAnimationCode(animation: IBodyAnimation, displayName: string) {
+	const safeName = displayName
+		.replace(/[^a-zA-Z0-9_$]+/g, '_')
+		.replace(/^([^a-zA-Z_$])/, '_$1') || 'new_animation';
+
+	const framesCode = animation.frames
+		.map(frame => `\t[${bodyFrameToArray(frame).join(', ')}],`)
+		.join('\n');
+
+	const shadow = animation.shadow && animation.shadow.some(s => s.frame || s.offset)
+		? `, [\n${animation.shadow.map(s => `\t[${shadowToArray(s).join(', ')}],`).join('\n')}\n]`
+		: '';
+
+	const disableHeadTurn = animation.disableHeadTurnFrames
+		? `, ${animation.disableHeadTurnFrames}`
+		: '';
+
+	return [
+		`export const ${safeName} = createBodyAnimation(${JSON.stringify(animation.name)}, ${animation.fps}, ${animation.loop}, [`,
+		framesCode,
+		`]${shadow}${disableHeadTurn});`,
+		'',
+	].join('\n');
 }

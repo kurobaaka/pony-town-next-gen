@@ -1,6 +1,6 @@
 import { Component, Input, ViewChild, ElementRef } from '@angular/core';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
-import { ButtonAction } from '../../../common/interfaces';
+import { ButtonAction, Action } from '../../../common/interfaces';
 import { PonyTownGame } from '../../../client/game';
 import { isMobile } from '../../../client/data';
 import { useAction, serializeActions } from '../../../client/buttonActions';
@@ -24,6 +24,7 @@ export class ActionBar {
 	private modalRef?: BsModalRef;
 	private _editable = false;
 	private isWaitingForActionsModal = false;
+	private lastModalState?: boolean;
 	constructor(private game: PonyTownGame, private settings: SettingsService, private modalService: BsModalService) {
 	}
 	@Input() get editable() {
@@ -92,6 +93,12 @@ export class ActionBar {
 
 			this.isWaitingForActionsModal = true;
 			this.modalRef = this.modalService.show(this.actionsModal, { ignoreBackdropClick: true });
+			this.setPlayerModalState(true);
+
+			const onHidden: any = this.modalRef && (this.modalRef as any).onHidden;
+			if (onHidden && onHidden.subscribe) {
+				onHidden.subscribe(() => this.setPlayerModalState(false));
+			}
 		}
 	}
 	closeActions() {
@@ -103,10 +110,40 @@ export class ActionBar {
 			this.isWaitingForActionsModal = true;
 			this.modalRef.hide();
 			this.modalRef = undefined;
+			this.setPlayerModalState(false);
 		}
 	}
 	actionsModalNotify() {
 		this.isWaitingForActionsModal = false;
+	}
+	private setPlayerModalState(value: boolean) {
+		if (this.lastModalState === value) {
+			return;
+		}
+
+		this.lastModalState = value;
+		this.game.send(server => server.actionParam(Action.ModalState, value));
+		const player = this.game.player as any;
+
+		if (!player) {
+			return;
+		}
+
+		if (!player.options) {
+			player.options = {};
+		}
+
+		player.inModal = value;
+		player.options.modal = value;
+
+		const selected = this.game.selected as any;
+		if (selected && selected.id === player.id) {
+			if (!selected.options) {
+				selected.options = {};
+			}
+			selected.inModal = value;
+			selected.options.modal = value;
+		}
 	}
 	private updateFreeSlots() {
 		const actions = this.actions;

@@ -187,8 +187,8 @@ h1(focusTitle) Help
 				li <code>/maps</code> - list all server maps
 				li <code>/map</code> - show info about current map
 
-			h3.mt-3(*ngIf="isAdmin || isSuperadmin") Admin commands (requires admin or higher)
-			ul.spaced-list(*ngIf="isAdmin || isSuperadmin")
+			h3.mt-3(*ngIf="isAdmin || isOwner") Admin commands (requires admin or higher)
+			ul.spaced-list(*ngIf="isAdmin || isOwner")
 				li <code>/a &lt;message&gt;</code> - send announcement
 				li <code>/time &lt;HH:MM|day|night|?&gt;</code> - change server time (includes freeze and help)
 				li <code>/collect &lt;kind&gt; [amount|clear]</code> - adjust counters (gift/egg/etc.)
@@ -199,8 +199,8 @@ h1(focusTitle) Help
 				li <code>/season &lt;season&gt; [&lt;holiday&gt;]</code> - change world season (BETA)
 				li <code>/weather &lt;none|rain&gt;</code> - change map weather (BETA)
 
-			h3.mt-3(*ngIf="isSuperadmin") Superadmin commands (highest privilege)
-			ul.spaced-list(*ngIf="isSuperadmin")
+			h3.mt-3(*ngIf="isOwner") Owner commands (highest privilege)
+			ul.spaced-list(*ngIf="isOwner")
 				li <code>/update</code> - prepare server for update
 				li <code>/shutdown</code> - shutdown the server
 				li <code>/loadmap &lt;name&gt;</code> - load a saved map from store
@@ -214,11 +214,11 @@ h1(focusTitle) Help
 				li <code>/msg</code> - send a debug message via special entities (BETA)
 				li <code>/hold &lt;name&gt;</code> - hold specific item (BETA)
 				li <code>/toy &lt;number&gt;</code> - hold toy by id (BETA)
-				li <code>/dc</code> - disconnect without saving (superadmin)
-				li <code>/disconnect</code> - normal disconnect (superadmin)
-				li <code>/info &lt;id&gt;</code> - inspect an entity (superadmin)
-				li <code>/collider</code> - save collider data for current region (superadmin)
-				li <code>/testparty</code> - debug party invitations (superadmin)
+			li <code>/dc</code> - disconnect without saving (owner)
+			li <code>/disconnect</code> - normal disconnect (owner)
+			li <code>/info &lt;id&gt;</code> - inspect an entity (owner)
+			li <code>/collider</code> - save collider data for current region (owner)
+			li <code>/testparty</code> - debug party invitations (owner)
 
 		section
 			h2 Chat emojis

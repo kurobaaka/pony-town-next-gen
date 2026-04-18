@@ -1,0 +1,127 @@
+@import '../../../../styles/partials/variables';
+
+:host {
+	display: block;
+}
+
+.btn {
+	position: relative;
+
+	@media (max-width: 320px) {
+		white-space: normal;
+	}
+}
+
+.btn-telegram {
+	padding: 1.0rem;
+	font-weight: 500;
+	color: #0088cc;
+	border-color: #0088cc;
+
+	.telegram-logo fa-icon {
+		transform-origin: 50% 50%;
+		will-change: transform, opacity;
+	}
+
+	&:hover .telegram-logo fa-icon,
+	&:focus .telegram-logo fa-icon {
+		animation: telegram-flight 0.9s ease-in-out;
+	}
+
+	&:hover,
+	&:focus,
+	&:active {
+		color: #fff;
+		background-color: #0088cc;
+		border-color: #0088cc;
+	}
+}
+
+@keyframes telegram-flight {
+	0% {
+		transform: translate(0, 0) rotate(0deg);
+		opacity: 1;
+	}
+	35% {
+		transform: translate(10px, -10px) rotate(-14deg);
+		opacity: 0.92;
+	}
+	65% {
+		transform: translate(-4px, 3px) rotate(8deg);
+		opacity: 1;
+	}
+	100% {
+		transform: translate(0, 0) rotate(0deg);
+		opacity: 1;
+	}
+}
+
+.btn-telegram.nudging .telegram-logo fa-icon {
+	animation: telegram-nudge 0.7s ease-in-out;
+}
+
+.btn-telegram.nudging {
+	animation: telegram-button-glow 0.95s ease-in-out;
+}
+
+@keyframes telegram-nudge {
+	0%   { transform: translate(0, 0) rotate(0deg); }
+	20%  { transform: translate(-3px, -6px) rotate(-10deg); }
+	40%  { transform: translate(4px, -10px) rotate(8deg); }
+	60%  { transform: translate(-2px, -5px) rotate(-5deg); }
+	80%  { transform: translate(1px, -2px) rotate(3deg); }
+	100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes telegram-button-glow {
+	0% {
+		box-shadow: 0 0 0 0 rgba(0, 136, 204, 0);
+	}
+	45% {
+		box-shadow: 0 0 0 7px rgba(0, 136, 204, 0.2);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(0, 136, 204, 0);
+	}
+}
+
+.telegram-logo {
+	position: absolute;
+	left: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 60px;
+	height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	fa-icon {
+		font-size: 2.5rem;
+		line-height: 1;
+	}
+
+	@media (max-width: 320px) {
+		display: none;
+	}
+}
+
+.telegram-pony {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	height: 80px;
+	width: 100px;
+	overflow: hidden;
+	border-radius: $border-radius-lg - 2px;
+
+	> telegram-pony {
+		position: absolute;
+		bottom: -80px;
+		left: -20px;
+	}
+
+	@media (max-width: 360px) {
+		display: none;
+	}
+}

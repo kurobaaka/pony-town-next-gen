@@ -1,0 +1,11 @@
+.game-character-modal-body {
+	padding: 0;
+	max-height: calc(100vh - 200px);
+	overflow-x: hidden;
+	overflow-y: auto;
+
+	character {
+		display: block;
+		min-width: 0;
+	}
+}

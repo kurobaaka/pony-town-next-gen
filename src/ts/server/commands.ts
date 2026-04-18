@@ -71,10 +71,10 @@ function hasRoleNull(client: IClient, role: string) {
 		return (client.supporterLevel >= level || client.isMod);
 	}
 
-	// Role hierarchy: mod < admin < superadmin
+	// Role hierarchy: mod < admin < owner
 	if (client.isMod) return role === 'mod';
 	if (hasRole(client.account, 'admin')) return role === 'admin' || role === 'mod';
-	if (hasRole(client.account, 'superadmin')) return role === 'superadmin' || role === 'admin' || role === 'mod';
+	if (hasRole(client.account, 'owner')) return role === 'owner' || role === 'admin' || role === 'mod';
 
 	return false;
 }
@@ -188,7 +188,7 @@ export function createCommands(world: World): Command[] {
 			
 			// Build help text with categories
 			const helpLines: string[] = [];
-			const categoryOrder = ['Chat', 'Actions', 'Pony states', 'Emotes', 'Expressions', 'House', 'Supporters', 'Debug', 'Other', 'Mod', 'Admin', 'Superadmin'];
+			const categoryOrder = ['Chat', 'Actions', 'Pony states', 'Emotes', 'Expressions', 'House', 'Supporters', 'Debug', 'Other', 'Mod', 'Admin', 'Owner'];
 // moved Other above Mod so generic commands show earlier
 
 			
@@ -453,6 +453,7 @@ export function createCommands(world: World): Command[] {
 		action(['excite', 'tada'], Action.Excite, 'Actions'),
 		action(['magic'], Action.Magic, 'Actions'),
 		action(['kiss'], Action.Kiss, 'Actions'),
+		action(['dance1', 'dance-1', 'dance'], Action.Dance1, 'Actions'),
 
 		// house
 		command(['savehouse'], '/savehouse - saves current house setup', '', async ({ }, client) => {
@@ -1101,43 +1102,43 @@ export function createCommands(world: World): Command[] {
 			}
 		}, false, 'Admin'),
 
-		// superadmin
-		command(['update'], '/update - prepare server for update', 'superadmin', ({ world, liveSettings }) => {
+		// owner
+		command(['update'], '/update - prepare server for update', 'owner', ({ world, liveSettings }) => {
 			createNotifyUpdate(world, liveSettings)();
-		}, false, 'Superadmin'),
-		command(['shutdown'], '/shutdown - shutdown server for update', 'superadmin', ({ world, liveSettings }) => {
+		}, false, 'Owner'),
+		command(['shutdown'], '/shutdown - shutdown server for update', 'owner', ({ world, liveSettings }) => {
 			createShutdownServer(world, liveSettings)(true);
-	}, false, 'Superadmin'),
-		command(['loadmap'], '/loadmap <file name> - load map from file', 'superadmin', ({ world }, client, message) => {
+	}, false, 'Owner'),
+		command(['loadmap'], '/loadmap <file name> - load map from file', 'owner', ({ world }, client, message) => {
 			execWithFileName(client, message, fileName =>
 				loadMapFromFile(world, client.map, pathTo('store', `${fileName}.json`), { loadOnlyTiles: true }));
-		}, false, 'Superadmin'),
-		command(['savemap'], '/savemap <file name> - save map to file', 'superadmin', (_, client, message) => {
+		}, false, 'Owner'),
+		command(['savemap'], '/savemap <file name> - save map to file', 'owner', (_, client, message) => {
 			execWithFileName(client, message, async fileName => {
 				await saveMapToFile(client.map, pathTo('store', `${fileName}.json`), { saveTiles: true });
 				// await saveMapToFileBinary(client.map, pathTo('store', `${fileName}.bin`));
 			});
-		}, false, 'Superadmin'),
-		command(['savemapbin'], '/savemapbin <file name> - save map to file', 'superadmin', (_, client, message) => {
+		}, false, 'Owner'),
+		command(['savemapbin'], '/savemapbin <file name> - save map to file', 'owner', (_, client, message) => {
 			execWithFileName(client, message, fileName => saveMapToFileBinaryAlt(client.map, pathTo('store', `${fileName}.json`)));
-		}, false, 'Superadmin'),
-		command(['saveentities'], '/saveentities <file name> - save entities to file', 'superadmin', (_, client, message) => {
+		}, false, 'Owner'),
+		command(['saveentities'], '/saveentities <file name> - save entities to file', 'owner', (_, client, message) => {
 			execWithFileName(client, message, fileName => saveEntitiesToFile(client.map, pathTo('store', `${fileName}.txt`)));
-		}, false, 'Superadmin'),
-		command(['savehides'], '/savehides - save hides to file', 'superadmin', async ({ world }, client) => {
+		}, false, 'Owner'),
+		command(['savehides'], '/savehides - save hides to file', 'owner', async ({ world }, client) => {
 			const json = world.hidingService.serialize();
 			await writeFileAsync(pathTo('store', 'hides.json'), json, 'utf8');
 			saySystem(client, 'saved');
-		}, false, 'Superadmin'),
-		command(['throwerror'], '/throwerror <message> - throw test error', 'superadmin', (_, _client, message) => {
+		}, false, 'Owner'),
+		command(['throwerror'], '/throwerror <message> - throw test error', 'owner', (_, _client, message) => {
 			throw new Error(message || 'test');
-		}, false, 'Superadmin'),
-		BETA && command(['test'], '', 'superadmin', ({ }, client) => {
+		}, false, 'Owner'),
+		BETA && command(['test'], '', 'owner', ({ }, client) => {
 			client.map.regions.forEach(region => {
 				console.log(region.x, region.y, region.colliders.length);
 			});
-		}, false, 'Superadmin'),
-		BETA && command(['spamchat'], '/spamchat - spam chat messages', 'superadmin',
+		}, false, 'Owner'),
+		BETA && command(['spamchat'], '/spamchat - spam chat messages', 'owner',
 			({ world, random }, client, _, __, ___, settings) => {
 				if (interval) {
 					clearInterval(interval);
@@ -1152,27 +1153,27 @@ export function createCommands(world: World): Command[] {
 						}
 					}, 100);
 				}
-			}, false, 'Superadmin'),
-		BETA && command(['noclouds'], '/noclouds - remove clouds', 'superadmin', ({ world }, client) => {
+			}, false, 'Owner'),
+		BETA && command(['noclouds'], '/noclouds - remove clouds', 'owner', ({ world }, client) => {
 			findEntities(client.map, e => e.type === cloud.type).forEach(e => world.removeEntity(e, client.map));
-		}, false, 'Superadmin'),
-		BETA && command(['msg'], '/msg - say random stuff', 'superadmin', ({ }, client, _, __, ___, settings) => {
+		}, false, 'Owner'),
+		BETA && command(['msg'], '/msg - say random stuff', 'owner', ({ }, client, _, __, ___, settings) => {
 			findEntities(client.map, e => !!e.options && e.name === 'debug 2')
 				.forEach(e => sayToAll(e, 'Hello there!', 'Hello there!', MessageType.Chat, settings));
-		}, false, 'Superadmin'),
-		BETA && command(['hold'], '/hold <name> - hold item', 'superadmin', ({ }, client, message) => {
+		}, false, 'Owner'),
+		BETA && command(['hold'], '/hold <name> - hold item', 'owner', ({ }, client, message) => {
 			holdItem(client.pony, getEntityType(message));
-		}, false, 'Superadmin'),
-		BETA && command(['toy'], '/toy <number> - hold toy', 'superadmin', ({ }, client, message) => {
+		}, false, 'Owner'),
+		BETA && command(['toy'], '/toy <number> - hold toy', 'owner', ({ }, client, message) => {
 			holdToy(client.pony, parseInt(message, 10) | 0);
-		}, false, 'Superadmin'),
-		BETA && command(['dc'], '/dc', 'superadmin', ({ }, client) => {
+		}, false, 'Owner'),
+		BETA && command(['dc'], '/dc', 'owner', ({ }, client) => {
 			client.disconnect(true, false);
-		}, false, 'Superadmin'),
-		BETA && command(['disconnect'], '/disconnect', 'superadmin', ({ }, client) => {
+		}, false, 'Owner'),
+		BETA && command(['disconnect'], '/disconnect', 'owner', ({ }, client) => {
 			client.disconnect(true, true);
-		}, false, 'Superadmin'),
-		BETA && command(['info'], '/info <id>', 'superadmin', ({ world }, client, message) => {
+		}, false, 'Owner'),
+		BETA && command(['info'], '/info <id>', 'owner', ({ world }, client, message) => {
 			const id = parseInt(message, 10) | 0;
 			const entity = world.getEntityById(id);
 
@@ -1183,8 +1184,8 @@ export function createCommands(world: World): Command[] {
 			} else {
 				saySystem(client, 'undefined');
 			}
-		}, false, 'Superadmin'),
-		BETA && command(['collider'], '/collider', 'superadmin', ({ }, client) => {
+		}, false, 'Owner'),
+		BETA && command(['collider'], '/collider', 'owner', ({ }, client) => {
 			const region = getRegionGlobal(client.map, client.pony.x, client.pony.y);
 
 			if (region) {
@@ -1192,14 +1193,14 @@ export function createCommands(world: World): Command[] {
 				saySystem(client, 'saved');
 				// console.log(region.tileIndices);
 			}
-		}, false, 'Superadmin'),
-		DEVELOPMENT && command(['testparty'], '', 'superadmin', ({ party }, client) => {
+		}, false, 'Owner'),
+		DEVELOPMENT && command(['testparty'], '', 'owner', ({ party }, client) => {
 			const entities = findEntities(client.map, e => !!e.client && /^debug/.test(e.name || ''));
 
 			for (const e of entities.slice(0, PARTY_LIMIT - 1)) {
 				party.invite(client, e.client!);
 			}
-		}, false, 'Superadmin'),
+		}, false, 'Owner'),
 	]);
 
 	return commands;
@@ -1246,6 +1247,7 @@ chatTypes.set('ss', ChatType.Supporter);
 chatTypes.set('s1', ChatType.Supporter1);
 chatTypes.set('s2', ChatType.Supporter2);
 chatTypes.set('s3', ChatType.Supporter3);
+chatTypes.set('s4', ChatType.Supporter4);
 chatTypes.set('r', ChatType.Whisper);
 chatTypes.set('reply', ChatType.Whisper);
 chatTypes.set('w', ChatType.Whisper);
@@ -1282,6 +1284,8 @@ export function getChatPrefix(type: ChatType) {
 			return '/p ';
 		case ChatType.Supporter:
 			return '/ss ';
+		case ChatType.Supporter4:
+			return '';
 		case ChatType.Dismiss:
 			return '/dismiss ';
 		case ChatType.Whisper:

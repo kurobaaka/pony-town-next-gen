@@ -2,7 +2,8 @@ import { Component, Output, EventEmitter, OnInit, OnDestroy } from '@angular/cor
 import { Subscription } from 'rxjs';
 import {
 	createButtionActionActions, expressionButtonAction, createButtonCommandActions,
-	createDefaultButtonActions, actionExpressionDefaultPalette, entityButtonAction, serializeActions, deserializeActions
+	createDefaultButtonActions, actionExpressionDefaultPalette, entityButtonAction, serializeActions, deserializeActions,
+	createEmoteActions, createBodyActions, createBuildingActions
 } from '../../../client/buttonActions';
 import * as sprites from '../../../generated/sprites';
 import {
@@ -11,11 +12,12 @@ import {
 } from '../../../common/interfaces';
 import { createExpression, readFileAsText } from '../../../client/clientUtils';
 import { ACTION_EXPRESSION_BG, ACTION_EXPRESSION_EYE_COLOR, fillToOutline } from '../../../common/colors';
-import { faLock, faApple, faLaughBeam, faComment, faCog, faCogs } from '../../../client/icons';
+import { faLock, faApple, faLaughBeam, faComment, faCog, faCogs, faHorseHead, faHome } from '../../../client/icons';
 import { createEyeSprite } from '../../../client/spriteUtils';
 import { times, hasFlag } from '../../../common/utils';
 import { PonyTownGame } from '../../../client/game';
 import { getEntityNames } from '../../services/model';
+import { ACTIONS_LIMIT } from '../../../common/constants';
 
 function eyeSprite(e: PonyEye | undefined) {
 	return createEyeSprite(e, 0, sprites.defaultPalette);
@@ -28,15 +30,21 @@ function eyeSprite(e: PonyEye | undefined) {
 })
 export class ActionsModal implements OnInit, OnDestroy {
 	readonly lockIcon = faLock;
+	readonly emotesIcon = faHorseHead;
 	readonly actionsIcon = faApple;
+	readonly buildingIcon = faHome;
 	readonly expressionsIcon = faLaughBeam;
 	readonly chatIcon = faComment;
 	readonly optionsIcon = faCog;
 	readonly devIcon = faCogs;
 	readonly dev = BETA;
+	readonly actionsLimit = ACTIONS_LIMIT;
 	@Output() close = new EventEmitter();
 	@Output() notify = new EventEmitter();
 	actions = createButtionActionActions();
+	emotes = createEmoteActions();
+	bodyActions = createBodyActions();
+	buildingActions = createBuildingActions();
 	commands = createButtonCommandActions();
 	emoteAction = expressionButtonAction(createExpression(Eye.Neutral, Eye.Neutral, Muzzle.Smile));
 	entityAction = entityButtonAction('apple');
@@ -69,6 +77,9 @@ export class ActionsModal implements OnInit, OnDestroy {
 	crying = false;
 	hearts = false;
 	activeTab = 'right-eye';
+	get actionsCount() {
+		return this.game.actions.filter(a => a.action !== undefined).length;
+	}
 	private interval: any = 0;
 	private subscription?: Subscription;
 	private actionsToUndo: ButtonActionSlot[][] = [];

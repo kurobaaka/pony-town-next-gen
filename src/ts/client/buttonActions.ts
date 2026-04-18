@@ -8,10 +8,10 @@ import * as sprites from '../generated/sprites';
 import { createExpression } from './clientUtils';
 import { encodeExpression, decodeExpression } from '../common/encoders/expressionEncoder';
 import { PonyTownGame } from './game';
-import { boopAction, upAction, downAction, turnHeadAction, interact } from './playerActions';
+import { boopAction, dance1Action, upAction, downAction, turnHeadAction, interact } from './playerActions';
 import { ACTIONS_LIMIT, COMMAND_ACTION_TIME_DELAY } from '../common/constants';
 import { cloneDeep, hasFlag } from '../common/utils';
-import { boop, defaultHeadFrame, stand, sneeze, yawn, lie, sit, fly, laugh, kiss, excite } from './ponyAnimations';
+import { boop, defaultHeadFrame, stand, sneeze, yawn, lie, sit, fly, laugh, kiss, excite, dance1 } from './ponyAnimations';
 import { createDefaultPony, syncLockedPonyInfo, toPalette, mockPaletteManager } from '../common/ponyInfo';
 import {
 	ACTION_EXPRESSION_EYE_COLOR, ACTION_EXPRESSION_BG, ACTION_ACTION_COAT_COLOR, WHITE, HEARTS_COLOR,
@@ -103,11 +103,7 @@ export function entityButtonAction(entity: string): EntityButtonAction {
 	return { type: 'entity', entity, title: entity };
 }
 
-const actionActions = [
-	actionButtonAction('boop', 'Boop'),
-	actionButtonAction('down', 'Sit down / Land'),
-	actionButtonAction('up', 'Stand up / Fly up'),
-	actionButtonAction('turn-head', 'Turn head'),
+const emoteActions = [
 	actionButtonAction('sneeze', 'Sneeze', Action.Sneeze),
 	actionButtonAction('sleep', 'Sleep', Action.Sleep),
 	actionButtonAction('yawn', 'Yawn', Action.Yawn),
@@ -115,17 +111,30 @@ const actionActions = [
 	actionButtonAction('laugh', 'Laugh', Action.Laugh),
 	actionButtonAction('excite', 'Excite', Action.Excite),
 	actionButtonAction('blush', 'Blush', Action.Blush),
+	actionButtonAction('kiss', 'Kiss', Action.Kiss),
+];
+
+const bodyActions = [
+	actionButtonAction('boop', 'Boop'),
+	actionButtonAction('dance-1', 'Dance 1'),
+	actionButtonAction('down', 'Sit down / Land'),
+	actionButtonAction('up', 'Stand up / Fly up'),
+	actionButtonAction('turn-head', 'Turn head'),
 	actionButtonAction('drop', 'Drop item', Action.Drop),
 	actionButtonAction('interact', 'Interact'),
 	actionButtonAction('open', 'Open gift'),
 	actionButtonAction('drop-toy', 'Drop toy', Action.DropToy),
 	actionButtonAction('magic', 'Magic', Action.Magic),
+];
+
+const buildingToolActions = [
 	actionButtonAction('switch-tool', 'Switch tool', Action.SwitchTool),
 	actionButtonAction('switch-entity', 'Switch item to place'),
 	actionButtonAction('switch-entity-rev', 'Switch item to place (reverse)'),
 	actionButtonAction('switch-tile', 'Switch tile to place'),
-	actionButtonAction('kiss', 'Kiss', Action.Kiss),
 ];
+
+const actionActions = [...bodyActions, ...emoteActions, ...buildingToolActions];
 
 const commandActions = [
 	commandButtonAction('/roll', '🎲'),
@@ -150,6 +159,18 @@ function getCommandAction(command: string) {
 
 export function createButtionActionActions() {
 	return [...actionActions, ...additionalActionsActions];
+}
+
+export function createEmoteActions() {
+	return [...additionalActionsActions, ...emoteActions];
+}
+
+export function createBodyActions() {
+	return [...bodyActions];
+}
+
+export function createBuildingActions() {
+	return [...buildingToolActions];
 }
 
 export function createButtonCommandActions() {
@@ -287,6 +308,9 @@ export function useAction(game: PonyTownGame, action: ButtonAction | undefined) 
 					switch (action.action) {
 						case 'boop':
 							boopAction(game);
+							break;
+						case 'dance-1':
+							dance1Action(game);
 							break;
 						case 'up':
 							upAction(game);
@@ -466,6 +490,11 @@ export function drawAction(canvas: HTMLCanvasElement, action: ButtonAction | und
 							case 'boop': {
 								const state = { ...createState(), animation: headlessBoop, animationFrame: 0 };
 								drawPony(batch, actionPony, state, 25, 32, defaultDrawPonyOptions());
+								break;
+							}
+							case 'dance-1': {
+								const state = { ...createState(), animation: dance1, animationFrame: 5 };
+								drawPony(batch, actionPony, state, 18, 40, defaultDrawPonyOptions());
 								break;
 							}
 							case 'turn-head': {

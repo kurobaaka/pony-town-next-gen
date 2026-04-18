@@ -4,6 +4,7 @@ import { defaultPonyState } from '../../../client/ponyHelpers';
 import { GameService } from '../../services/gameService';
 import { OAuthProvider, PonyObject } from '../../../common/interfaces';
 import { stand } from '../../../client/ponyAnimations';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
 	selector: 'home',
@@ -16,6 +17,9 @@ export class Home {
 	error?: string;
 	private animationTime = 0;
 	private interval?: any;
+	showFullWarning = false;
+	showLoginWarning = false;
+	readonly warningIcon = faExclamationCircle;
 	constructor(
 		private gameService: GameService,
 		private model: Model,
@@ -54,7 +58,16 @@ export class Home {
 	signIn(provider: OAuthProvider) {
 		this.model.signIn(provider);
 	}
+	toggleFullWarning() {
+		this.showFullWarning = !this.showFullWarning;
+	}
 	ngOnInit() {
+		this.model.loginServerStatus()
+			.then(show => this.showLoginWarning = show)
+			.catch(() => {
+				this.showLoginWarning = false;
+			});
+
 		let last = Date.now();
 		this.interval = setInterval(() => {
 			const now = Date.now();

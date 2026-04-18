@@ -2,14 +2,25 @@ import { Component, Output, EventEmitter, OnInit, OnDestroy } from '@angular/cor
 import { Subscription } from 'rxjs';
 import { AccountSettings, BrowserSettings, GraphicsQuality } from '../../../common/interfaces';
 import { SettingsService } from '../../services/settingsService';
+import { Model } from '../../services/model';
 import {
 	DEFAULT_CHATLOG_OPACITY, MAX_CHATLOG_RANGE, MIN_CHATLOG_RANGE, isChatlogRangeUnlimited, MAX_FILTER_WORDS_LENGTH
 } from '../../../common/constants';
 import { StorageService } from '../../services/storageService';
-import { cloneDeep } from '../../../common/utils';
+import { cloneDeep, clamp } from '../../../common/utils';
 import { PonyTownGame } from '../../../client/game';
 import { updateRangeIndicator, readFileAsText } from '../../../client/clientUtils';
-import { faSlidersH, faCommentSlash, faGamepad, faImage, faDownload, faUpload, faComment } from '../../../client/icons';
+import { faSlidersH, faCommentSlash, faGamepad, faImage, faDownload, faUpload, faComment, faStar } from '../../../client/icons';
+
+interface AfkOption {
+	value: number;
+	label: string;
+	requiredTier?: 2 | 3 | 4;
+}
+
+const DEFAULT_AFK_STATUS_MINUTES = 2;
+const DEFAULT_AFK_SLEEP_MINUTES = 5;
+const DEFAULT_AFK_KICK_MINUTES = 15;
 
 @Component({
 	selector: 'settings-modal',
@@ -28,6 +39,33 @@ export class SettingsModal implements OnInit, OnDestroy {
 	readonly graphicsIcon = faImage;
 	readonly exportIcon = faDownload;
 	readonly importIcon = faUpload;
+	readonly starIcon = faStar;
+	readonly afkKickOptions: AfkOption[] = [
+		{ value: 5, label: '5' },
+		{ value: 10, label: '10' },
+		{ value: 15, label: '15' },
+		{ value: 30, label: '30', requiredTier: 2 },
+		{ value: 45, label: '45', requiredTier: 3 },
+		{ value: 0, label: 'Unlimited', requiredTier: 4 },
+	];
+	readonly afkStatusOptions: AfkOption[] = [
+		{ value: 1, label: '1' },
+		{ value: 2, label: '2' },
+		{ value: 3, label: '3' },
+		{ value: 5, label: '5' },
+		{ value: 10, label: '10' },
+		{ value: 15, label: '15' },
+		{ value: 30, label: '30', requiredTier: 2 },
+		{ value: 45, label: '45', requiredTier: 3 },
+	];
+	readonly afkSleepOptions: AfkOption[] = [
+		{ value: 2, label: '2' },
+		{ value: 5, label: '5' },
+		{ value: 10, label: '10' },
+		{ value: 15, label: '15' },
+		{ value: 30, label: '30', requiredTier: 2 },
+		{ value: 45, label: '45', requiredTier: 3 },
+	];
 	@Output() close = new EventEmitter();
 	account: AccountSettings = {};
 	browser: BrowserSettings = {};
@@ -39,6 +77,7 @@ export class SettingsModal implements OnInit, OnDestroy {
 		private settingsService: SettingsService,
 		private storage: StorageService,
 		private game: PonyTownGame,
+		private model: Model,
 	) {
 		if (game.webgl) {
 			if (game.webgl.failedFBO) {
@@ -84,6 +123,145 @@ export class SettingsModal implements OnInit, OnDestroy {
 			return 'High';
 		}
 	}
+	get supporterLevel() {
+		return this.model.supporter;
+	}
+	get afkKickText() {
+		return this.account.afkKickMinutes === 0 ? 'Unlimited' : `${this.account.afkKickMinutes || DEFAULT_AFK_KICK_MINUTES}`;
+	}
+	get afkStatusText() {
+		return `${this.account.afkStatusMinutes || DEFAULT_AFK_STATUS_MINUTES}`;
+	}
+	get afkSleepText() {
+		return `${this.account.afkSleepMinutes || DEFAULT_AFK_SLEEP_MINUTES}`;
+	}
+	get partyInvitesPolicy() {
+		return this.account.ignorePartyInvites ? 'friends' : 'everyone';
+	}
+	get partyInvitesPolicyText() {
+		return this.partyInvitesPolicy === 'friends' ? 'Friends only' : 'Everyone';
+	}
+	get friendRequestsPolicy() {
+		return this.account.ignoreFriendInvites ? 'nobody' : 'everyone';
+	}
+	get friendRequestsPolicyText() {
+		return this.friendRequestsPolicy === 'nobody' ? 'Nobody' : 'Everyone';
+	}
+	setPartyInvitesPolicy(value: string) {
+		this.account.ignorePartyInvites = value !== 'everyone';
+	}
+	setFriendRequestsPolicy(value: string) {
+		this.account.ignoreFriendInvites = value === 'nobody';
+	}
+	get maxKickMinutes() {
+		if (this.supporterLevel >= 4) return 0;
+		if (this.supporterLevel >= 3) return 45;
+		if (this.supporterLevel >= 2) return 30;
+		return 15;
+	}
+	isTierLocked(requiredTier?: 2 | 3 | 4) {
+		return !!requiredTier && this.supporterLevel < requiredTier;
+	}
+	isAfkOptionDisabled(option: AfkOption, type: 'kick' | 'status' | 'sleep') {
+		if (this.isTierLocked(option.requiredTier)) return true;
+		const kick = this.account.afkKickMinutes || DEFAULT_AFK_KICK_MINUTES;
+
+		if (type !== 'kick' && kick > 0 && option.value > kick) {
+			return true;
+		}
+
+		if (type === 'sleep') {
+			const status = this.account.afkStatusMinutes || DEFAULT_AFK_STATUS_MINUTES;
+			if (option.value < status) return true;
+		}
+
+		return false;
+	}
+	optionTierClass(option: AfkOption) {
+		return option.requiredTier ? `supporter-${option.requiredTier}` : '';
+	}
+	optionTierTitle(option: AfkOption) {
+		return option.requiredTier ? `Available with tier ${option.requiredTier} support` : '';
+	}
+	private promptMinutes(title: string, current: number, allowUnlimited = false): number | undefined {
+		const hint = allowUnlimited ? 'Enter minutes (0 for Unlimited)' : 'Enter minutes';
+		const value = window.prompt(`${title}\n${hint}`, `${current}`);
+
+		if (value === null) return undefined;
+
+		const parsed = Number(value.trim());
+		if (!isFinite(parsed)) return undefined;
+
+		return Math.max(0, Math.floor(parsed));
+	}
+	setCustomAfkKickMinutes() {
+		if (this.supporterLevel < 4 && this.maxKickMinutes <= 0) return;
+
+		const current = this.account.afkKickMinutes === undefined ? DEFAULT_AFK_KICK_MINUTES : this.account.afkKickMinutes;
+		const value = this.promptMinutes('AFK timeout', current, this.supporterLevel >= 4);
+
+		if (value === undefined) return;
+
+		if (value === 0 && this.supporterLevel < 4) return;
+
+		this.account.afkKickMinutes = value;
+		this.normalizeAfkSettings();
+	}
+	setCustomAfkStatusMinutes() {
+		const current = this.account.afkStatusMinutes === undefined ? DEFAULT_AFK_STATUS_MINUTES : this.account.afkStatusMinutes;
+		const value = this.promptMinutes('Show away status after', current);
+
+		if (value === undefined) return;
+
+		this.account.afkStatusMinutes = value;
+		this.normalizeAfkSettings();
+	}
+	setCustomAfkSleepMinutes() {
+		const current = this.account.afkSleepMinutes === undefined ? DEFAULT_AFK_SLEEP_MINUTES : this.account.afkSleepMinutes;
+		const value = this.promptMinutes('Fall asleep after', current);
+
+		if (value === undefined) return;
+
+		this.account.afkSleepMinutes = value;
+		this.normalizeAfkSettings();
+	}
+	setAfkKickMinutes(value: number) {
+		this.account.afkKickMinutes = value;
+		this.normalizeAfkSettings();
+	}
+	setAfkStatusMinutes(value: number) {
+		this.account.afkStatusMinutes = value;
+		this.normalizeAfkSettings();
+	}
+	setAfkSleepMinutes(value: number) {
+		this.account.afkSleepMinutes = value;
+		this.normalizeAfkSettings();
+	}
+	private normalizeAfkSettings() {
+		const maxKick = this.maxKickMinutes;
+		let kick = this.account.afkKickMinutes;
+		let status = this.account.afkStatusMinutes;
+		let sleep = this.account.afkSleepMinutes;
+
+		kick = kick === undefined ? DEFAULT_AFK_KICK_MINUTES : (kick | 0);
+		status = status === undefined ? DEFAULT_AFK_STATUS_MINUTES : (status | 0);
+		sleep = sleep === undefined ? DEFAULT_AFK_SLEEP_MINUTES : (sleep | 0);
+
+		if (maxKick === 0) {
+			kick = Math.max(0, kick);
+		} else {
+			if (kick <= 0) kick = DEFAULT_AFK_KICK_MINUTES;
+			kick = clamp(kick, 1, maxKick);
+		}
+
+		const kickLimit = kick === 0 ? 24 * 60 : kick;
+		status = clamp(status, 1, kickLimit);
+		sleep = clamp(sleep, status, kickLimit);
+
+		this.account.afkKickMinutes = kick;
+		this.account.afkStatusMinutes = status;
+		this.account.afkSleepMinutes = sleep;
+	}
 	ngOnInit() {
 		this.accountBackup = cloneDeep(this.settingsService.account);
 		this.browserBackup = cloneDeep(this.settingsService.browser);
@@ -105,14 +283,18 @@ export class SettingsModal implements OnInit, OnDestroy {
 		this.account = this.settingsService.account = {};
 		this.browser = this.settingsService.browser = {};
 		this.setupDefaults();
+		this.applyBackgroundModeClass();
 	}
 	cancel() {
 		this.done = true;
 		this.settingsService.account = this.accountBackup;
 		this.settingsService.browser = this.browserBackup;
+		this.applyBackgroundModeClass();
 		this.close.emit();
 	}
 	ok() {
+		this.normalizeAfkSettings();
+
 		if (this.account.filterWords) {
 			let filter = this.account.filterWords;
 
@@ -130,7 +312,11 @@ export class SettingsModal implements OnInit, OnDestroy {
 		this.done = true;
 		this.settingsService.saveAccountSettings(this.account);
 		this.settingsService.saveBrowserSettings(this.browser);
+		this.applyBackgroundModeClass();
 		this.close.emit();
+	}
+	onPowerSaveModeInBackgroundChanged() {
+		this.applyBackgroundModeClass();
 	}
 	switchTimestamp(state?: string) {
 		if (!state) this.browser.timestamp = undefined;
@@ -146,6 +332,10 @@ export class SettingsModal implements OnInit, OnDestroy {
 		updateRangeIndicator(undefined, this.game);
 	}
 	private setupDefaults() {
+		if (this.account.powerSaveModeInBackground === undefined) {
+			this.account.powerSaveModeInBackground = true;
+		}
+
 		if (this.account.chatlogOpacity === undefined) {
 			this.account.chatlogOpacity = DEFAULT_CHATLOG_OPACITY;
 		}
@@ -162,9 +352,34 @@ export class SettingsModal implements OnInit, OnDestroy {
 			this.account.showTypingIndicator = true;
 		}
 
+		if (this.account.visibleTestingMessages === undefined) {
+			this.account.visibleTestingMessages = false;
+		}
+
+		if (this.account.afkStatusMinutes === undefined) {
+			this.account.afkStatusMinutes = DEFAULT_AFK_STATUS_MINUTES;
+		}
+
+		if (this.account.afkSleepMinutes === undefined) {
+			this.account.afkSleepMinutes = DEFAULT_AFK_SLEEP_MINUTES;
+		}
+
+		if (this.account.afkKickMinutes === undefined) {
+			this.account.afkKickMinutes = DEFAULT_AFK_KICK_MINUTES;
+		}
+
+		this.normalizeAfkSettings();
+
 		if (this.browser.graphicsQuality === undefined) {
 			this.browser.graphicsQuality = this.maxGraphicsQualityValue;
 		}
+
+		this.applyBackgroundModeClass();
+	}
+
+	private applyBackgroundModeClass() {
+		const powerSaveMode = this.account.powerSaveModeInBackground !== false;
+		document.body.classList.toggle('background-style-new', !powerSaveMode);
 	}
 	export() {
 		const account = { ...this.account, actions: undefined };

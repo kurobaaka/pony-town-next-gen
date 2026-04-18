@@ -17,6 +17,7 @@ import { About } from './about/about';
 import { Account } from './account/account';
 import { Character } from './character/character';
 import { EditorBox } from './editor-box/editor-box';
+import { GameCharacterModal } from '../shared/game-character/game-character';
 
 import { AuthGuard } from '../services/authGuard';
 import { RollbarService, rollbarFactory, RollbarErrorHandler } from '../services/rollbarErrorHandler';
@@ -54,6 +55,7 @@ export const routes: Routes = [
 		Account,
 		Character,
 		EditorBox,
+		GameCharacterModal,
 	],
 	providers: [
 		{ provide: RollbarService, useFactory: rollbarFactory },

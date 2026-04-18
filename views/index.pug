@@ -63,7 +63,7 @@ html(lang="en")
 		data-token=token
 		data-wasm=wasm)
 		pony-town-app
-			.card
+			#loading.loading-card
 				.gif-container
 					img.gif-image(
 						src="assets/images/loading-pony.gif"  
@@ -73,9 +73,14 @@ html(lang="en")
 						onload="console.log('GIF loaded successfully')")
 				.loader
 					p Loading
-					.words
-						each word in ['buttons', 'forms', 'magic', 'patterns', 'maps', 'switches', 'ponies', 'canvas', 'objects', 'forms', 'assets', 'images', 'fonts', 'styles', 'scripts', 'files', 'data', 'icons', 'sprites', 'textures', 'models', 'shaders', 'sounds', 'music', 'animations', 'components', 'modules', 'widgets', 'features', 'buttons', 'forms']
-							span.word= word
+					.loading-words#loadingWords(style="--current-position: 0px; --next-position: -40px;")
+						.loading-words-track#loadingWordsTrack
+							each word in ['buttons', 'forms', 'magic', 'patterns', 'maps', 'switches', 'ponies', 'canvas', 'objects', 'forms', 'assets', 'images', 'fonts', 'styles', 'scripts', 'files', 'data', 'icons', 'sprites', 'textures', 'models', 'shaders', 'sounds', 'music', 'animations', 'components', 'modules', 'widgets', 'features', 'buttons', 'forms']
+								span.loading-word= word
+				if !production
+					.dev-update-wrapper
+						.dev-update-header DevUpdate Console
+						.dev-update-console#devUpdateConsole
 				p.loading-error
 					| Could not load the game, #[a.loading-error-btn(href="/reset.html") reload] to continue.
 
@@ -85,8 +90,104 @@ html(lang="en")
 		if socketOptions
 			script#socket-options(type="text/plain")!=socketOptions
 
+		script.
+			(function () {
+				const wordsViewport = document.getElementById('loadingWords');
+				const wordsTrack = document.getElementById('loadingWordsTrack');
+				const devConsole = document.getElementById('devUpdateConsole');
+
+				if (devConsole) {
+					const maxLines = 220;
+
+					function formatArg(arg) {
+						if (typeof arg === 'string') return arg;
+						if (arg instanceof Error) return arg.stack || arg.message;
+						try {
+							return JSON.stringify(arg);
+						} catch (e) {
+							return String(arg);
+						}
+					}
+
+					function appendLine(type, args) {
+						const line = document.createElement('div');
+						line.className = 'dev-log-line';
+
+						const label = document.createElement('span');
+						label.className = 'log-label';
+						label.textContent = '[' + type + ']';
+
+						const text = document.createElement('span');
+						text.textContent = ' ' + args.map(formatArg).join(' ');
+
+						line.appendChild(label);
+						line.appendChild(text);
+						devConsole.appendChild(line);
+
+						while (devConsole.childElementCount > maxLines) {
+							devConsole.removeChild(devConsole.firstElementChild);
+						}
+
+						devConsole.scrollTop = devConsole.scrollHeight;
+					}
+
+					const methods = ['log', 'info', 'warn', 'error', 'debug'];
+					for (const method of methods) {
+						const original = console[method];
+						console[method] = function () {
+							appendLine(method, Array.from(arguments));
+							if (typeof original === 'function') {
+								original.apply(console, arguments);
+							}
+						};
+					}
+
+					window.addEventListener('error', function (event) {
+						appendLine('error', [event.message, event.filename + ':' + event.lineno]);
+					});
+
+					window.addEventListener('unhandledrejection', function (event) {
+						appendLine('error', ['Unhandled Promise rejection:', event.reason]);
+					});
+
+					appendLine('info', ['Console mirror enabled']);
+				}
+
+				if (!wordsViewport || !wordsTrack) return;
+
+				const words = Array.from(wordsTrack.children);
+				if (!words.length) return;
+				for (let i = words.length - 1; i > 0; i--) {
+					const randomIndex = Math.floor(Math.random() * (i + 1));
+					wordsTrack.insertBefore(words[randomIndex], words[i]);
+				}
+
+				const itemHeight = words[0].getBoundingClientRect().height || 40;
+				const stopPositions = [];
+				for (let i = 0; i < words.length; i++) {
+					stopPositions.push(i * -itemHeight);
+				}
+
+				let currentIndex = 0;
+				let nextIndex = stopPositions.length > 1 ? 1 : 0;
+
+				function stopAt(index) {
+					return stopPositions[index] + 'px';
+				}
+
+				wordsTrack.style.setProperty('--current-position', stopAt(currentIndex));
+				wordsTrack.style.setProperty('--next-position', stopAt(nextIndex));
+
+				wordsTrack.addEventListener('animationiteration', function () {
+					currentIndex = nextIndex;
+					nextIndex = (nextIndex + 1) % stopPositions.length;
+					wordsTrack.style.setProperty('--current-position', stopAt(currentIndex));
+					wordsTrack.style.setProperty('--next-position', stopAt(nextIndex));
+				});
+			})();
+
 		if production
 			script(src=script async)
 		else
-			script(src="http://localhost:8091/assets/scripts/vendor.js")
-			script(src="http://localhost:8091" + script.replace('/adm/', '/'))
+			script(src="http://26.50.189.235:8091/assets/scripts/vendor.js")
+			script(src="http://26.50.189.235:8091" + script.replace('/adm/', '/'))

@@ -1,12 +1,66 @@
-.sign-in-box.mx-auto.text-center
-	p.lead
+.sign-in-box.mx-auto
+	p.lead.text-center
 		| Sign in with your social site account
 
+	div(*ngIf="showLoginWarning")
+		.alert.alert-warning.mb-3(role="alert")
+			fa-icon.mr-1.text-center([icon]="warningIcon" size="lg")
+			strong Важно:
+			
+			div([class.collapse]="!showFullWarning" [class.show]="showFullWarning")
+				br
+				|  Вы входите на основной рабочий билд сервера.
+
+				br
+				br
+
+				|  Сервер находится в активной разработке и тестировании, поэтому вы можете столкнуться со следующими проблемами:
+				ul.mb-2
+					li баги и ошибки в игре
+					li нестабильная работа сервера
+					li частые перезапуски
+					li проблемы со входом в аккаунт или игрой
+					li возможная потеря прогресса
+
+				|  Обратите внимание: все обновления применяются напрямую в рабочую версию, так как сервер разрабатывается одним человеком.
+
+				br
+				br
+
+				|  Продолжая вход, вы соглашаетесь с тем, что подобные проблемы могут возникать.
+
+				hr
+
+				fa-icon.mr-1.text-center([icon]="warningIcon" size="lg")
+				strong Notice:
+				|  You are entering the main development build of the server.
+
+				br
+				br
+
+				|  The server is actively being developed and tested, so you may encounter:
+				ul.mb-2
+					li bugs and glitches
+					li unstable performance
+					li frequent restarts
+					li login or account issues
+					li possible data loss
+
+				|  Please note: updates are applied directly to the live build, as the server is maintained by a single developer.
+
+				br
+				br
+
+				|  By continuing, you acknowledge and accept these conditions.
+
+		button.btn.btn-sm.btn-light(type="button" (click)="toggleFullWarning()" [attr.aria-expanded]="showFullWarning" aria-controls="warningText")
+			| {{ showFullWarning ? 'Show Less...' : 'Show More...' }}
+
 	div(*ngIf="signUpProviders.length")
-		.sign-in-heading
+		.sign-in-heading.mt-2.text-center
 			span(aria-hidden="true") Sign in #[i or] sign up
 
-		.sign-in-box-providers
+		.sign-in-box-providers.text-center
 			button.btn.btn-lg.btn-dark(
 				*ngFor="let p of signUpProviders"
 				(click)="signInTo(p)"
@@ -17,12 +71,12 @@
 				.sr-only Sign in or sign up using {{p.name}}
 
 	div(*ngIf="signInProviders.length")
-		.sign-in-heading
+		.sign-in-heading.text-center
 			span(aria-hidden="true") Sign in #[i only]
 
 		.text-muted.mb-3 (You #[b cannot] use these social sites to create new account)
 
-		.sign-in-box-providers.sign-in-only
+		.sign-in-box-providers.sign-in-only.text-center
 			button.btn.btn-lg.btn-dark(
 				*ngFor="let p of signInProviders"
 				(click)="signInTo(p)"
@@ -32,12 +86,10 @@
 				fa-icon([icon]="icon(p.id)" [fixedWidth]="true" size="lg")
 				.sr-only Sign in using {{p.name}}
 
-	div(*ngIf="local")
+	div.text-center(*ngIf="local")
 		.btn-group.dropdown(dropdown)
 			button.btn.btn-lg.btn-dark.dropdown-toggle(dropdownToggle)
 				| Mock login
 			.dropdown-menu(*dropdownMenu)
 				//- NOTE: change usernames to ids of accounts you want to use for testing
-				a.dropdown-item(href="/auth/local?password=x&username=69c916b9f450eb0930b50af8" target="_self") TreoFlixRed
-				a.dropdown-item(href="/auth/local?password=x&username=69c81a20d9daac1138aabfba" target="_self") BlackSmokepTown
-				a.dropdown-item(href="/auth/local?password=x&username=69cb75bc5a06f31808246891" target="_self") NeoKris
+				a.dropdown-item(href="/auth/local?password=x&username=69d67f4c0e88580b5c2ec42b" target="_self") [#b Empty]

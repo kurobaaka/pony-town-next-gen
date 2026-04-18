@@ -1,5 +1,13 @@
 @import '../../../../styles/partials/variables';
 
+:host ::ng-deep #chat-log {
+	position: fixed;
+	left: 5px;
+	bottom: 47px;
+	right: 5px;
+	height: 0;
+}
+
 action-button {
 	margin-right: 6px;
 	margin-bottom: 6px;
@@ -37,4 +45,41 @@ action-button {
 
 .inactive-tab {
 	visibility: hidden;
+}
+
+:host {
+	::ng-deep .modal-body.modal-checkboxes {
+		max-height: calc((100vh - 1rem) * 0.7);
+		overflow-y: auto;
+	}
+
+	::ng-deep tabset.fixed-height {
+		.tab-content.scroll {
+			scrollbar-width: thin;
+			scrollbar-color: rgba($body-bg, 0.8) rgba($body-bg, 0.2);
+
+			&::-webkit-scrollbar {
+				width: 10px;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: rgba($body-bg, 0.2);
+				border-radius: 6px;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: rgba($body-bg, 0.8);
+				border-radius: 6px;
+				border: 2px solid rgba($body-bg, 0.2);
+
+				&:hover {
+					background: lighten($body-bg, 8%);
+				}
+
+				&:active {
+					background: lighten($body-bg, 12%);
+				}
+			}
+		}
+	}
 }

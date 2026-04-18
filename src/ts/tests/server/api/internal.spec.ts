@@ -275,6 +275,13 @@ describe('api internal', () => {
 			return func('foo', 'bar');
 		});
 
+		it('resolves if user meets server restrictions (supporter 4)', () => {
+			server.require = 'sup4';
+			account.patreon = PatreonFlags.Supporter4;
+
+			return func('foo', 'bar');
+		});
+
 		it('resolves if user meets server restrictions (invited)', () => {
 			server.require = 'inv';
 			hasInvite.resolves(true);

@@ -71,6 +71,7 @@ export const enum Key {
 	NUMPAD_9 = 105,
 	MULTIPLY = 106,
 	ADD = 107,
+	NUMPAD_ENTER = 108,
 	SUBTRACT = 109,
 	DECIMAL = 110,
 	DIVIDE = 111,

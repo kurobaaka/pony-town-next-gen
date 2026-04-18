@@ -52,6 +52,35 @@ $chat-line-indent: 10px;
 	}
 }
 
+.chat-line-label-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1em;
+	height: 1em;
+}
+
+.chat-line-label-icon > svg {
+	width: 0.85em;
+	height: 0.85em;
+	vertical-align: middle;
+}
+
+.chat-line-supporter-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1em;
+	height: 1em;
+	margin-right: 2px;
+}
+
+.chat-line-supporter-icon > svg {
+	width: 0.85em;
+	height: 0.85em;
+	vertical-align: middle;
+}
+
 .chat-line-break {
 	word-break: break-all;
 }

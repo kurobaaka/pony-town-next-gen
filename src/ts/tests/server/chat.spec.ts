@@ -391,7 +391,29 @@ describe('chat', () => {
 
 				expect(client.saysQueue).eql([[client.pony.id, 'hello', MessageType.Supporter3]]);
 			});
+			it('sends supporter message of correct level (4)', () => {
+				client.supporterLevel = 4;
 
+				say(client, 'hello', ChatType.Supporter, undefined, {});
+
+				expect(client.saysQueue).eql([[client.pony.id, 'hello', MessageType.Supporter4]]);
+			});
+
+			it('sends supporter 4 message', () => {
+				client.supporterLevel = 4;
+
+				say(client, 'hello', ChatType.Supporter4, undefined, {});
+
+				expect(client.saysQueue).eql([[client.pony.id, 'hello', MessageType.Supporter4]]);
+			});
+
+			it('sends chat message if supporter level is lower than message level (4)', () => {
+				client.supporterLevel = 3;
+
+				say(client, 'hello', ChatType.Supporter4, undefined, {});
+
+				expect(client.saysQueue).eql([[client.pony.id, 'hello', MessageType.Chat]]);
+			});
 			it('sends supporter message as regular message for non-supporters', () => {
 				say(client, 'hello', ChatType.Supporter, undefined, {});
 

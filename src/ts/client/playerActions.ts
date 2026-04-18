@@ -1,11 +1,11 @@
 import { isCommand, processCommand, hasFlag, includes, point } from '../common/utils';
-import { canPonyLie, canPonyFlyUp, canPonyStand, canPonySit, doBoopPonyAction } from '../common/pony';
+import { canPonyLie, canPonyFlyUp, canPonyStand, canPonySit, doBoopPonyAction, doPonyAction } from '../common/pony';
 import { PonyTownGame } from './game';
 import {
 	setPonyState, canBoop, isPonyLying, isPonyFlying, isPonyStanding, isPonySitting, getInteractBounds,
 	isFacingRight, closestEntity, entityInRange
 } from '../common/entityUtils';
-import { EntityState, Action, Pony, ChatType, EntityFlags, Point, TileType } from '../common/interfaces';
+import { EntityState, Action, Pony, ChatType, EntityFlags, Point, TileType, DoAction } from '../common/interfaces';
 import { FLY_DELAY } from '../common/constants';
 import { randomString } from '../common/stringUtils';
 import { pickEntitiesByRect, pickAnyEntities } from '../common/worldMap';
@@ -135,6 +135,12 @@ export function flyAction(player: Pony, game: PonyTownGame) {
 export function boopAction(game: PonyTownGame) {
 	if (game.player && canBoop(game.player) && game.send(server => server.action(Action.Boop))) {
 		doBoopPonyAction(game, game.player);
+	}
+}
+
+export function dance1Action(game: PonyTownGame) {
+	if (game.player && canBoop(game.player) && game.send(server => server.action(Action.Dance1))) {
+		doPonyAction(game.player, DoAction.Dance1);
 	}
 }
 

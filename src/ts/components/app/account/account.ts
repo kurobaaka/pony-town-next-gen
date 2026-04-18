@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ACCOUNT_NAME_MAX_LENGTH, ACCOUNT_NAME_MIN_LENGTH, HIDES_PER_PAGE } from '../../../common/constants';
-import { UpdateAccountData, SocialSiteInfo, OAuthProvider, HiddenPlayer } from '../../../common/interfaces';
+import { UpdateAccountData, SocialSiteInfo, OAuthProvider, HiddenPlayer, PonyInfo } from '../../../common/interfaces';
 import {
 	toSocialSiteInfo, cleanName, supporterTitle, supporterClass, isSupporterOrPastSupporter, supporterRewards
 } from '../../../client/clientUtils';
@@ -10,6 +10,8 @@ import { getProviderIcon } from '../../shared/sign-in-box/sign-in-box';
 import { faStar, faExclamationCircle, faSync, faCopy } from '../../../client/icons';
 import { Router } from '@angular/router';
 import { formatPlaytime } from '../../../common/utils';
+import { AccountDataFlags } from '../../../common/interfaces';
+import { hasFlag } from '../../../common/utils';
 
 @Component({
 
@@ -118,6 +120,9 @@ export class Account implements OnInit, OnDestroy {
 	get showSupporter() {
 		return isSupporterOrPastSupporter(this.account);
 	}
+	get isPastSupporter() {
+		return !!this.account && hasFlag(this.account.flags, AccountDataFlags.PastSupporter) && !this.supporter;
+	}
 	get canSubmit() {
 		return this.account && this.data.name && !!cleanName(this.data.name).length;
 	}
@@ -127,8 +132,26 @@ export class Account implements OnInit, OnDestroy {
 	get supporterClass() {
 		return supporterClass(this.account);
 	}
+	commandClass(level: number) {
+		return `supporter-${level}`;
+	}
 	get supporterRewards() {
-		return supporterRewards(this.account);
+		return supporterRewards(this.account) || [];
+	}
+	get supporterPonyInfo(): PonyInfo | undefined {
+		return this.showSupporter ? this.model.pony.ponyInfo : undefined;
+	}
+	get supporterPonyTag(): string {
+		if (this.supporter > 0) {
+			return `sup${this.supporter}`;
+		}
+		return '';
+	}
+	get showSupporterTag(): boolean {
+		return !!this.supporterPonyTag;
+	}
+	get supporterPonyName(): string {
+		return this.showSupporter ? this.model.pony.name : '';
 	}
 	get showSupporterInfo() {
 		const account = this.account;

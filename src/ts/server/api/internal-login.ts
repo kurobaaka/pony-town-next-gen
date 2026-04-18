@@ -19,8 +19,7 @@ export function createLoginServerStatus(settings: Settings, live: ServerLiveSett
 		suspiciousSafeMessages: settings.suspiciousSafeMessages || '',
 		suspiciousSafeWholeMessages: settings.suspiciousSafeWholeMessages || '',
 		suspiciousSafeInstantMessages: settings.suspiciousSafeInstantMessages || '',
-		suspiciousSafeInstantWholeMessages: settings.suspiciousSafeInstantWholeMessages || '',
-
+		suspiciousSafeInstantWholeMessages: settings.suspiciousSafeInstantWholeMessages || '',			showTestingWarning: !!settings.showTestingWarning,
 		updating: live.updating,
 		dead: false,
 	};

@@ -51,7 +51,7 @@ export interface AppArgs {
 	admin?: boolean;
 	standaloneadmin?: boolean;
 	game?: string;
-	superadmin?: string;
+	owner?: string;
 	users?: boolean;
 	tools?: boolean;
 	webpack?: boolean;

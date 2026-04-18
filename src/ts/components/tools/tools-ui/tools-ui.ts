@@ -14,7 +14,7 @@ import { SettingsService } from '../../services/settingsService';
 import { faHome, faStar, faLock, faHeart } from '../../../client/icons';
 import { decompressPonyString } from '../../../common/compressPony';
 import { getAllTags } from '../../../common/tags';
-import { Model } from '../../services/model';
+import { Model, Friend } from '../../services/model';
 import { isPartyLeader } from '../../../client/partyUtils';
 import { createPony, getPaletteInfo } from '../../../common/pony';
 import { serializeActions, deserializeActions } from '../../../client/buttonActions';
@@ -135,6 +135,7 @@ export class ToolsUI implements OnInit, OnDestroy {
 				{ id: 'j', info: OFFLINE_PONY, name: 'Meno', active: false },
 			]),
 		} as any);
+		this.setupFakeFriends();
 	}
 	ngOnInit() {
 		initFeatureFlags({});
@@ -242,5 +243,57 @@ export class ToolsUI implements OnInit, OnDestroy {
 	set expressionActionsColor(value) {
 		updateActionColor(colorToCSS(parseColor(value)));
 		this.game.actionsChanged = true;
+	}
+
+	private setupFakeFriends() {
+		const now = Date.now();
+		const demoPonies = [
+			offlinePony,
+			supporterPony,
+			pendingPony,
+			createPony(4, 0, SUPPORTER_PONY, defaultPalette, mockPaletteManager),
+			createPony(5, 0, SUPPORTER_PONY, defaultPalette, mockPaletteManager),
+			createPony(6, 0, SUPPORTER_PONY, defaultPalette, mockPaletteManager),
+			createPony(7, 0, SUPPORTER_PONY, defaultPalette, mockPaletteManager),
+			createPony(8, 0, SUPPORTER_PONY, defaultPalette, mockPaletteManager),
+		];
+
+		demoPonies[3].name = 'Seconds Pony';
+		demoPonies[4].name = 'Week Pony';
+		demoPonies[5].name = 'Halfyear Pony';
+		demoPonies[6].name = 'Year Pony';
+		demoPonies[7].name = 'Ancient Pony';
+
+		const friends: Friend[] = [
+			this.createFakeFriend('a-online-1', 'Aurora', demoPonies[1], true),
+			this.createFakeFriend('a-online-2', 'Blaze', demoPonies[2], true),
+			this.createFakeFriend('a-seconds', 'Comet', demoPonies[3], false, new Date(now - 8 * 1000)),
+			this.createFakeFriend('a-minute', 'Dusty', demoPonies[0], false, new Date(now - 65 * 1000)),
+			this.createFakeFriend('a-hour', 'Echo', demoPonies[4], false, new Date(now - 4 * 60 * 60 * 1000)),
+			this.createFakeFriend('a-day', 'Flora', demoPonies[5], false, new Date(now - 2 * 24 * 60 * 60 * 1000)),
+			this.createFakeFriend('a-week', 'Glimmer', demoPonies[6], false, new Date(now - 3 * 7 * 24 * 60 * 60 * 1000)),
+			this.createFakeFriend('a-halfyear', 'Harbor', demoPonies[7], false, new Date(now - 182 * 24 * 60 * 60 * 1000)),
+			this.createFakeFriend('a-year', 'Iris', demoPonies[4], false, new Date(now - 365 * 24 * 60 * 60 * 1000)),
+			this.createFakeFriend('a-years', 'Juniper', demoPonies[5], false, new Date(now - 4 * 365 * 24 * 60 * 60 * 1000)),
+		];
+
+		this.model.friends = friends;
+		this.model.friends$.next(friends);
+	}
+
+	private createFakeFriend(accountId: string, displayName: string, pony: any, online: boolean, lastSeen?: Date): Friend {
+		return {
+			accountId,
+			accountName: `${displayName.toLowerCase()}_acc`,
+			name: displayName,
+			pony: pony.name,
+			nameBad: false,
+			entityId: online ? pony.id : 0,
+			crc: pony.crc || 0,
+			online,
+			ponyInfo: getPaletteInfo(pony),
+			actualName: displayName,
+			lastSeen,
+		};
 	}
 }

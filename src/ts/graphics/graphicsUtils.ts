@@ -69,6 +69,8 @@ function getMessagePalette(type: MessageType, palettes: FontPalettes) {
 		return palettes.supporter2;
 	} else if (type === MessageType.Supporter3) {
 		return palettes.supporter3;
+	} else if (type === MessageType.Supporter4) {
+		return palettes.supporter4;
 	} else {
 		return undefined;
 	}
@@ -263,12 +265,13 @@ function getNameColor(flags: DrawNameFlags) {
 
 export function drawNamePlate(
 	batch: PaletteSpriteBatch, text: string, x: number, y: number, flags: DrawNameFlags,
-	palettes: CommonPalettes, tagId?: string,
+	palettes: CommonPalettes, tagId?: string, allowRawTag = false,
 ) {
 	const tag = getTag(tagId);
+	const hasTag = !!tag || (allowRawTag && !!tagId);
 	const size = measureText(text, fontPal);
 	const xx = x - Math.round(size.w / 2);
-	const yy = y - size.h + 6 - (tag ? 3 : 0);
+	const yy = y - size.h + 6 - (hasTag ? 3 : 0);
 	const color = getNameColor(flags);
 	const options = { palette: palettes.mainFont.white, emojiPalette: palettes.mainFont.emoji };
 	drawOutlinedText(batch, text, fontPal, color, OUTLINE_COLOR, xx, yy, options);
@@ -278,6 +281,11 @@ export function drawNamePlate(
 		const textX = x - Math.round(tagSize.w / 2);
 		const palette = getTagPalette(tag, palettes.smallFont);
 		drawOutlinedText(batch, tag.label, fontSmallPal, tag.color, OUTLINE_COLOR, textX, yy + 11, { palette });
+	} else if (allowRawTag && tagId) {
+		const label = `<${tagId.toUpperCase()}>`;
+		const tagSize = measureText(label, fontSmallPal);
+		const textX = x - Math.round(tagSize.w / 2);
+		drawOutlinedText(batch, label, fontSmallPal, WHITE, OUTLINE_COLOR, textX, yy + 11, { palette: palettes.smallFont.white });
 	}
 }
 
@@ -544,7 +552,7 @@ export const chatAnimationDuration = 0.2;
 
 export function dismissSays(says: Says) {
 	if (says.timer !== undefined) {
-		says.timer = isTypingIndicatorMessage(says.message) ? 0 : Math.min(says.timer, chatAnimationDuration);
+		says.timer = Math.min(says.timer, chatAnimationDuration);
 	}
 }
 
@@ -645,6 +653,8 @@ export function createCommonPalettes(paletteManager: PaletteManager): CommonPale
 			supporter1: paletteManager.addArray(sprites.fontSupporter1Palette),
 			supporter2: paletteManager.addArray(sprites.fontSupporter2Palette),
 			supporter3: paletteManager.addArray(sprites.fontSupporter3Palette),
+			supporter4: paletteManager.addArray(sprites.fontSupporter4Palette),
+			owner: paletteManager.addArray(sprites.fontSupporterOwnerPalette),
 		},
 		smallFont: {
 			emoji: paletteManager.addArray(sprites.emojiPalette),
@@ -652,6 +662,8 @@ export function createCommonPalettes(paletteManager: PaletteManager): CommonPale
 			supporter1: paletteManager.addArray(sprites.fontSmallSupporter1Palette),
 			supporter2: paletteManager.addArray(sprites.fontSmallSupporter2Palette),
 			supporter3: paletteManager.addArray(sprites.fontSmallSupporter3Palette),
+			supporter4: paletteManager.addArray(sprites.fontSmallSupporter4Palette),
+			owner: paletteManager.addArray(sprites.fontSmallSupporterOwnerPalette),
 		},
 	};
 }

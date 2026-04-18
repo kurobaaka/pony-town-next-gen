@@ -3,7 +3,8 @@ import {
 	stand, sit, sitDown, standUp, lie, lieDown, sitUp, flyBug, fly, flyUp, flyDown, flyUpBug, flyDownBug,
 	trot, boop, boopSit, swim, sitToTrot, lieToTrot, boopLie, trotToFly, trotToFlyBug, boopFly, boopFlyBug,
 	flyToTrot, flyToTrotBug, swing, swimToTrot, trotToSwim, swimToFly, flyToSwim, boopSwim, swimToFlyBug, flyToSwimBug,
-	kissBody, kissLiftHoofBody, kissFlyBody, kissFlyBugBody, kissLieBody, kissSitBody, kissSwimBody, kissToTrot
+	kissBody, kissLiftHoofBody, kissFlyBody, kissFlyBugBody, kissLieBody, kissSitBody, kissSwimBody, kissToTrot,
+	dance1
 } from './ponyAnimations';
 import { BodyAnimation } from '../common/interfaces';
 
@@ -25,6 +26,12 @@ export const boopingSitting = state(n('booping-sitting'), boopSit);
 export const boopingLying = state(n('booping-lying'), boopLie);
 export const boopingFlying = state(n('booping-flying'), boopFly, { bug: boopFlyBug });
 export const boopingSwimming = state(n('booping-swimming'), boopSwim);
+
+export const dancing = state(n('dancing'), dance1);
+export const dancingSitting = state(n('dancing-sitting'), dance1);
+export const dancingLying = state(n('dancing-lying'), dance1);
+export const dancingFlying = state(n('dancing-flying'), dance1);
+export const dancingSwimming = state(n('dancing-swimming'), dance1);
 
 export const kissing = state(n('kissing'), kissBody);
 export const kissingHoof = state(n('kissing'), kissLiftHoofBody);
@@ -57,6 +64,7 @@ export const swinging = state(n('swinging'), swing);
 export const ponyStates = [
 	anyState, standing, trotting, swimming, swimmingToTrotting, trottingToSwimming,
 	booping, boopingSitting, boopingLying, boopingFlying,
+	dancing, dancingSitting, dancingLying, dancingFlying, dancingSwimming,
 	sitting, sittingDown, standingUp, sittingToTrotting,
 	lying, lyingDown, sittingUp, lyingToTrotting,
 	hovering, flying, flyingUp, flyingDown, trottingToFlying, flyingToTrotting,
@@ -120,6 +128,17 @@ transition(lying, boopingLying, { exitAfter: 0 });
 transition(boopingFlying, hovering, { enterTime: 1.1 / 10 });
 transition(hovering, boopingFlying, { exitAfter: 0 });
 
+transition(dancingSwimming, swimming);
+transition(swimming, dancingSwimming, { exitAfter: 0 });
+transition(dancing, standing);
+transition(standing, dancing, { exitAfter: 0 });
+transition(dancingSitting, sitting);
+transition(sitting, dancingSitting, { exitAfter: 0 });
+transition(dancingLying, lying);
+transition(lying, dancingLying, { exitAfter: 0 });
+transition(dancingFlying, hovering, { enterTime: 1.1 / 10 });
+transition(hovering, dancingFlying, { exitAfter: 0 });
+
 transition(kissingSwimming, swimming);
 transition(swimming, kissingSwimming, { exitAfter: 0 });
 transition(kissing, standing);
@@ -157,7 +176,7 @@ export function isFlyingDown(state: AnimatorState<BodyAnimation> | undefined) {
 
 export function isSwimmingState(state: AnimatorState<BodyAnimation> | undefined) {
 	return state === swimming || state === trottingToSwimming || state === swimmingToTrotting ||
-		state === flyingToSwimming || state === swimmingToFlying || state === boopingSwimming ||
+		state === flyingToSwimming || state === swimmingToFlying || state === boopingSwimming || state === dancingSwimming ||
 		state === kissingSwimming;
 }
 
@@ -192,4 +211,20 @@ export function toKissState(state: AnimatorState<BodyAnimation>) {
 		case swimming: return kissingSwimming;
 		default: return undefined;
 	}
+}
+
+export function toDanceState(state: AnimatorState<BodyAnimation>) {
+	switch (state) {
+		case standing: return dancing;
+		case sitting: return dancing;
+		case lying: return dancing;
+		case hovering: return dancingFlying;
+		case swimming: return dancingSwimming;
+		default: return undefined;
+	}
+}
+
+export function isDanceState(state: AnimatorState<BodyAnimation> | undefined) {
+	return state === dancing || state === dancingSitting || state === dancingLying ||
+		state === dancingFlying || state === dancingSwimming;
 }

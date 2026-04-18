@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { merge } from 'lodash';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { HASH } from '../../generated/hash';
 import {
 	AccountData, UpdateAccountData, AccountSettings, GameStatus, SocialSiteInfo, PonyObject, JoinResponse,
@@ -30,6 +30,8 @@ export interface Friend extends FriendData {
 	online: boolean;
 	ponyInfo: PalettePonyInfo | undefined;
 	actualName: string;
+	lastSeen?: Date;
+	pinned?: boolean;
 }
 
 const LIMIT_ERROR = 'Request limit reached, please wait';
@@ -119,6 +121,7 @@ export class Model {
 	updatingTakesLongTime = false;
 	suffix = '';
 	friends: Friend[] | undefined = undefined;
+	friends$ = new BehaviorSubject<Friend[]>([]);
 	private _pony: PonyObject = createDefaultPonyObject();
 	constructor(
 		private http: HttpClient,
@@ -156,6 +159,7 @@ export class Model {
 		this.accountAlert = undefined;
 		this.ponies = [];
 		this.friends = undefined;
+		this.friends$.next([]);
 		this.sites = [noneSite];
 		this._pony = createDefaultPonyObject();
 		this.storage.setItem('bid', this.storage.getItem('bid') || randomString(20));
@@ -189,6 +193,7 @@ export class Model {
 				this.sites = [noneSite, ...(account.sites || []).map(toSocialSiteInfo)];
 				this.ponies = account.ponies ? account.ponies.sort(comparePonies) : [];
 				this.friends = undefined;
+				this.friends$.next([]);
 
 				let defaultPony = getDefaultPony(this.ponies);
 				if (this.ponies.length === 0) {
@@ -237,6 +242,7 @@ export class Model {
 					ponyInfo: f.pony && decodePonyInfo(f.pony, mockPaletteManager) || undefined,
 					actualName: '',
 				})).sort(compareFriends);
+				this.friends$.next(this.friends);
 			})
 			.catch(e => {
 				DEVELOPMENT && console.error(e);
@@ -275,8 +281,9 @@ export class Model {
 			const ponyInfo = decompressPonyString(pony.info, true);
 			return { ponyInfo, ...pony };
 		} catch (e) {
+			const message = e instanceof Error ? e.message : String(e);
 			this.errorReporter.reportError(e, { ponyInfo: pony.info });
-			this.errorReporter.reportError('Pony info reading error', { originalError: e.message, ponyInfo: pony.info });
+			this.errorReporter.reportError('Pony info reading error', { originalError: message, ponyInfo: pony.info });
 			throw new Error('Error while reading pony info');
 		}
 	}
@@ -458,6 +465,11 @@ export class Model {
 			.set('t', (Date.now() % 0x10000).toString(16));
 
 		return observableToPromise(this.http.get<GameStatus>('/api2/game/status', { params }));
+	}
+
+	loginServerStatus(): Promise<boolean> {
+		return observableToPromise(this.http.get<{ showTestingWarning?: boolean }>('/api2/game/login-status'))
+			.then(status => !!status.showTestingWarning);
 	}
 	join(serverId: string, ponyId: string): Promise<JoinResponse> {
 		if (this.pending)

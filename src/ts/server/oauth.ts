@@ -21,7 +21,6 @@ export interface OAuthProfile {
 	id?: string;
 	name?: OAuthProfileName;
 	username?: string;
-	discriminator?: string; // discord
 	displayName?: string;
 	email?: string; // discord
 	emails?: { value: string; }[];
@@ -134,12 +133,12 @@ export function getProfileEmails(profile: OAuthProfile): string[] {
 }
 
 export function getProfileUsername(profile: OAuthProfile): string | undefined {
-	if (profile.provider === 'discord') return `${profile.username}#${profile.discriminator}`;
+	if (profile.provider === 'discord') return `${profile.username}`;
 	return profile.username || profile.displayName || getProfileNameInternal(profile.name);
 }
 
 export function getProfileName(profile: OAuthProfile): string | undefined {
-	if (profile.provider === 'discord') return `${profile.username}#${profile.discriminator}`;
+	if (profile.provider === 'discord') return `${profile.username}`;
 	return profile.displayName || profile.username || getProfileNameInternal(profile.name);
 }
 

@@ -156,6 +156,10 @@ character-preview {
 	color: $supporter-3 !important;
 }
 
+.supporter-4 {
+	color: $supporter-4 !important;
+}
+
 // flags
 
 @mixin flag-3($a, $b, $c) {
@@ -275,7 +279,7 @@ $argentina-blue: #74acdf;
 // TODO: make $action-bar-space 46px on desktop
 
 .actions-modal-opened {
-	$action-bar-space: 80px;	
+	$action-bar-space: 46px;	
 	
 	.modal-backdrop, .modal {
 		bottom: $action-bar-space;
@@ -292,6 +296,29 @@ $argentina-blue: #74acdf;
 	}
 }
 
+// Keep settings modal overlay behavior close to actions modal so chat-log positioning matches.
+.settings-modal-opened {
+	$action-bar-space: 0px;
+
+	.modal-backdrop, .modal {
+		bottom: $action-bar-space;
+		height: auto;
+	}
+
+	.modal-dialog {
+		@media screen and (max-height: 600px) {
+			height: auto;
+		}
+
+		align-items: flex-end;
+		padding-bottom: 20px;
+	}
+
+	.modal-content {
+		overflow: visible;
+	}
+}
+
 .translucent-modals .modal-content {
 	opacity: 0.5;
 }
@@ -304,4 +331,49 @@ $argentina-blue: #74acdf;
 
 .tooltip.tooltip-desc .tooltip-inner {
 	max-width: 250px;
+}
+
+.tooltip.tooltip-pony {
+	opacity: 1;
+
+	.tooltip-inner {
+		max-width: 320px;
+		background: #eee;
+		border-radius: 7px;
+		padding: 0;
+		overflow: hidden;
+	}
+
+	&.bs-tooltip-left .arrow::before {
+		border-left-color: #eee;
+	}
+
+	&.bs-tooltip-right .arrow::before {
+		border-right-color: #eee;
+	}
+
+	&.bs-tooltip-top .arrow::before {
+		border-top-color: #eee;
+	}
+
+	&.bs-tooltip-bottom .arrow::before {
+		border-bottom-color: #eee;
+	}
+}
+
+.character-tooltip {
+	margin: 0;
+	border-radius: 7px;
+	overflow: hidden;
+	position: relative;
+	display: block;
+
+	.pony-info-preview {
+		padding: 4px;
+
+		character-preview {
+			width: 220px;
+			height: 220px;
+		}
+	}
 }

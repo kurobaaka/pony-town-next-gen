@@ -72,6 +72,7 @@ export class ToolsChat implements AfterViewInit {
 		{ label: 'Supporter message 1', color: getMessageColor(MessageType.Supporter1) },
 		{ label: 'Supporter message 2', color: WHITE, palette: p => p.supporter2 },
 		{ label: 'Supporter message 3', color: WHITE, palette: p => p.supporter3 },
+		{ label: 'Supporter message 4', color: WHITE, palette: p => p.supporter4 },
 		{ label: 'Whisper message', color: WHISPER_COLOR },
 		// { label: 'Supporter message 2', color: 0xffd45aff },
 	];
@@ -127,6 +128,7 @@ export class ToolsChat implements AfterViewInit {
 			drawNamePlate(batch, 'Тег красного саппа', 220, 170, DrawNameFlags.None, palettes, 'sup1');
 			drawNamePlate(batch, 'Тег бронзового саппа', 220, 195, DrawNameFlags.None, palettes, 'sup2');
 			drawNamePlate(batch, 'Тег золотого саппа', 220, 220, DrawNameFlags.None, palettes, 'sup3');
+			drawNamePlate(batch, 'Тег изумрудного саппа', 220, 245, DrawNameFlags.None, palettes, 'sup4');
 			drawNamePlate(batch, 'Тег разработчика', 220, 245, DrawNameFlags.None, palettes, 'dev');
 			drawNamePlate(batch, 'Тег художника', 220, 270, DrawNameFlags.None, palettes, 'dev:art');
 			drawNamePlate(batch, 'Тег музыканта', 220, 295, DrawNameFlags.None, palettes, 'dev:music');

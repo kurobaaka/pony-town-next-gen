@@ -49,6 +49,10 @@ describe('adminUtils', () => {
 			expect(supporterLevel(account({ supporter: SupporterFlags.Supporter1 }))).equal(1);
 		});
 
+		it('returns 4 if has supporter4 flag', () => {
+			expect(supporterLevel(account({ supporter: SupporterFlags.Supporter4 }))).equal(4);
+		});
+
 		it('returns max level if has supporter flag and patreon', () => {
 			expect(supporterLevel(account({
 				patreon: PatreonFlags.Supporter3,

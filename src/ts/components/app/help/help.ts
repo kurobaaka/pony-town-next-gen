@@ -39,9 +39,9 @@ export class Help {
 		const a = this.model.account;
 		return !!(a && a.roles && a.roles.indexOf('admin') !== -1);
 	}
-	get isSuperadmin() {
+	get isOwner() {
 		const a = this.model.account;
-		return !!(a && a.roles && a.roles.indexOf('superadmin') !== -1);
+		return !!(a && a.roles && a.roles.indexOf('owner') !== -1);
 	}
 
 	ngAfterViewInit() {

@@ -1,0 +1,135 @@
+@import '../../../../styles/partials/variables';
+
+:host {
+	display: block;
+}
+
+.btn {
+	position: relative;
+
+	@media (max-width: 320px) {
+		white-space: normal;
+	}
+}
+
+.btn-about {
+	padding: 1rem;
+	font-weight: 500;
+	color: #6c757d;
+	border-color: #6c757d;
+
+	.about-logo .about-logo-mark {
+		will-change: transform, box-shadow;
+	}
+
+	&:hover .about-logo .about-logo-mark,
+	&:focus .about-logo .about-logo-mark {
+		animation: about-icon-pulse 0.9s ease-in-out;
+	}
+
+	&:hover,
+	&:focus,
+	&:active {
+		color: #fff;
+		background-color: #6c757d;
+		border-color: #6c757d;
+	}
+}
+
+@keyframes about-icon-pulse {
+	0% {
+		transform: scale(1) rotate(0deg);
+		box-shadow: 0 0 0 rgba(108, 117, 125, 0);
+	}
+	40% {
+		transform: scale(1.14) rotate(-10deg);
+		box-shadow: 0 0 0 6px rgba(108, 117, 125, 0.18);
+	}
+	70% {
+		transform: scale(0.97) rotate(6deg);
+		box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.12);
+	}
+	100% {
+		transform: scale(1) rotate(0deg);
+		box-shadow: 0 0 0 rgba(108, 117, 125, 0);
+	}
+}
+
+.btn-about.nudging .about-logo .about-logo-mark {
+	animation: about-nudge 0.7s ease-in-out;
+}
+
+.btn-about.nudging {
+	animation: about-button-glow 0.95s ease-in-out;
+}
+
+@keyframes about-nudge {
+	0%   { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 rgba(108, 117, 125, 0); }
+	25%  { transform: scale(1.22) rotate(-18deg); box-shadow: 0 0 0 8px rgba(108, 117, 125, 0.22); }
+	55%  { transform: scale(0.88) rotate(12deg); box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.14); }
+	75%  { transform: scale(1.1) rotate(-7deg); box-shadow: 0 0 0 4px rgba(108, 117, 125, 0.1); }
+	100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 rgba(108, 117, 125, 0); }
+}
+
+@keyframes about-button-glow {
+	0% {
+		box-shadow: 0 0 0 0 rgba(108, 117, 125, 0);
+	}
+	45% {
+		box-shadow: 0 0 0 7px rgba(108, 117, 125, 0.18);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(108, 117, 125, 0);
+	}
+}
+
+.about-logo {
+	position: absolute;
+	left: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 60px;
+	height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	.about-logo-mark {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: #6c757d;
+		color: #fff;
+		font-size: 22px;
+		font-weight: 700;
+		font-style: normal;
+		line-height: 1;
+	}
+
+	@media (max-width: 320px) {
+		display: none;
+	}
+}
+
+.about-pony {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	height: 80px;
+	width: 100px;
+	overflow: hidden;
+	border-radius: $border-radius-lg - 2px;
+
+	> about-pony {
+		position: absolute;
+		bottom: -80px;
+		left: -20px;
+	}
+
+	@media (max-width: 360px) {
+		display: none;
+	}
+}

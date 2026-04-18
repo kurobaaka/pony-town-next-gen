@@ -78,24 +78,40 @@ ng-template(#shareLinkPopover)
 						(click)="share()" title="Share" [popover]="shareLinkPopover" [isOpen]="shareLinkOpen"
 						popover-enable="shareLink" popover-class="popover-wide")
 						fa-icon([icon]="shareIcon" [fixedWidth]="true")
-					button.btn.btn-default.ml-1((click)="export()" title="Export")
-						fa-icon([icon]="codeIcon" [fixedWidth]="true")
+					button.btn.btn-default.ml-1((click)="export()" title="Export to file")
+						fa-icon([icon]="downloadIcon" [fixedWidth]="true")
+						|  Export
+					button.btn.btn-default.ml-1((click)="exportCode()" title="Export as createBodyAnimation code")
+						fa-icon([icon]="downloadIcon" [fixedWidth]="true")
+						|  Export code(do_not)
+					button.btn.btn-default.ml-1((click)="importClick()" title="Import from file")
+						fa-icon([icon]="uploadIcon" [fixedWidth]="true")
+						|  Import
+					input#import-animation(type="file" accept=".txt" (change)="import($event)" style="display: none;")
 					.btn-group.dropdown.ml-1(dropdown)
 						button.btn.btn-default((click)="png()" title="Save as PNG")
-							| PNG
+							| PNG x1
 						button.btn.btn-default.dropdown-toggle(dropdownToggle)
 						.dropdown-menu(*dropdownMenu)
-							a.dropdown-item((click)="png(2)") &times;2
-							a.dropdown-item((click)="png(3)") &times;3
-							a.dropdown-item((click)="png(4)") &times;4
+							a.dropdown-item((click)="png(2)") PNG x2
+							a.dropdown-item((click)="png(3)") PNG x3
+							a.dropdown-item((click)="png(4)") PNG x4
 					.btn-group.ml-1(dropdown)
 						button.btn.btn-default((click)="gif()" title="Save as GIF")
-							| GIF
+							| GIF x1
 						button.btn.btn-default.dropdown-toggle(dropdownToggle)
 						.dropdown-menu(*dropdownMenu)
-							a.dropdown-item((click)="gif(2)") &times;2
-							a.dropdown-item((click)="gif(3)") &times;3
-							a.dropdown-item((click)="gif(4)") &times;4
+							a.dropdown-item((click)="gif(2)") GIF x2
+							a.dropdown-item((click)="gif(3)") GIF x3
+							a.dropdown-item((click)="gif(4)") GIF x4
+					.btn-group.ml-1(dropdown)
+						button.btn.btn-default((click)="mp4()" title="Save as MP4")
+							| MP4 x1
+						button.btn.btn-default.dropdown-toggle(dropdownToggle)
+						.dropdown-menu(*dropdownMenu)
+							a.dropdown-item((click)="mp4(2)") MP4 x2
+							a.dropdown-item((click)="mp4(3)") MP4 x3
+							a.dropdown-item((click)="mp4(4)") MP4 x4
 
 					.btn.btn-warning.ml-1(*ngIf="animation.builtin" disabled)
 						| Changes to builtin animations aren't saved, duplicate it, to save the changes
@@ -112,12 +128,6 @@ ng-template(#shareLinkPopover)
 				.form-group
 					button.btn.btn-sm.ml-1([(ngModel)]="animation.loop" btnCheckbox [btnHighlight]="animation.loop")
 						| loop
-				.form-group(*ngIf="mode !== 'body'")
-					button.btn.btn-sm.ml-1([(ngModel)]="animation.dontOpenEyes" btnCheckbox [btnHighlight]="animation.dontOpenEyes")
-						| dontOpenEyes
-				.form-group(*ngIf="mode !== 'body'")
-					button.btn.btn-sm.ml-1([(ngModel)]="animation.dontCloseMouth" btnCheckbox [btnHighlight]="animation.dontCloseMouth")
-						| dontCloseMouth
 				.btn-group.ml-1(dropdown)
 					button.btn.btn-sm.btn-default.dropdown-toggle(dropdownToggle title="Before animation")
 						| before: {{beforeAnimation?.name || 'none'}}
@@ -290,6 +300,11 @@ ng-template(#shareLinkPopover)
 						td.frame-cell
 							check-box.float-left([(checked)]="headAnimation.lockEyes" (checkedChange)="update()" [icon]="lockIcon")
 							| Left eye
+					tr: td.frame-cell Right iris
+					tr([class.frames-locked]="headAnimation.lockIrises")
+						td.frame-cell
+							check-box.float-left([(checked)]="headAnimation.lockIrises" (checkedChange)="update()" [icon]="lockIcon")
+							| Left iris
 					tr: td.frame-cell Mouth
 		.frames-view
 			table.table.table-bordered.table-frames.table-sm
@@ -311,6 +326,16 @@ ng-template(#shareLinkPopover)
 						td.frame-cell(*ngFor="let f of headFrames; index as i" [class.active]="isActive(i)")
 							tools-frame(
 								[(frame)]="f.left" [sprites]="leftEyes" [pony]="info" [x]="-15" [y]="-20" [circle]="coat"
+							  (frameChange)="update()" [reverseExtra]="true" (click)="selectFrame(i)")
+					tr
+						td.frame-cell(*ngFor="let f of headFrames; index as i" [class.active]="isActive(i)")
+							tools-frame(
+								[(frame)]="f.rightIris" [sprites]="rightIrises" [pony]="info" [x]="-15" [y]="-20" [circle]="coat"
+							  (frameChange)="update()" [reverseExtra]="true" (click)="selectFrame(i)")
+					tr([class.frames-locked]="headAnimation.lockIrises")
+						td.frame-cell(*ngFor="let f of headFrames; index as i" [class.active]="isActive(i)")
+							tools-frame(
+								[(frame)]="f.leftIris" [sprites]="leftIrises" [pony]="info" [x]="-15" [y]="-20" [circle]="coat"
 							  (frameChange)="update()" [reverseExtra]="true" (click)="selectFrame(i)")
 					tr
 						td.frame-cell(*ngFor="let f of headFrames; index as i" [class.active]="isActive(i)")

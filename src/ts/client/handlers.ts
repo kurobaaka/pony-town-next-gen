@@ -383,6 +383,15 @@ export function handleRemoveEntity(game: PonyTownGame, id: number) {
 	}
 
 	if (isSelected(game, id)) {
+		const selected = game.selected as any;
+		if (selected) {
+			selected.offline = true;
+			if (!selected.options) {
+				selected.options = {};
+			}
+			selected.options.offline = true;
+		}
+
 		setTimeout(() => {
 			if (isSelected(game, id)) {
 				game.select(undefined);
@@ -404,6 +413,9 @@ export function handleAction(game: PonyTownGame, id: number, action: Action) {
 			case Action.Boop:
 				doBoopPonyAction(game, pony);
 				break;
+				case Action.Dance1:
+					doPonyAction(pony, DoAction.Dance1);
+					break;
 			case Action.HoldPoof:
 				doPonyAction(pony, DoAction.HoldPoof);
 				break;
@@ -648,30 +660,37 @@ export function handleSay(game: PonyTownGame, entity: Entity | FakeEntity, messa
 	if (!shouldShowChatMessage(game, entity, message, type))
 		return;
 
-	if (type === MessageType.Dismiss || message === '.') {
-		if (!entity.fake && entity.says) {
-			dismissSays(entity.says);
-		}
-	} else {
-		const typingIndicator = isTypingIndicatorMessage(message);
+	const typingIndicator = isTypingIndicatorMessage(message);
 
-		if (typingIndicator && game.settings.account.showTypingIndicator === false) {
+	if (typingIndicator) {
+		if (game.settings.account.showTypingIndicator === false) {
 			return;
 		}
 
 		const bubbleEntity = isWhisperTo(type) ? game.player : entity;
 
 		if (bubbleEntity && !bubbleEntity.fake && game.map.entitiesById.has(bubbleEntity.id)) {
-			const total = typingIndicator ? typingIndicatorDuration : getSaysTime(message);
+			const total = typingIndicatorDuration;
+			addChatBubble(game.map, bubbleEntity, { message, type, total, timer: total, created: Date.now() });
+		}
+	} else if (type === MessageType.Dismiss || message === '.') {
+		if (!entity.fake && entity.says) {
+			dismissSays(entity.says);
+		}
+	} else {
+		const bubbleEntity = isWhisperTo(type) ? game.player : entity;
+
+		if (bubbleEntity && !bubbleEntity.fake && game.map.entitiesById.has(bubbleEntity.id)) {
+			const total = getSaysTime(message);
 			addChatBubble(game.map, bubbleEntity, { message, type, total, timer: total, created: Date.now() });
 		}
 
-		if (!typingIndicator && isWhisper(type)) {
+		if (isWhisper(type)) {
 			const friend = game.model.friends && game.model.friends.find(f => f.entityId === entity.id);
 			game.lastWhisperFrom = { entityId: entity.id, accountId: friend && friend.accountId };
 		}
 
-		if (!typingIndicator && shouldShowChatMessageInChatlog(game, entity, type)) {
+		if (shouldShowChatMessageInChatlog(game, entity, type)) {
 			const { id, name = '', crc } = entity;
 			game.messageQueue.push({ id, crc, name, message, type });
 		}
@@ -749,6 +768,11 @@ function createEntityOrPony(
 function updateEntityOptionsInternal(entity: Entity, options: Partial<EntityOrPonyOptions>, game: PonyTownGame) {
 	Object.assign(entity, options);
 
+	if (isPony(entity) && 'modal' in options && game.selected && game.selected.id === entity.id) {
+		(game.selected as any).modal = (options as any).modal;
+		game.applyChanges();
+	}
+
 	if ('tag' in options && !options.tag) {
 		entity.tag = undefined;
 	}
@@ -762,12 +786,14 @@ export function handleUpdateFriends(game: PonyTownGame, friends: FriendStatusDat
 	if (!game.model.friends)
 		return;
 
+	let currentFriends = game.model.friends;
+
 	for (const { accountId, accountName, status, entityId, name, info, crc, nameBad = false } of friends) {
-		let friend = game.model.friends.find(f => f.accountId === accountId);
+		let friend = currentFriends.find(f => f.accountId === accountId);
 
 		if (hasFlag(status, FriendStatusFlags.Remove)) {
 			if (friend) {
-				removeItem(game.model.friends, friend);
+				removeItem(currentFriends, friend);
 			}
 		} else {
 			if (!friend) {
@@ -782,59 +808,77 @@ export function handleUpdateFriends(game: PonyTownGame, friends: FriendStatusDat
 					crc: 0,
 					ponyInfo: undefined,
 					actualName: '',
+					lastSeen: undefined,
 				};
 
-				game.model.friends.push(friend);
+				const current = currentFriends.slice();
+				current.push(friend);
+				game.model.friends$.next(current);
+				game.model.friends = current;
+				currentFriends = current;
 			}
 
-			friend.online = hasFlag(status, FriendStatusFlags.Online);
+			const ensuredFriend = friend;
+			if (!ensuredFriend) {
+				continue;
+			}
+
+			ensuredFriend.online = hasFlag(status, FriendStatusFlags.Online);
+
+			if (ensuredFriend.online) {
+				ensuredFriend.lastSeen = undefined;
+			} else if (ensuredFriend.lastSeen === undefined) {
+				ensuredFriend.lastSeen = new Date();
+			}
 
 			if (accountName !== undefined) {
-				friend.accountName = accountName;
+				ensuredFriend.accountName = accountName;
 			}
 
 			if (entityId !== undefined) {
-				if (game.lastWhisperFrom && game.lastWhisperFrom.accountId === friend.accountId) {
+				if (game.lastWhisperFrom && game.lastWhisperFrom.accountId === ensuredFriend.accountId) {
 					game.lastWhisperFrom.entityId = entityId;
 				}
 
-				game.onEntityIdUpdate.next({ old: friend.entityId, new: entityId });
+				game.onEntityIdUpdate.next({ old: ensuredFriend.entityId, new: entityId });
 
-				friend.entityId = entityId;
+				ensuredFriend.entityId = entityId;
 			}
 
 			if (name !== undefined) {
-				friend.name = name;
-				friend.nameBad = nameBad;
-				friend.actualName = filterEntityName(game, name, nameBad) || '';
+				ensuredFriend.name = name;
+				ensuredFriend.nameBad = nameBad;
+				ensuredFriend.actualName = filterEntityName(game, name, nameBad) || '';
 			}
 
 			if (crc !== undefined) {
-				friend.crc = crc;
+				ensuredFriend.crc = crc;
 			}
 
 			if (info !== undefined) {
-				friend.pony = info;
-				friend.ponyInfo = decodePonyInfo(info, mockPaletteManager);
+				ensuredFriend.pony = info;
+				ensuredFriend.ponyInfo = decodePonyInfo(info, mockPaletteManager);
 			}
 
-			if (friend.entityId && game.whisperTo && game.whisperTo.id === friend.entityId) {
-				game.whisperTo.name = friend.actualName;
-				game.whisperTo.crc = friend.crc;
+			if (ensuredFriend.entityId && game.whisperTo && game.whisperTo.id === ensuredFriend.entityId) {
+				game.whisperTo.name = ensuredFriend.actualName;
+				game.whisperTo.crc = ensuredFriend.crc;
 			}
 		}
 	}
 
 	if (removeMissing) {
-		for (let i = game.model.friends.length - 1; i >= 0; i--) {
-			if (!friends.find(f => f.accountId === game.model.friends![i].accountId)) {
-				game.model.friends.splice(i, 1);
+		for (let i = currentFriends.length - 1; i >= 0; i--) {
+			if (!friends.find(f => f.accountId === currentFriends[i].accountId)) {
+				currentFriends.splice(i, 1);
 			}
 		}
 
 		DEVELOPMENT && console.log('Refreshing friend list');
 	}
 
-	game.model.friends.sort(compareFriends);
+	currentFriends.sort(compareFriends);
+	game.model.friends = currentFriends;
+	game.model.friends$.next(currentFriends);
 	game.apply(() => { });
 }

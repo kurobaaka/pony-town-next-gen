@@ -1,8 +1,9 @@
 import '../lib';
 import { expect } from 'chai';
-import { isAdmin, isMod, isDev, meetsRequirement, getSupporterInviteLimit } from '../../common/accountUtils';
+import { isAdmin, isMod, isDev, meetsRequirement, getSupporterInviteLimit, getCharacterLimit } from '../../common/accountUtils';
 import { account } from '../mocks';
 import { SupporterFlags } from '../../common/adminInterfaces';
+import { BASE_CHARACTER_LIMIT, ADDITIONAL_CHARACTERS_SUPPORTER1, ADDITIONAL_CHARACTERS_SUPPORTER2, ADDITIONAL_CHARACTERS_SUPPORTER3, ADDITIONAL_CHARACTERS_SUPPORTER4 } from '../../common/constants';
 
 describe('accountUtils [client]', () => {
 	describe('isAdmin()', () => {
@@ -10,15 +11,15 @@ describe('accountUtils [client]', () => {
 			expect(isAdmin(account({ roles: ['admin'] }))).true;
 		});
 
-		it('returns true if target account has superadmin role', () => {
-			expect(isAdmin(account({ roles: ['superadmin'] }))).true;
+		it('returns true if target account has owner role', () => {
+			expect(isAdmin(account({ roles: ['owner'] }))).true;
 		});
 
 		it('returns false if target account has no roles', () => {
 			expect(isAdmin(account({}))).false;
 		});
 
-		it('returns false if target account has no admin or superadmin roles', () => {
+		it('returns false if target account has no admin or owner roles', () => {
 			expect(isAdmin(account({ roles: ['foo'] }))).false;
 		});
 	});
@@ -32,15 +33,15 @@ describe('accountUtils [client]', () => {
 			expect(isMod(account({ roles: ['admin'] }))).true;
 		});
 
-		it('returns true if target account has superadmin role', () => {
-			expect(isMod(account({ roles: ['superadmin'] }))).true;
+		it('returns true if target account has owner role', () => {
+			expect(isMod(account({ roles: ['owner'] }))).true;
 		});
 
 		it('returns false if target account has no roles', () => {
 			expect(isMod(account({}))).false;
 		});
 
-		it('returns false if target account has no admin or superadmin roles', () => {
+		it('returns false if target account has no admin or owner roles', () => {
 			expect(isMod(account({ roles: ['foo'] }))).false;
 		});
 	});
@@ -82,6 +83,10 @@ describe('accountUtils [client]', () => {
 
 		it('returns true if matches supporter 3 requirement', () => {
 			expect(meetsRequirement({ supporter: SupporterFlags.Supporter3 }, 'sup3')).true;
+		});
+
+		it('returns true if matches supporter 4 requirement', () => {
+			expect(meetsRequirement({ supporter: SupporterFlags.Supporter4 }, 'sup4')).true;
 		});
 
 		it('returns false if supporter is lower level', () => {
@@ -146,8 +151,34 @@ describe('accountUtils [client]', () => {
 			expect(getSupporterInviteLimit({ supporter: 3 })).equal(10);
 		});
 
+		it('returns 15 for supporter level 4', () => {
+			expect(getSupporterInviteLimit({ supporter: 4 })).equal(15);
+		});
+
 		it('returns 0 otherwise', () => {
 			expect(getSupporterInviteLimit({})).equal(0);
+		});
+	});
+
+	describe('getCharacterLimit()', () => {
+		it('returns base limit for no supporter', () => {
+			expect(getCharacterLimit({})).equal(BASE_CHARACTER_LIMIT);
+		});
+
+		it('returns base + additional for supporter level 1', () => {
+			expect(getCharacterLimit({ supporter: 1 })).equal(BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER1);
+		});
+
+		it('returns base + additional for supporter level 2', () => {
+			expect(getCharacterLimit({ supporter: 2 })).equal(BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER2);
+		});
+
+		it('returns base + additional for supporter level 3', () => {
+			expect(getCharacterLimit({ supporter: 3 })).equal(BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER3);
+		});
+
+		it('returns base + additional for supporter level 4', () => {
+			expect(getCharacterLimit({ supporter: 4 })).equal(BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER4);
 		});
 	});
 });

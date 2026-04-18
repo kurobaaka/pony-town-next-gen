@@ -25,6 +25,7 @@ export const BG_COLOR = 0x333333ff;
 export const ADMIN_COLOR = 0xff69b4ff;
 export const MOD_COLOR = 0xb689ffff;
 export const SYSTEM_COLOR = 0xbbbbbbff;
+export const OWNER_COLOR = 0xff0000ff;
 export const MESSAGE_COLOR = 0x333333ff;
 export const ANNOUNCEMENT_COLOR = 0xf0e68Cff;
 export const PARTY_COLOR = 0x71daffff;
@@ -38,9 +39,12 @@ export const FRIENDS_COLOR = 0x71ff7fff;
 export const SUPPORTER1_COLOR = PATREON_COLOR;
 export const SUPPORTER2_COLOR = 0xffa32bff;
 export const SUPPORTER3_COLOR = 0xffcf00ff;
+export const SUPPORTER4_COLOR = 0x50c878ff;
 
 export const SUPPORTER2_BANDS = [0xffdfc1ff, 0xffcd99ff, 0xff9f3bff, 0xd97e09ff];
 export const SUPPORTER3_BANDS = [0xffffffff, 0xfffda4ff, 0xffea3bff, 0xfdbb0bff];
+export const SUPPORTER4_BANDS = [0xb8f2c8ff, 0x8ae6a0ff, 0x5cd98cff, 0x2ecc71ff, 0x27ae60ff, 0x229954ff, 0x1e8449ff, 0x196f3dff];
+export const SUPPORTER_OWNER_BANDS = [0xff9999ff, 0xff4444ff, 0xcc0000ff, 0x990000ff];
 
 // game
 
@@ -84,6 +88,7 @@ export function getMessageColor(type: MessageType): number {
 		case MessageType.Supporter1: return SUPPORTER1_COLOR;
 		case MessageType.Supporter2: return SUPPORTER2_COLOR;
 		case MessageType.Supporter3: return SUPPORTER3_COLOR;
+		case MessageType.Supporter4: return SUPPORTER4_COLOR;
 		case MessageType.Whisper:
 		case MessageType.WhisperTo:
 			return WHISPER_COLOR;

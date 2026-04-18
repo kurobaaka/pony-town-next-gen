@@ -70,12 +70,24 @@ export function canMagic(info: PonyInfoBase<any, SpriteSetBase>) {
 }
 
 export function flipIris(iris: Iris): Iris {
-	if (iris === Iris.Left || iris === Iris.UpLeft) {
-		return iris + 1;
-	} else if (iris === Iris.Right || iris === Iris.UpRight) {
-		return iris - 1;
-	} else {
-		return iris;
+	switch (iris) {
+		case Iris.Left: return Iris.Right;
+		case Iris.Right: return Iris.Left;
+		case Iris.UpLeft: return Iris.UpRight;
+		case Iris.UpRight: return Iris.UpLeft;
+		case Iris.DownLeft: return Iris.DownRight;
+		case Iris.DownRight: return Iris.DownLeft;
+		case Iris.DownLeft2: return Iris.DownRight2;
+		case Iris.DownRight2: return Iris.DownLeft2;
+		case Iris.ShockedLeft: return Iris.ShockedRight;
+		case Iris.ShockedRight: return Iris.ShockedLeft;
+		case Iris.ShockedDownLeft: return Iris.ShockedDownRight;
+		case Iris.ShockedDownRight: return Iris.ShockedDownLeft;
+		case Iris.ShockedUpLeft: return Iris.ShockedUpRight;
+		case Iris.ShockedUpRight: return Iris.ShockedUpLeft;
+		case Iris.ShockedDownLeft2: return Iris.ShockedDownRight2;
+		case Iris.ShockedDownRight2: return Iris.ShockedDownLeft2;
+		default: return iris;
 	}
 }
 

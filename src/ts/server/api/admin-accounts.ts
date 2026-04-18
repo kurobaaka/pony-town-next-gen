@@ -95,8 +95,8 @@ export async function updateAccountSafe(accountId: string, update: AccountUpdate
 	await updateAccountAndNotify(accountId, accountUpdate);
 }
 
-export async function setRole(accountId: string, role: string, set: boolean, isSuperadmin: boolean) {
-	if (role === 'superadmin' || !isSuperadmin) {
+export async function setRole(accountId: string, role: string, set: boolean, isOwner: boolean) {
+	if (role === 'owner' || !isOwner) {
 		throw new Error('Not allowed');
 	} else {
 		await updateAccountAndNotify(accountId, set ? { $addToSet: { roles: [role] } } : { $pull: { roles: role } });

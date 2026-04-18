@@ -7,7 +7,7 @@ import { isMobile } from '../../../client/data';
 import { Model } from '../../services/model';
 import { faHashtag, faEllipsisV, faStar, faSlash } from '../../../client/icons';
 import { toPalette, createDefaultPony } from '../../../common/ponyInfo';
-import { getTag } from '../../../common/tags';
+import { getTag, getTagTooltip } from '../../../common/tags';
 import { getProviderIcon } from '../sign-in-box/sign-in-box';
 import { BASE_CHARACTER_LIMIT } from '../../../common/constants';
 
@@ -28,6 +28,41 @@ function sortTagToNumber(tag: string) {
 
 function fallbackComparePonies(a: PonyObject, b: PonyObject) {
 	return a.name.localeCompare(b.name) || (a.desc || '').localeCompare(b.desc || '');
+}
+
+function normalizeSearchWords(query: string): string[] {
+	return query
+		.split(/\s+/g)
+		.map(x => x.trim().toLowerCase().replace(/^[★⭐]+/g, ''))
+		.filter(Boolean);
+}
+
+function addSupporterStarsToWords(text: string, levels: number[]): string {
+	if (!text) {
+		return '';
+	}
+
+	const words = text.split(/\s+/g).map(w => w.trim()).filter(Boolean);
+	if (!words.length || !levels.length) {
+		return '';
+	}
+
+	return levels
+		.map(level => {
+			const stars = '★'.repeat(Math.max(0, Math.min(4, level)));
+			return stars ? words.map(word => `${stars}${word}`).join(' ') : '';
+		})
+		.filter(Boolean)
+		.join(' ');
+}
+
+function extractRealHashtags(description?: string): string[] {
+	if (!description) {
+		return [];
+	}
+
+	const matches = description.match(/(?:^|\s)(#\w+)/g) || [];
+	return matches.map(x => x.trim().toLowerCase());
 }
 
 function comparePonies(a: PonyObject, b: PonyObject) {
@@ -70,7 +105,6 @@ export class CharacterList implements OnInit {
 	ponies: PonyObject[] = [];
 	tags: string[] = [];
 	sortMode: 'default' | 'name' | 'creation' | 'recent' = 'default';
-
 	private previewPony: PonyObject | undefined = undefined;
 	readonly getProviderIcon = getProviderIcon;
 	constructor(private model: Model, private zone: NgZone) {
@@ -80,6 +114,9 @@ export class CharacterList implements OnInit {
 	}
 	getCharacterTag(pony: PonyObject) {
 		return getTag(pony.tag);
+	}
+	getCharacterTagTooltip(pony: PonyObject) {
+		return getTagTooltip(this.getCharacterTag(pony));
 	}
 	getSupporterLevel(): number {
 		return (this.model && this.model.supporter) || 0;
@@ -95,6 +132,7 @@ export class CharacterList implements OnInit {
 		if (level === 1) return '#f96955'; // красный (Patreon)
 		if (level === 2) return '#ffa32b'; // бронзовый
 		if (level === 3) return '#ffcf00'; // золотой
+		if (level === 4) return '#2ecc71'; // изумрудный
 		return undefined;
 	}
 	formatDescriptionWithTags(description?: string): string {
@@ -145,8 +183,7 @@ export class CharacterList implements OnInit {
 	ngOnInit() {
 		this.updatePonies();
 
-		this.tags = uniq(flatten(this.ponies.map(p => (p.desc || '').split(/ /g).map(x => x.trim())))
-			.filter(x => /^#/.test(x)))
+		this.tags = uniq(flatten(this.ponies.map(p => extractRealHashtags(p.desc))))
 			.sort();
 
 		if (!isMobile) {
@@ -179,7 +216,8 @@ export class CharacterList implements OnInit {
 	}
 	setPreview(pony: PonyObject) {
 		this.previewPony = pony;
-		this.previewCharacter.emit(this.model.parsePonyObject(pony));
+		const parsed = this.model.parsePonyObject(pony);
+		this.previewCharacter.emit(parsed);
 	}
 	unsetPreview(pony: PonyObject) {
 		if (this.previewPony && pony && this.previewPony.id === pony.id) {
@@ -314,12 +352,15 @@ export class CharacterList implements OnInit {
 			}
 
 			const parsedPonies = this.model.ponies.map(pony => this.model.parsePonyObject(pony));
+			const supporterLevel = Math.max(0, Math.min(4, this.getSupporterLevel()));
 
 			if (query) {
-				const words = query.split(/ /g).map(x => x.trim());
+				const words = normalizeSearchWords(query);
 
 				this.ponies = this.sortPonies(parsedPonies.filter(pony => {
-					const text = `${pony.name} ${pony.desc || ''}`.toLowerCase();
+					const baseText = `${pony.name} ${pony.desc || ''}`.toLowerCase();
+					const starredText = addSupporterStarsToWords(baseText, supporterLevel ? [supporterLevel] : []);
+					const text = `${baseText} ${starredText}`;
 					return matchesWords(text, words);
 				}));
 			} else {
@@ -327,7 +368,9 @@ export class CharacterList implements OnInit {
 			}
 
 			this.setSelectedIndex(this.selectedIndex);
-			this.previewCharacter.emit(undefined);
+			if (!this.ponies.length) {
+				this.previewCharacter.emit(undefined);
+			}
 		});
 	}
 	select(pony: PonyObject) {

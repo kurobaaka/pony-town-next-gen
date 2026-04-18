@@ -59,6 +59,7 @@ function getMessageType(client: IClient, type: ChatType) {
 				case 1: return MessageType.Supporter1;
 				case 2: return MessageType.Supporter2;
 				case 3: return MessageType.Supporter3;
+				case 4: return MessageType.Supporter4;
 				default: return MessageType.Chat;
 			}
 		case ChatType.Supporter1:
@@ -67,6 +68,8 @@ function getMessageType(client: IClient, type: ChatType) {
 			return client.supporterLevel >= 2 ? MessageType.Supporter2 : MessageType.Chat;
 		case ChatType.Supporter3:
 			return client.supporterLevel >= 3 ? MessageType.Supporter3 : MessageType.Chat;
+		case ChatType.Supporter4:
+			return client.supporterLevel >= 4 ? MessageType.Supporter4 : MessageType.Chat;
 		case ChatType.Think:
 		case ChatType.PartyThink:
 			return MessageType.Thinking;

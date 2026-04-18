@@ -82,6 +82,10 @@
 		color: $supporter-3;
 	}
 
+	.chat-sup4 > & {
+		color: $supporter-4;
+	}
+
 	.chat-whisper > & {
 		color: $chat-whisper;
 	}
@@ -183,6 +187,10 @@
 
 	&.chat-sup3 {
 		color: $supporter-3;
+	}
+
+	&.chat-sup4 {
+		color: $supporter-4;
 	}
 
 	&.chat-whisper {

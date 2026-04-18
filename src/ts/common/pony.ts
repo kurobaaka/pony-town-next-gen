@@ -26,7 +26,7 @@ import {
 } from './animator';
 import {
 	trotting, flying, hovering, toBoopState, isFlyingUpOrDown, isFlyingDown, isSittingDown, isSittingUp, swinging,
-	standing, sitting, lying, swimming, isSwimmingState, swimmingToFlying, toKissState,
+	standing, sitting, lying, swimming, isSwimmingState, swimmingToFlying, toKissState, toDanceState, isDanceState,
 } from '../client/ponyStates';
 import { decodePonyInfo } from './compressPony';
 import { defaultPonyState, defaultDrawPonyOptions, isStateEqual } from '../client/ponyHelpers';
@@ -213,7 +213,7 @@ export function ensurePonyInfoDecoded(pony: Pony) {
 		const info = (pony.palettePonyInfo as any) || {};
 		const wingType = pony.palettePonyInfo.wings && pony.palettePonyInfo.wings.type || 0;
 		pony.animator.variant = wingType === 4 ? 'bug' : '';
-		pony.ponyState.blushColor = blushColor(pony.palettePonyInfo.coatPalette.colors[1]);
+		pony.ponyState.blushColor = (info.blushColor && info.blushColor.colors && info.blushColor.colors[1]) || blushColor(pony.palettePonyInfo.coatPalette.colors[1]);
 		pony.magicColor = withAlpha(pony.palettePonyInfo.magicColorValue, MAGIC_ALPHA);
 
 		// apply persistent head / flip options from pony info
@@ -462,6 +462,9 @@ export function updatePonyEntity(pony: Pony, delta: number, gameTime: number, sa
 			case DoAction.Kiss:
 				setAnimatorState(pony.animator, toKissState(animationState) || animationState);
 				break;
+				case DoAction.Dance1:
+					setAnimatorState(pony.animator, toDanceState(animationState) || animationState);
+					break;
 			default:
 				if (DEVELOPMENT) {
 					console.error(`Invalid DoAction: ${pony.doAction}`);
@@ -470,7 +473,13 @@ export function updatePonyEntity(pony: Pony, delta: number, gameTime: number, sa
 
 		pony.doAction = DoAction.None;
 	} else {
-		setAnimatorState(pony.animator, animationState);
+		const danceState = toDanceState(animationState);
+
+		if (isDanceState(pony.animator.state) && danceState) {
+			setAnimatorState(pony.animator, danceState);
+		} else {
+			setAnimatorState(pony.animator, animationState);
+		}
 	}
 
 	// head

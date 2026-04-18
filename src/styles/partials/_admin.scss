@@ -129,9 +129,10 @@ b, strong, th {
 
 	.tooltip-inner {
 		max-width: 300px;
-		max-height: 300px;
+		max-height: 360px;
 		background: #eee;
 		border-radius: 7px;
+		overflow: hidden;
 	}
 
 	&.bs-tooltip-top .arrow::before {
@@ -148,6 +149,33 @@ b, strong, th {
 	border-radius: 7px;
 	overflow: hidden;
 	position: relative;
+
+	character-preview {
+		display: block;
+		width: 180px;
+		height: 180px;
+	}
+}
+
+.character-tooltip-info {
+	padding: 4px 4px 0 4px;
+	font-size: 11px;
+	background: rgb(255, 255, 255);
+}
+
+.character-tooltip-info {
+	color: #adb5bd;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.character-tooltip-time {
+	color: #6c757d;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-bottom: 2px;
 }
 
 .character-tooltip-indicator {

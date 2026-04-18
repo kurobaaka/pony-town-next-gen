@@ -96,7 +96,7 @@ function isValidForName(c: number): boolean {
 }
 
 export function initLoader() {
-	const words = document.querySelectorAll('.word');
+	const words = document.querySelectorAll('#loading .loading-word');
 	words.forEach((word, index) => {
 		(word as HTMLElement).style.animationDelay = `${index * 0.2}s`;
 	});

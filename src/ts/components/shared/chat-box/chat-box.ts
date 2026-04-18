@@ -44,6 +44,7 @@ setupChatType(ChatType.Supporter, 'sup');
 setupChatType(ChatType.Supporter1, 'sup1');
 setupChatType(ChatType.Supporter2, 'sup2');
 setupChatType(ChatType.Supporter3, 'sup3');
+setupChatType(ChatType.Supporter4, 'sup4');
 setupChatType(ChatType.Whisper, 'whisper');
 setupChatType(ChatType.Think, 'think');
 setupChatType(ChatType.PartyThink, 'party think');
@@ -284,6 +285,8 @@ export class ChatBox implements AfterViewInit, OnDestroy {
 			return { mode: supporter >= 2 ? ChatType.Supporter2 : ChatType.Say };
 		} else if (/^\/s3\s$/i.test(message)) {
 			return { mode: supporter >= 3 ? ChatType.Supporter3 : ChatType.Say };
+		} else if (/^\/s4\s$/i.test(message)) {
+			return { mode: supporter >= 4 ? ChatType.Supporter4 : ChatType.Say };
 		} else if (/^\/m\s$/i.test(message) && account && isMod(account)) {
 			return { mode: 'mod' };
 		} else if (/^\/a\s$/i.test(message) && account && isAdmin(account)) {
@@ -428,6 +431,7 @@ export class ChatBox implements AfterViewInit, OnDestroy {
 					case 1: return MessageType.Supporter1;
 					case 2: return MessageType.Supporter2;
 					case 3: return MessageType.Supporter3;
+					case 4: return MessageType.Supporter4;
 					default: return MessageType.Chat;
 				}
 			case ChatType.Supporter1:
@@ -436,6 +440,8 @@ export class ChatBox implements AfterViewInit, OnDestroy {
 				return this.game.model.supporter >= 2 ? MessageType.Supporter2 : MessageType.Chat;
 			case ChatType.Supporter3:
 				return this.game.model.supporter >= 3 ? MessageType.Supporter3 : MessageType.Chat;
+			case ChatType.Supporter4:
+				return this.game.model.supporter >= 4 ? MessageType.Supporter4 : MessageType.Chat;
 			case ChatType.Whisper:
 				return MessageType.Whisper;
 			default:
@@ -483,6 +489,8 @@ export class ChatBox implements AfterViewInit, OnDestroy {
 					return args ? { entityId: 0, type: this.getTypingMessageType(ChatType.Supporter2) } : undefined;
 				case 's3':
 					return args ? { entityId: 0, type: this.getTypingMessageType(ChatType.Supporter3) } : undefined;
+				case 's4':
+					return args ? { entityId: 0, type: this.getTypingMessageType(ChatType.Supporter4) } : undefined;
 				case 'm':
 					return args ? { entityId: 0, type: MessageType.Mod } : undefined;
 				case 'a':
@@ -816,6 +824,7 @@ function chatTypeClass(chatType: ChatModeId, supporter: number) {
 			case 1: return 'chat-sup chat-sup1';
 			case 2: return 'chat-sup chat-sup2';
 			case 3: return 'chat-sup chat-sup3';
+			case 4: return 'chat-sup chat-sup4';
 		}
 	}
 
@@ -841,6 +850,8 @@ function isValidChatType(type: ChatType, game: PonyTownGame) {
 			return supporter >= 2;
 		case ChatType.Supporter3:
 			return supporter >= 3;
+		case ChatType.Supporter4:
+			return supporter >= 4;
 		case ChatType.Dismiss:
 			return false;
 		default:
@@ -906,6 +917,7 @@ function getChatTypeSections(game: PonyTownGame): ChatTypeSection[] {
 				supporter >= 1 ? ChatType.Supporter1 : undefined,
 				supporter >= 2 ? ChatType.Supporter2 : undefined,
 				supporter >= 3 ? ChatType.Supporter3 : undefined,
+				supporter >= 4 ? ChatType.Supporter4 : undefined,
 			] as Array<ChatModeId | undefined>).filter(isDefined).map(createItem),
 		},
 		{

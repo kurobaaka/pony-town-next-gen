@@ -50,6 +50,16 @@ describe('api game', () => {
 			await joinGame(a, 'charid', 'serverid', '1', 'http://foo.bar/', false, {} as any);
 		});
 
+		it('resolves if meets server requirement (supporter 4)', async () => {
+			server.state.require = 'sup4';
+			const a = account({ _id: genObjectId(), patreon: PatreonFlags.Supporter4 });
+			const character = {} as any;
+			findCharacter.withArgs('charid').returns(character);
+			join.withArgs(server, a, character).returns('tokenid');
+
+			await joinGame(a, 'charid', 'serverid', '1', 'http://foo.bar/', false, {} as any);
+		});
+
 		it('resolves if meets server requirement (invited)', async () => {
 			server.state.require = 'inv';
 			const a = account({ _id: genObjectId() });

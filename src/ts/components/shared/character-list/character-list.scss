@@ -22,7 +22,28 @@ $character-list-selected-bg: $nav-tabs-link-active-color;
 	display: flex;
 	position: relative;
 
+	&.has-supporter-icon {
+		> .form-control {
+			padding-left: 28px;
+		}
+	}
+
+	.search-supporter-icon {
+		position: absolute;
+		left: 14px;
+		top: 3px;
+		bottom: 0;
+		display: flex;
+		align-items: center;
+		z-index: 6;
+		pointer-events: none;
+		font-size: 12px;
+		line-height: 1;
+	}
+
 	> .form-control {
+		position: relative;
+		z-index: 1;
 		background: white;
 		color: #222;
 		border-color: #eee !important;
@@ -92,7 +113,7 @@ $character-list-selected-bg: $nav-tabs-link-active-color;
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		border-left: 4px solid transparent;
+		position: relative;
 
 		&:last-child {
 			border-bottom: none;
@@ -102,7 +123,6 @@ $character-list-selected-bg: $nav-tabs-link-active-color;
 		&.selected,
 		&.selected-line {
 			background: $character-list-selected-bg;
-			border-left-color: $character-list-selected-border;
 		}
 
 		> a.item-list-divider {
@@ -112,6 +132,19 @@ $character-list-selected-bg: $nav-tabs-link-active-color;
 			height: 100%;
 			padding: $character-list-item-padding;
 			flex: 1;
+			position: relative;
+
+			&:before {
+				content: '';
+				position: absolute;
+				left: 3px;
+				top: 6px;
+				bottom: 6px;
+				width: 4px;
+				border-radius: 999px;
+				background: transparent;
+				transition: background-color .18s ease;
+			}
 
 			> portrait-box {
 				margin-right: 6px !important;
@@ -128,6 +161,16 @@ $character-list-selected-bg: $nav-tabs-link-active-color;
 				color: $dropdown-link-hover-color;
 				background-color: $dropdown-link-hover-bg;
 			}
+		}
+
+		&.active > a.item-list-divider:before,
+		&.selected > a.item-list-divider:before,
+		&.selected-line > a.item-list-divider:before {
+			background: $character-list-selected-border;
+		}
+
+		&:hover > a.item-list-divider:before {
+			background: rgba($character-list-selected-border, 0.45);
 		}
 	}
 
@@ -222,6 +265,21 @@ $character-list-selected-bg: $nav-tabs-link-active-color;
 .character-list-badges .badge {
 	margin: 0;
 	margin-top: 2px;
+}
+
+.character-list-badges .character-tag-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 24px;
+	height: 18px;
+	padding: 0 6px;
+	border-radius: 6px;
+
+	.fa-icon {
+		font-size: 11px;
+		line-height: 1;
+	}
 }
 
 .character-list-badges .site-icon-wrapper {

@@ -1,0 +1,10 @@
+a.btn.btn-lg.btn-about.btn-outline-secondary.btn-block.mb-2(
+	[routerLink]="aboutLink"
+	[class.nudging]="isNudging"
+	(mouseenter)="pony.yawn(); onInteract()"
+	(mouseout)="pony.reset()")
+	.about-logo
+		span.about-logo-mark i
+	| About this project
+	.about-pony
+		about-pony(#pony [scale]="2")

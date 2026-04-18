@@ -231,6 +231,14 @@ describe('characterUtils', () => {
 			expect(entity.options!.tag).equal('sup1');
 		});
 
+		it('creates supporter4 tag', () => {
+			const entity = serverEntity(1);
+
+			updatePony(entity, account({ _id: genObjectId(), supporter: SupporterFlags.Supporter4 }), character({ name: 'foo' }));
+
+			expect(entity.options!.tag).equal('sup4');
+		});
+
 		it('does not create support tag if hide support flag is true', () => {
 			const entity = serverEntity(1);
 

@@ -33,8 +33,8 @@ export class AdminState {
 	get servers() {
 		return this.model.state.gameServers;
 	}
-	get isSuperadmin() {
-		return hasRole(this.model.account, 'superadmin');
+	get isOwner() {
+		return hasRole(this.model.account, 'owner');
 	}
 	kickAll(server: GameServerState) {
 		return this.model.kickAll(server.id);

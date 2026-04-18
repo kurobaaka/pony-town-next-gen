@@ -32,6 +32,7 @@ import { CustomCheckbox } from './custom-checkbox/custom-checkbox';
 import { DatePicker } from './date-picker/date-picker';
 import { SignInBox } from './sign-in-box/sign-in-box';
 import { PonyBox } from './pony-box/pony-box';
+import { PonyPreview } from './pony-info/pony-info';
 import { ModBox } from './mod-box/mod-box';
 import { PartyBox } from './party-box/party-box';
 import { PartyList } from './party-list/party-list';
@@ -44,6 +45,7 @@ import { ImportedModal } from './imported-modal/imported-modal';
 import { ChangelogModal } from './changelog-modal/changelog-modal';
 import { ChangelogView } from './changelog-view/changelog-view';
 import { SelectToyModal } from './select-toy-modal/select-toy-modal';
+import { TestModal } from './test-modal/test-modal';
 import { FillOutline } from './fill-outline/fill-outline';
 import { FriendsBox } from './friends-box/friends-box';
 import { InstallButton } from './install-button/install-button';
@@ -81,8 +83,10 @@ import { SaveActiveTab } from './directives/saveActiveTab';
 import { SiteNamePipe } from './pipes/siteName';
 import { VisitPTButton } from './visit-pt-button/visit-pt-button';
 import { VisitPTPony } from './visit-pt-pony/visit-pt-pony';
-import { VkButton } from './vk-button/vk-button';
-import { VkPony } from './vk-pony/vk-pony';
+import { TelegramButton } from './telegram-button/telegram-button';
+import { TelegramPony } from './telegram-pony/telegram-pony';
+import { AboutButton } from './about-button/about-button';
+import { AboutPony } from './about-pony/about-pony';
 import { LeaveSiteModal } from './leave-site-modal/leave-site-modal';
 
 const declarations = [
@@ -104,8 +108,10 @@ const declarations = [
 	SpriteSelection,
 	VisitPTButton,
 	VisitPTPony,
-	VkButton,
-	VkPony,
+	TelegramButton,
+	TelegramPony,
+	AboutButton,
+	AboutPony,
 	SetSelection,
 	SetOutlineHidden,
 	CheckBox,
@@ -117,6 +123,7 @@ const declarations = [
 	DatePicker,
 	SignInBox,
 	PonyBox,
+	PonyPreview,
 	ModBox,
 	PartyBox,
 	PartyList,
@@ -132,6 +139,7 @@ const declarations = [
 	ChangelogModal,
 	ChangelogView,
 	SelectToyModal,
+	TestModal,
 	LeaveSiteModal,
 	KbdKey,
 	PlayBox,

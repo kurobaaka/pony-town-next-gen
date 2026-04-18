@@ -282,6 +282,21 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 	const backOffset = at(offsets.backAccessoryOffsets, body)!;
 	const wing = at(wings, frame.wing);
 	const flipped = options.flipped;
+	const farWingSet = flipped ? info.wings : info.wingsRight;
+	const closeWingSet = flipped ? info.wingsRight : info.wings;
+	const farEarSet = flipped ? info.ears : info.earsRight;
+	const farSleeveSet = flipped ? info.sleeveAccessory : info.sleeveAccessoryRight;
+	const closeSleeveSet = flipped ? info.sleeveAccessoryRight : info.sleeveAccessory;
+	const closeWaistSet = flipped ? info.waistAccessoryRight : info.waistAccessory;
+	const closeBodySet = flipped ? info.bodyRight : info.body;
+	const farFrontLegSet = flipped ? info.frontLegs : info.frontLegsRight;
+	const closeFrontLegSet = flipped ? info.frontLegsRight : info.frontLegs;
+	const farBackLegSet = flipped ? info.backLegs : info.backLegsRight;
+	const closeBackLegSet = flipped ? info.backLegsRight : info.backLegs;
+	const farFrontHoofSet = flipped ? info.frontHooves : info.frontHoovesRight;
+	const closeFrontHoofSet = flipped ? info.frontHoovesRight : info.frontHooves;
+	const farBackHoofSet = flipped ? info.backHooves : info.backHoovesRight;
+	const closeBackHoofSet = flipped ? info.backHoovesRight : info.backHooves;
 
 	const headOffset = clamp(state.headTurn, 0, headOffsetsX.length - 1);
 	const headOffsetX = headOffsetsX[headOffset];
@@ -339,7 +354,7 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 
 	if (draw(options, NoDraw.Behind)) {
 		// far wing
-		drawSet(batch, wing, info.wings, x + FAR_WING_OX + wingOffset.x, y + FAR_WING_OY + wingOffset.y, FAR_COLOR);
+		drawSet(batch, wing, farWingSet, x + FAR_WING_OX + wingOffset.x, y + FAR_WING_OY + wingOffset.y, FAR_COLOR);
 
 		batch.save();
 		batch.multiplyTransform(headTransform);
@@ -355,11 +370,12 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 
 		if (draw(options, NoDraw.FarEar)) {
 			drawSet(batch, sprites.earAccessoriesBehind, info.earAccessory, 0, 0, WHITE);
+			drawSet(batch, sprites.earAccessoriesBehind, info.earAccessoryExtra, 0, 0, WHITE);
 		}
 	}
 
 	if (draw(options, NoDraw.Body) && draw(options, NoDraw.FarEar)) {
-		drawSet(batch, sprites.earsFar, info.ears, 0, 0, draw(options, NoDraw.FarEarShade) ? FAR_COLOR : WHITE);
+		drawSet(batch, sprites.earsFar, farEarSet, 0, 0, draw(options, NoDraw.FarEarShade) ? FAR_COLOR : WHITE);
 	}
 
 	if (draw(options, NoDraw.Behind)) {
@@ -396,16 +412,16 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 	// far leg back
 	if (draw(options, NoDraw.BackFarLeg)) {
 		drawLeg(batch, backBehindX, backBehindY, frame.backFarLeg, sprites.backLegs,
-			sprites.backLegHooves, sprites.backLegAccessories, info.backLegs,
-			flipped ? info.backLegAccessory : info.backLegAccessoryRight, info.backHooves, backHoovesInFront, FAR_COLOR,
+			sprites.backLegHooves, sprites.backLegAccessories, farBackLegSet,
+			flipped ? info.backLegAccessory : info.backLegAccessoryRight, farBackHoofSet, backHoovesInFront, FAR_COLOR,
 			undefined, false, 0, 0);
 	}
 
 	// far leg front
 	if (draw(options, NoDraw.FrontFarLeg)) {
 		drawLeg(batch, frontBehindX, frontBehindY, frame.frontFarLeg, sprites.frontLegs,
-			frontHooves, sprites.frontLegAccessories, info.frontLegs,
-			flipped ? info.frontLegAccessory : info.frontLegAccessoryRight, info.frontHooves, frontHoovesInFront, FAR_COLOR,
+			frontHooves, sprites.frontLegAccessories, farFrontLegSet,
+			flipped ? info.frontLegAccessory : info.frontLegAccessoryRight, farFrontHoofSet, frontHoovesInFront, FAR_COLOR,
 			undefined, false, 0, 0);
 	}
 
@@ -416,7 +432,7 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 
 	// far leg front sleeve
 	if (draw(options, NoDraw.FarSleeves) && hasSleeves) {
-		drawSet(batch, at(sprites.frontLegSleeves, frame.frontFarLeg), info.sleeveAccessory, frontBehindX, frontBehindY, FAR_COLOR);
+		drawSet(batch, at(sprites.frontLegSleeves, frame.frontFarLeg), farSleeveSet, frontBehindX, frontBehindY, FAR_COLOR);
 	}
 
 	// tail
@@ -434,7 +450,8 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 
 	// body
 	if (draw(options, NoDraw.Body) && draw(options, NoDraw.BodyOnly)) {
-		drawSet(batch, sprites.body[body], info.body, x, y, WHITE);
+		drawSet(batch, sprites.body[body], closeBodySet, x, y, WHITE);
+		drawSet(batch, sprites.body[body], info.bodyExtra, x, y, WHITE);
 	}
 
 	// neck accessory
@@ -455,7 +472,7 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 	if (draw(options, NoDraw.BackLeg)) {
 		drawLeg(
 			batch, backX, backY, frame.backLeg, sprites.backLegs, sprites.backLegHooves, sprites.backLegAccessories,
-			info.backLegs, flipped ? info.backLegAccessoryRight : info.backLegAccessory, info.backHooves, backHoovesInFront, WHITE,
+			closeBackLegSet, flipped ? info.backLegAccessoryRight : info.backLegAccessory, closeBackHoofSet, backHoovesInFront, WHITE,
 			info.cmPalette, flipped && !!info.cmFlip, x + cmOffset.x, y + cmOffset.y);
 	}
 
@@ -480,13 +497,13 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 	if (draw(options, NoDraw.FrontLeg)) {
 		drawLeg(
 			batch, frontX, frontY, frame.frontLeg, sprites.frontLegs, hooves, sprites.frontLegAccessories,
-			info.frontLegs, flipped ? info.frontLegAccessoryRight : info.frontLegAccessory, info.frontHooves, frontHoovesInFront, WHITE,
+			closeFrontLegSet, flipped ? info.frontLegAccessoryRight : info.frontLegAccessory, closeFrontHoofSet, frontHoovesInFront, WHITE,
 			undefined, false, 0, 0);
 	}
 
 	// close legs front sleeves
 	if (draw(options, NoDraw.CloseSleeves) && hasSleeves) {
-		drawSet(batch, at(sprites.frontLegSleeves, frame.frontLeg), info.sleeveAccessory, frontX, frontY, WHITE);
+		drawSet(batch, at(sprites.frontLegSleeves, frame.frontLeg), closeSleeveSet, frontX, frontY, WHITE);
 	}
 
 	// chest accessory
@@ -498,7 +515,7 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 	if (draw(options, NoDraw.BackLeg)) {
 		drawLeg(
 			batch, backX, backY, frame.backLeg, sprites.backLegs2, sprites.backLegHooves2, sprites.backLegAccessories2,
-			info.backLegs, flipped ? info.backLegAccessoryRight : info.backLegAccessory, info.backHooves, backHoovesInFront, WHITE,
+			closeBackLegSet, flipped ? info.backLegAccessoryRight : info.backLegAccessory, closeBackHoofSet, backHoovesInFront, WHITE,
 			undefined, false, 0, 0);
 	}
 
@@ -511,15 +528,17 @@ function drawPonyImpl(batch: Batch, info: Info, state: State, ponyX: number, pon
 	if (frontNeckAccessory) {
 		const neckOffset = at(offsets.neckAccessoryOffsets, body)!;
 		drawSet(batch, neckAccessories[body], info.neckAccessory, x + neckOffset.x, y + neckOffset.y, WHITE);
+		drawSet(batch, neckAccessories[body], info.neckAccessoryExtra, x + neckOffset.x, y + neckOffset.y, WHITE);
 	}
 
 	// waist accessory
 	const waistFrame = frame.wing > 2 ? 16 : body;
 	const waistOffset = at(offsets.waistAccessoryOffsets, waistFrame)!;
-	drawSet(batch, waistAccessories[waistFrame], info.waistAccessory, x + waistOffset.x, y + waistOffset.y, WHITE);
+	drawSet(batch, waistAccessories[waistFrame], closeWaistSet, x + waistOffset.x, y + waistOffset.y, WHITE);
+	drawSet(batch, waistAccessories[waistFrame], info.waistAccessoryExtra, x + waistOffset.x, y + waistOffset.y, WHITE);
 
 	// wings
-	drawSet(batch, wing, info.wings, x + wingOffset.x, y + wingOffset.y, WHITE);
+	drawSet(batch, wing, closeWingSet, x + wingOffset.x, y + wingOffset.y, WHITE);
 
 	// head
 	const headTurned = state.headTurned;
@@ -570,16 +589,20 @@ export function drawHead(
 	if (draw(options, NoDraw.Body)) {
 		if (draw(options, NoDraw.Head)) {
 			drawSet(batch, headSprites, info.head, x, y, WHITE);
+			drawSet(batch, headSprites, info.facePatternExtra, x, y, WHITE);
 		}
+
+		let shouldDrawBlush = !!info.blush;
 
 		let eyeLeftBase = -1;
 		let eyeRightBase = -1;
-		let irisLeft = Iris.Forward;
-		let irisRight = Iris.Forward;
+		let irisLeft = headFrame.leftIris != null ? headFrame.leftIris : Iris.Forward;
+		let irisRight = headFrame.rightIris != null ? headFrame.rightIris : Iris.Forward;
 
 		if (expression !== undefined) {
 			if (hasFlag(expression.extra, ExpressionExtra.Blush)) {
 				batch.drawSprite(sprites.blush, blushColor, info.defaultPalette, x, y);
+				shouldDrawBlush = false;
 			}
 
 			eyeLeftBase = expression.left;
@@ -599,6 +622,10 @@ export function drawHead(
 			}
 		}
 
+		if (shouldDrawBlush) {
+			batch.drawSprite(sprites.blush, blushColor, info.defaultPalette, x, y);
+		}
+
 		const eyeRight = getEyeFrame(info.eyeOpennessRight || 1, eyeRightBase, headFrame.right, animationProperties, blinkFrame);
 		const eyeLeft = getEyeFrame(info.eyeOpennessLeft || 1, eyeLeftBase, headFrame.left, animationProperties, blinkFrame);
 		const eyeFrameLeft = flip ? eyeRight : eyeLeft;
@@ -607,6 +634,10 @@ export function drawHead(
 		const eyeColorRight = flip ? info.eyeColorLeft : info.eyeColorRight;
 		const eyePaletteLeft = flip ? info.eyePalette : info.eyePaletteLeft;
 		const eyePaletteRight = flip ? info.eyePaletteLeft : info.eyePalette;
+		const eyeshadowEnabledLeft = !!(flip ? info.eyeshadow : (info.unlockEyeshadowColor ? info.eyeshadowLeft : info.eyeshadow));
+		const eyeshadowEnabledRight = !!(flip ? (info.unlockEyeshadowColor ? info.eyeshadowLeft : info.eyeshadow) : info.eyeshadow);
+		const eyeshadowColorLeft = flip ? info.eyeshadowColor : (info.unlockEyeshadowColor ? info.eyeshadowColorLeft : info.eyeshadowColor);
+		const eyeshadowColorRight = flip ? (info.unlockEyeshadowColor ? info.eyeshadowColorLeft : info.eyeshadowColor) : info.eyeshadowColor;
 		const eyeIrisLeft = flip ? flipIris(irisRight) : irisLeft;
 		const eyeIrisRight = flip ? flipIris(irisLeft) : irisRight;
 		const eyeLeftSprites = sprites.eyeLeft;
@@ -615,10 +646,10 @@ export function drawHead(
 		if (draw(options, NoDraw.Eyes)) {
 			drawEye(
 				batch, att(at(eyeLeftSprites, eyeFrameLeft), info.eyelashes),
-				eyeIrisLeft, info, eyeColorLeft, eyePaletteLeft, x, y);
+				eyeIrisLeft, info, eyeColorLeft, eyePaletteLeft, eyeshadowColorLeft, eyeshadowEnabledLeft, x, y);
 			drawEye(
 				batch, att(at(eyeRightSprites, eyeFrameRight), info.eyelashes),
-				eyeIrisRight, info, eyeColorRight, eyePaletteRight, x, y);
+				eyeIrisRight, info, eyeColorRight, eyePaletteRight, eyeshadowColorRight, eyeshadowEnabledRight, x, y);
 		}
 	}
 
@@ -627,12 +658,15 @@ export function drawHead(
 	}
 
 	if (drawFaceExtra !== undefined) {
-		drawFaceExtra(batch);
+		(drawFaceExtra as any)(batch, x, y, flip);
 	}
 
 	const faceAccessory = info.faceAccessory;
+	const faceAccessoryExtra = info.faceAccessoryExtra;
 	let faceAccessoryType = 0;
 	let faceAccessoryPattern = 0;
+	let faceAccessoryExtraType = 0;
+	let faceAccessoryExtraPattern = 0;
 
 	if (faceAccessory !== undefined) {
 		faceAccessoryType = flip ? flipFaceAccessoryType(faceAccessory.type) : faceAccessory.type;
@@ -648,6 +682,17 @@ export function drawHead(
 			// 		batch, sprites.faceAccessoriesExtra, faceAccessoryType, faceAccessoryPattern,
 			// 		info.faceAccessoryExtraPalette, x, y, WHITE);
 			// }
+		}
+	}
+
+	if (faceAccessoryExtra !== undefined) {
+		faceAccessoryExtraType = flip ? flipFaceAccessoryType(faceAccessoryExtra.type) : faceAccessoryExtra.type;
+		faceAccessoryExtraPattern = flip ? flipFaceAccessoryPattern(faceAccessoryExtraType, faceAccessoryExtra.pattern) : faceAccessoryExtra.pattern;
+
+		if (draw(options, NoDraw.FaceAccessory1)) {
+			drawTypePattern(
+				batch, sprites.faceAccessories, faceAccessoryExtraType, faceAccessoryExtraPattern,
+				faceAccessoryExtra.palette, faceAccessoryExtra.extraPalette, x, y, WHITE);
 		}
 	}
 
@@ -697,7 +742,8 @@ export function drawHead(
 	}
 
 	if (draw(options, NoDraw.Body) && draw(options, NoDraw.CloseEar) && !options.noEars) {
-		drawSet(batch, sprites.ears, info.ears, x, y, WHITE);
+		const closeEarSet = flip ? info.earsRight : info.ears;
+		drawSet(batch, sprites.ears, closeEarSet, x, y, WHITE);
 	}
 
 	if (faceAccessory !== undefined && draw(options, NoDraw.FaceAccessory2)) {
@@ -712,11 +758,19 @@ export function drawHead(
 		// }
 	}
 
-	const earAccessoryOffset = at(EAR_ACCESSORY_OFFSETS, info.ears && info.ears.type)!;
+	if (faceAccessoryExtra !== undefined && draw(options, NoDraw.FaceAccessory2)) {
+		drawTypePattern(
+			batch, sprites.faceAccessories2, faceAccessoryExtraType, faceAccessoryExtraPattern,
+			faceAccessoryExtra.palette, faceAccessoryExtra.extraPalette, x, y, WHITE);
+	}
+
+	const closeEarSet = flip ? info.earsRight : info.ears;
+	const earAccessoryOffset = at(EAR_ACCESSORY_OFFSETS, closeEarSet && closeEarSet.type)!;
 	const frontEarAccessory = false; // info.earAccessory !== undefined && info.earAccessory.type === 13;
 
 	if (!frontEarAccessory && draw(options, NoDraw.Front) && draw(options, NoDraw.CloseEar)) {
 		drawSet(batch, sprites.earAccessories, info.earAccessory, x + earAccessoryOffset.x, y + earAccessoryOffset.y, WHITE);
+		drawSet(batch, sprites.earAccessories, info.earAccessoryExtra, x + earAccessoryOffset.x, y + earAccessoryOffset.y, WHITE);
 	}
 
 	if (draw(options, NoDraw.FrontMane) /* && !skipTopAndFrontMane */) {
@@ -725,6 +779,7 @@ export function drawHead(
 
 	if (frontEarAccessory && draw(options, NoDraw.Front) && draw(options, NoDraw.CloseEar)) {
 		drawSet(batch, sprites.earAccessories, info.earAccessory, x + earAccessoryOffset.x, y + earAccessoryOffset.y, WHITE);
+		drawSet(batch, sprites.earAccessories, info.earAccessoryExtra, x + earAccessoryOffset.x, y + earAccessoryOffset.y, WHITE);
 	}
 }
 
@@ -807,11 +862,11 @@ function getMouthFrame(holding: boolean, expression: Expression | undefined, hea
 
 function drawEye(
 	batch: Batch, eye: PonyEye | undefined, iris: Iris, info: Info, palette: Palette | undefined, eyePalette: Palette,
-	x: number, y: number
+	eyeshadowPalette: Palette | undefined, eyeshadowEnabled: boolean, x: number, y: number
 ) {
 	if (eye !== undefined) {
-		if (info.eyeshadow === true) {
-			eye.shadow && batch.drawSprite(eye.shadow, WHITE, info.eyeshadowColor, x, y);
+		if (eyeshadowEnabled === true) {
+			eye.shadow && batch.drawSprite(eye.shadow, WHITE, eyeshadowPalette || info.eyeshadowColor, x, y);
 			eye.shine && batch.drawSprite(eye.shine, SHINES_COLOR, info.defaultPalette, x, y);
 		}
 

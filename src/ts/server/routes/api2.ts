@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { GameStatus, ServerInfo, ServerInfoShort } from '../../common/interfaces';
 import { InternalGameServerState, Settings, ServerLiveSettings } from '../../common/adminInterfaces';
+import { createLoginServerStatus } from '../api/internal-login';
 import { offline } from '../requestUtils';
 import { servers } from '../internal';
 import { version } from '../config';
@@ -62,6 +63,10 @@ export default function (settings: Settings, live: ServerLiveSettings, statsTrac
 		const status = getGameStatus(servers, live, req.query.short === 'true', req.query.d | 0);
 		res.json(status);
 		statsTracker.logRequest(req, status);
+	});
+
+	app.get('/game/login-status', offline(settings), (_, res) => {
+		res.json({ showTestingWarning: !!createLoginServerStatus(settings, live).showTestingWarning });
 	});
 
 	app.post('/csp', offline(settings), (_, res) => {

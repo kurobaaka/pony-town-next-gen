@@ -1,24 +1,41 @@
+ng-template(#gameCharacterModal)
+	game-character-modal([modalRef]="gameCharacterModalRef" (play)="playAndSwapCharacter()")
+
 #app-game.app-game([hidden]="!playing" [class.ui-disabled]="account?.settings?.disableUI")
 	canvas#canvas.unselectable.pixelart
 	span#stats.d-none.d-sm-inline
-	pony-box#pony-box(*ngIf="selected" [pony]="selected" (sendMessage)="messageToPony(chatBox, $event)")
+	ng-container(*ngIf="!canUseTier4Profiles")
+		pony-box#pony-box(*ngIf="selected" [pony]="selected" [dragEnabled]="false" [dragging]="false" (sendMessage)="messageToPony(chatBox, $event)")
+	ng-container(*ngIf="canUseTier4Profiles")
+		.pony-box-floating(
+			*ngFor="let profile of tier4Profiles; trackBy: trackByTier4Profile"
+			[class.dragging]="isTier4ProfileDragging(profile.id)"
+			[style.left.px]="profile.x"
+			[style.top.px]="profile.y")
+			pony-box(
+				[pony]="profile.pony"
+				[dragEnabled]="true"
+				[dragging]="isTier4ProfileDragging(profile.id)"
+				(portraitDrag)="onTier4ProfileDrag(profile.id, $event)"
+				(sendMessage)="messageToPony(chatBox, $event)")
 	editor-box#editor(*hasFeature="'editor'; also playing && isMod")
 	party-list#party-list
 	settings-box#settings-box
 	swap-box#swap-box
 	build-box#build-box
 	notification-list#notifications([notifications]="notifications" [notificationsLength]="notifications.length")
-	chat-log#chat-log(*ngIf="playing" (toggleType)="chatBox.setChatType($event)" (nameClick)="chatLogNameClick(chatBox, $event)")
+	chat-log#chat-log(*ngIf="playing && !editingActions && !settingsModalOpened" (toggleType)="chatBox.setChatType($event)" (nameClick)="chatLogNameClick(chatBox, $event)")
 	action-bar#action-bar(*ngIf="showActionBar" [blurred]="chatBox.isOpen" [editable]="editingActions")
-	friends-box#friends-box((sendMessage)="messageToFriend(chatBox, $event)")
+	friends-box#friends-box((sendMessage)="messageToFriend(chatBox, $event)" (openProfile)="openProfile($event)")
 	chat-box#chat-box(#chatBox [disabled]="editingActions")
 	#game-announcer(#announcer style="display: none")
 		div(#announcerText aria-live="assertive")
 	#touch-origin
 	#touch-position
 	#range-indicator
-	div
-		dropdown-outlet
+
+div
+	dropdown-outlet
 
 .container([hidden]="playing")
 	menu-bar(
@@ -37,12 +54,12 @@
 			a.changelog-link((click)="openChangelog()") Changelog
 		.text-right
 			.d-flex.flex-wrap
-				//- .text-nowrap.mr-2
-					| &copy; 2019-{{date | date:'yyyy'}}
+				.text-nowrap.mr-2
+					| &copy; 2024-{{date | date:'yyyy'}}
 					|  #[a.text-muted.mr-1([href]="twitterLink" target="_blank") {{copyright}}] | 
 				.text-nowrap
 					a.text-muted.mr-2(*ngIf="twitterLink" [href]="twitterLink" target="_blank" title="Twitter")
-					fa-icon([icon]="twitterIcon" [fixedWidth]="true")
+					fa-icon([icon]="twitterIcon" [fixedWidth]="true") |
 				a.text-muted.mr-2(*ngIf="contactEmail" href="mailto:{{contactEmail}}" target="_blank" title="Email")
 						fa-icon([icon]="emailIcon" [fixedWidth]="true")
 			div

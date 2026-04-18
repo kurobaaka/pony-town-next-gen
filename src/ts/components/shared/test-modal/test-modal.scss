@@ -1,0 +1,31 @@
+@import '../../../../styles/partials/variables';
+
+.modal-body {
+	max-height: 72vh;
+	min-height: 0;
+	font-size: 16px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+:host ::ng-deep tabset {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex: 1 1 auto;
+}
+
+:host ::ng-deep .tab-content {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding-right: 6px;
+}
+
+.modal-footer {
+	.btn-wide {
+		min-width: 100px;
+	}
+}

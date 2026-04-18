@@ -182,6 +182,8 @@ export interface IClient extends ClientActions, ClientExtensions {
 	safeX: number;
 	safeY: number;
 	lastPacket: number;
+	afk?: boolean;
+	autoAfkSleeping?: boolean;
 	lastBoopOrKissAction: number;
 	lastExpressionAction: number;
 	lastSays: LastSay[];

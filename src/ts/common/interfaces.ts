@@ -203,6 +203,7 @@ export const enum EntityPlayerState {
 	Ignored = 1,
 	Hidden = 2,
 	Friend = 4,
+	Afk = 8,
 
 	// max 0xff
 }
@@ -228,7 +229,8 @@ export const enum MessageType {
 	Supporter1 = 9,
 	Supporter2 = 10,
 	Supporter3 = 11,
-	Dismiss = 12,
+	Supporter4 = 12,
+	Dismiss = 13,
 	Whisper = 13,
 	WhisperTo = 14,
 	WhisperAnnouncement = 15,
@@ -285,7 +287,8 @@ export function isPublicMessage(type: MessageType) {
 		type === MessageType.Mod ||
 		type === MessageType.Supporter1 ||
 		type === MessageType.Supporter2 ||
-		type === MessageType.Supporter3;
+		type === MessageType.Supporter3 ||
+		type === MessageType.Supporter4;
 }
 
 export function isNonIgnorableMessage(type: MessageType) {
@@ -305,8 +308,9 @@ export const enum ChatType {
 	Supporter1 = 5,
 	Supporter2 = 6,
 	Supporter3 = 7,
-	Dismiss = 8,
-	Whisper = 9,
+	Supporter4 = 8,
+	Dismiss = 9,
+	Whisper = 10,
 }
 
 export function isPartyChat(type: ChatType | undefined) {
@@ -414,6 +418,18 @@ export interface Says {
 	total?: number;
 }
 
+export const typingIndicatorMessage = '...';
+export const typingIndicatorDuration = 1000;
+
+export function isTypingIndicatorMessage(message: string) {
+	return message === typingIndicatorMessage;
+}
+
+export function getTypingIndicatorFrame(created: number) {
+	const frames = ['■□□', '□■□', '□□■'];
+	return frames[Math.floor((Date.now() - created) / 350) % frames.length];
+}
+
 export interface PaletteRenderable {
 	color?: Sprite;
 	shadow?: Sprite;
@@ -447,6 +463,7 @@ export interface EntityPart {
 
 	// chat
 	says?: Says;
+	chatBubbles?: Says[];
 	chatX?: number;
 	chatY?: number;
 	chatBounds?: Rect;
@@ -567,6 +584,7 @@ export const enum DoAction {
 	Swing,
 	HoldPoof,
 	Kiss,
+	Dance1,
 }
 
 export interface Pony extends Entity {
@@ -595,6 +613,7 @@ export interface Pony extends Entity {
 
 	// movement modifier applied by server (/speed command)
 	speedMultiplier?: number;
+	modal?: boolean;
 
 	// player info
 	name: string | undefined;
@@ -642,6 +661,7 @@ export interface CharacterTag {
 	className: string;
 	tagClass: string;
 	color: number;
+	icon?: unknown;
 }
 
 export interface SocialSite {
@@ -675,6 +695,12 @@ export interface AccountSettings {
 	chatlogRange?: number;
 	actions?: string;
 	hidden?: boolean;
+	showTypingIndicator?: boolean;
+	visibleTestingMessages?: boolean;
+	powerSaveModeInBackground?: boolean;
+	afkStatusMinutes?: number;
+	afkSleepMinutes?: number;
+	afkKickMinutes?: number; // 0 = unlimited
 }
 
 export const enum GraphicsQuality {
@@ -701,6 +727,8 @@ export interface BrowserSettings {
 	brightNight?: boolean;
 	timestamp?: '24' | '12';
 	hideChangelogModal?: boolean;
+	enableTestModalHotkey?: boolean;
+	showLookClickZones?: boolean;
 }
 
 export interface EntityTypeName {
@@ -813,6 +841,7 @@ export interface PonyOptions {
 	extra?: boolean; // TODO: move to flags ?
 	hold?: number;
 	toy?: number;
+	modal?: boolean;
 	/** Allows temporarily modifying movement speed (1.0 = normal). */
 	speedMultiplier?: number;
 	// mod/extra info
@@ -1124,6 +1153,8 @@ export const enum Action {
 	SwitchToPlaceTool,
 	SwitchToTileTool,
 	Excite,
+	ModalState,
+	Dance1,
 }
 
 export const enum InfoFlags {
@@ -1199,6 +1230,7 @@ export interface IServerActions {
 	otherAction(entityId: number, action: ModAction, param: number): Promise<void>;
 	setNote(entityId: number, text: string): Promise<void>;
 	saveSettings(settings: AccountSettings): void;
+	typing(entityId: number, type: MessageType, active: boolean): void;
 	acceptNotification(id: number): void;
 	rejectNotification(id: number): void;
 	getPonies(ids: number[]): void;
@@ -1240,14 +1272,24 @@ export interface SpriteSet<T> extends SpriteSetBase {
 }
 
 export interface PonyInfoBase<T, SET> {
-	//body: SET | undefined;
+	body: SET | undefined;
+	bodyRight: SET | undefined;
+	bodyExtra: SET | undefined;
+	frontLegs: SET | undefined;
+	frontLegsRight: SET | undefined;
+	backLegs: SET | undefined;
+	backLegsRight: SET | undefined;
 	head: SET | undefined;
 	nose: SET | undefined;
 	ears: SET | undefined;
+	earsRight: SET | undefined;
 	horn: SET | undefined;
 	wings: SET | undefined;
+	wingsRight: SET | undefined;
 	frontHooves: SET | undefined;
+	frontHoovesRight: SET | undefined;
 	backHooves: SET | undefined;
+	backHoovesRight: SET | undefined;
 
 	mane: SET | undefined;
 	backMane: SET | undefined;
@@ -1256,7 +1298,9 @@ export interface PonyInfoBase<T, SET> {
 
 	headAccessory: SET | undefined;
 	earAccessory: SET | undefined;
+	earAccessoryExtra: SET | undefined;
 	faceAccessory: SET | undefined;
+	faceAccessoryExtra: SET | undefined;
 	neckAccessory: SET | undefined;
 	frontLegAccessory: SET | undefined;
 	backLegAccessory: SET | undefined;
@@ -1265,11 +1309,31 @@ export interface PonyInfoBase<T, SET> {
 	lockBackLegAccessory: boolean | undefined;
 	unlockFrontLegAccessory: boolean | undefined;
 	unlockBackLegAccessory: boolean | undefined;
+	lockBackHooves: boolean | undefined;
+	unlockFrontHooves: boolean | undefined;
+	unlockBackHooves: boolean | undefined;
+	lockBackLegs: boolean | undefined;
+	unlockBody: boolean | undefined;
+	useExtraBody: boolean | undefined;
+	unlockFrontLegs: boolean | undefined;
+	unlockBackLegs: boolean | undefined;
+	unlockEars: boolean | undefined;
+	unlockWings: boolean | undefined;
 	backAccessory: SET | undefined;
 	waistAccessory: SET | undefined;
+	waistAccessoryRight: SET | undefined;
+	waistAccessoryExtra: SET | undefined;
 	chestAccessory: SET | undefined;
 	sleeveAccessory: SET | undefined;
+	sleeveAccessoryRight: SET | undefined;
+	neckAccessoryExtra: SET | undefined;
+	facePatternExtra: SET | undefined;
 	extraAccessory: SET | undefined;
+	unlockWaistAccessory: boolean | undefined;
+	unlockSleeveAccessory: boolean | undefined;
+	useExtraWaistAccessory: boolean | undefined;
+	useExtraNeckAccessory: boolean | undefined;
+	useExtraFacePattern: boolean | undefined;
 
 	coatFill: T | undefined;
 	coatOutline: T | undefined;
@@ -1283,10 +1347,13 @@ export interface PonyInfoBase<T, SET> {
 	eyeOpennessLeft: number | undefined;
 	eyeOpennessRight: number | undefined;
 	eyeshadow: boolean | undefined;
+	eyeshadowLeft: boolean | undefined;
 	eyeshadowColor: T | undefined;
+	eyeshadowColorLeft: T | undefined;
 	lockEyes: boolean | undefined;
 	lockEyeColor: boolean | undefined;
 	unlockEyeWhites: boolean | undefined;
+	unlockEyeshadowColor: boolean | undefined;
 	unlockEyelashColor: boolean | undefined;
 	eyelashColor: T | undefined;
 	eyelashColorLeft: T | undefined;
@@ -1305,6 +1372,7 @@ export interface PonyInfoBase<T, SET> {
 
 	// effect flags (from Actions / expressions)
 	blush: boolean | undefined;
+	blushColor: T | undefined;
 	sleeping: boolean | undefined;
 	tears: boolean | undefined;
 	crying: boolean | undefined;
@@ -1312,7 +1380,6 @@ export interface PonyInfoBase<T, SET> {
 
 	// preview background color for character editor (hex without '#', e.g. '90ee90')
 	previewBackground: T | undefined;
-	lockPreviewBackground: boolean | undefined;
 
 	customOutlines: boolean | undefined;
 	freeOutlines: boolean | undefined;
@@ -1420,6 +1487,8 @@ export interface HeadAnimationFrame {
 	left: Eye;
 	right: Eye;
 	mouth: Muzzle;
+	rightIris?: Iris;
+	leftIris?: Iris;
 }
 
 export const enum HeadAnimationProperties {
@@ -1707,10 +1776,25 @@ export const enum Iris {
 	UpRight = 5,
 	Shocked = 6,
 	Down = 7,
-	// max: 15
+	DownRight = 8,
+	DownLeft = 9,
+	Down2 = 10,
+	DownRight2 = 11,
+	DownLeft2 = 12,
+	ShockedRight = 13,
+	ShockedLeft = 14,
+	ShockedDownRight = 15,
+	ShockedDownLeft = 16,
+	ShockedUpRight = 17,
+	ShockedUpLeft = 18,
+	ShockedDownRight2 = 19,
+	ShockedDownLeft2 = 20,
+	ShockedDown2 = 21,
+	ShockedDown = 22,
+	ShockedUp = 23,
+	// max: 31
 	COUNT,
 }
-
 export const enum ExpressionExtra {
 	None = 0,
 	Blush = 1,
@@ -1756,6 +1840,7 @@ export interface DrawOptions {
 	drawHidden: boolean;
 	showColliderMap: boolean;
 	showHeightmap: boolean;
+	showLookClickZones: boolean;
 	debug: DebugFlags;
 	gridLines: boolean;
 	tileIndices: boolean;
@@ -1773,6 +1858,7 @@ export const defaultDrawOptions: DrawOptions = {
 	drawHidden: false,
 	showColliderMap: false,
 	showHeightmap: false,
+	showLookClickZones: false,
 	debug: {},
 	gridLines: false,
 	tileIndices: false,
@@ -1849,6 +1935,8 @@ export interface FontPalettes {
 	supporter1: Palette;
 	supporter2: Palette;
 	supporter3: Palette;
+	supporter4: Palette;
+	owner: Palette;
 }
 
 export interface CommonPalettes {

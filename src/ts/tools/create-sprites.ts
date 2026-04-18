@@ -119,8 +119,9 @@ function getEyesFromPsd({ objects2, sprites }: Result, eyesPsd: Psd, irisesPsd: 
 	const top = 20;
 	const rightEyeWidth = 12;
 	const perLine = 10;
+	const irisesPerLine = 24;
 	const h = 30, dx = 30, dy = 30;
-	const irisesCount = 8;
+	const irisesCount = 24; // keep in sync with Iris.COUNT
 
 	const irises = colorCanvas(getLayerCanvasSafe('irises', irisesPsd), 'white');
 	const whites = getLayerCanvasSafe('whites', eyesPsd);
@@ -137,26 +138,28 @@ function getEyesFromPsd({ objects2, sprites }: Result, eyesPsd: Psd, irisesPsd: 
 	const getLeftEye = cropAndPadByColRow(left + rightEyeWidth, top, 30 - rightEyeWidth, h, dx, dy, left + rightEyeWidth, top);
 	const getRight = cropByIndex(getRightEye, perLine);
 	const getLeft = cropByIndex(getLeftEye, perLine);
+	const getIrisRight = cropByIndex(getRightEye, irisesPerLine);
+	const getIrisLeft = cropByIndex(getLeftEye, irisesPerLine);
 
 	// const mirrored = (get: ByIndexGetter): ByIndexGetter => (canvas, index) => mirrorCanvas(get(canvas, index), -15);
 
 	const palette = [0, WHITE, BLACK]; // 
 
-	const getEye = (get: ByIndexGetter) => (i: number) => bases.map(base => {
+	const getEye = (get: ByIndexGetter, getIris: ByIndexGetter) => (i: number) => bases.map(base => {
 		const s = addSprite(sprites, get(shadow, i), undefined, palette);
 
 		return <Eye>{
 			base: addSprite(sprites, get(base, i), undefined, palette),
 			irises: range(0, irisesCount)
-				.map(j => maskCanvas(get(irises, j), get(whites, i)))
+				.map(j => maskCanvas(getIris(irises, j), get(whites, i)))
 				.map(canvas => addSprite(sprites, canvas, undefined, palette)),
 			shadow: s ? s : addSprite(sprites, get(shadow, 0), undefined, palette),
 			shine: s ? addSprite(sprites, get(shine, i), undefined, palette) : addSprite(sprites, get(shine, 0), undefined, palette),
 		};
 	});
 
-	objects2['eyeRight: PonyEyes'] = [null, ...range(0, eyeCount).map(getEye(getRight))];
-	objects2['eyeLeft: PonyEyes'] = [null, ...range(0, eyeCount).map(getEye(getLeft))];
+	objects2['eyeRight: PonyEyes'] = [null, ...range(0, eyeCount).map(getEye(getRight, getIrisRight))];
+	objects2['eyeLeft: PonyEyes'] = [null, ...range(0, eyeCount).map(getEye(getLeft, getIrisLeft))];
 	// objects2['eyeRight2: PonyEyes'] = [null, ...range(0, eyeCount).map(getEye(mirrored(getLeft)))];
 }
 
@@ -1294,9 +1297,19 @@ function bandedTinyPalette(colors: number[]) {
 	return bandedPalette(colors, [2, 2, 2, 3]);
 }
 
+function bandedTextPalette8(colors: number[]) {
+	return bandedPalette(colors, [2, 1, 1, 1, 1, 1, 1, 2]);
+}
+
+function bandedTinyPalette8(colors: number[]) {
+	return bandedPalette(colors, [1, 1, 1, 1, 1, 1, 1, 2]);
+}
+
 const SUPPORTER1 = 0xf86754ff;
 const SUPPORTER2_BANDS = [0xffdfc1ff, 0xffcd99ff, 0xff9f3bff, 0xd97e09ff];
 const SUPPORTER3_BANDS = [0xffffffff, 0xfffda4ff, 0xffea3bff, 0xfdbb0bff];
+const SUPPORTER4_BANDS = [0xb8f2c8ff, 0x8ae6a0ff, 0x5cd98cff, 0x2ecc71ff, 0x27ae60ff, 0x229954ff, 0x1e8449ff, 0x196f3dff];
+const SUPPORTER_OWNER_BANDS = [0xff9999ff, 0xff4444ff, 0xcc0000ff, 0x990000ff];
 
 export function createSprites(log: boolean) {
 	mkdir(destPath);
@@ -1384,11 +1397,15 @@ export function createSprites(log: boolean) {
 			fontSupporter1Palette: addPalette([TRANSPARENT, ...times(10, () => SUPPORTER1)]),
 			fontSupporter2Palette: addPalette([TRANSPARENT, ...bandedTextPalette(SUPPORTER2_BANDS)]),
 			fontSupporter3Palette: addPalette([TRANSPARENT, ...bandedTextPalette(SUPPORTER3_BANDS)]),
+			fontSupporter4Palette: addPalette([TRANSPARENT, ...bandedTextPalette8(SUPPORTER4_BANDS)]),
+			fontSupporterOwnerPalette: addPalette([TRANSPARENT, ...bandedTextPalette(SUPPORTER_OWNER_BANDS)]),
 			// small
 			fontSmallPalette: addPalette([TRANSPARENT, ...times(9, () => WHITE)]),
 			fontSmallSupporter1Palette: addPalette([TRANSPARENT, ...times(9, () => SUPPORTER1)]),
 			fontSmallSupporter2Palette: addPalette([TRANSPARENT, ...bandedTinyPalette(SUPPORTER2_BANDS)]),
 			fontSmallSupporter3Palette: addPalette([TRANSPARENT, ...bandedTinyPalette(SUPPORTER3_BANDS)]),
+			fontSmallSupporter4Palette: addPalette([TRANSPARENT, ...bandedTinyPalette8(SUPPORTER4_BANDS)]),
+			fontSmallSupporterOwnerPalette: addPalette([TRANSPARENT, ...bandedTinyPalette(SUPPORTER_OWNER_BANDS)]),
 		},
 	};
 

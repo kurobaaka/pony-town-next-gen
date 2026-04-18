@@ -74,7 +74,7 @@
     - Mod
     - Admin
     - Dev
-    - Superadmin
+    - Owner
 
 ---
 

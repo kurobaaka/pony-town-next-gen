@@ -26,6 +26,10 @@ const defaultPositions: any = {
 	'booping-sitting': { 'x': 111, 'y': 569 },
 	'booping-lying': { 'x': 127, 'y': 821 },
 	'booping-flying': { 'x': 110, 'y': 64 },
+	'dancing': { 'x': 108, 'y': 235 },
+	'dancing-sitting': { 'x': 110, 'y': 514 },
+	'dancing-lying': { 'x': 123, 'y': 754 },
+	'dancing-flying': { 'x': 107, 'y': 123 },
 	'sitting': { 'x': 312, 'y': 569 },
 	'sitting-down': { 'x': 186, 'y': 437 },
 	'standing-up': { 'x': 313, 'y': 436 },
@@ -43,7 +47,8 @@ const defaultPositions: any = {
 	'swinging': { 'x': 484, 'y': 238 },
 	'swimming-to-flying': { 'x': 1063, 'y': 182 },
 	'flying-to-swimming': { 'x': 938, 'y': 232 },
-	'booping-swimming': { 'x': 1144, 'y': 432 }
+	'booping-swimming': { 'x': 1144, 'y': 432 },
+	'dancing-swimming': { 'x': 1142, 'y': 370 }
 };
 
 @Component({

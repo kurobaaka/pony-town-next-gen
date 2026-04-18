@@ -21,6 +21,8 @@ export class ColorPicker {
 	@Input() label?: string = undefined;
 	@Input() labelledBy?: string = undefined;
 	@Output() colorChange = new EventEmitter<string>();
+	@Output() colorChangeStart = new EventEmitter<void>();
+	@Output() colorChangeEnd = new EventEmitter<string>();
 	s = 0;
 	v = 0;
 	h = 0;
@@ -57,20 +59,28 @@ export class ColorPicker {
 		this.isOpen = true;
 		(e.target as HTMLInputElement).select();
 	}
-	dragSV({ event, x, y }: AgDragEvent) {
+	dragSV({ event, x, y, type }: AgDragEvent) {
 		event.preventDefault();
+
+		if (type === 'start') {
+			this.colorChangeStart.emit();
+		}
 
 		this.updateHsv();
 		this.s = clamp(x / SIZE, 0, 1);
 		this.v = 1 - clamp(y / SIZE, 0, 1);
-		this.updateColor();
+		this.updateColor(type === 'end');
 	}
-	dragHue({ event, y }: AgDragEvent) {
+	dragHue({ event, y, type }: AgDragEvent) {
 		event.preventDefault();
+
+		if (type === 'start') {
+			this.colorChangeStart.emit();
+		}
 
 		this.updateHsv();
 		this.h = clamp(360 * y / SIZE, 0, 360);
-		this.updateColor();
+		this.updateColor(type === 'end');
 	}
 	updateHsv() {
 		if (this.lastColor !== this.color) {
@@ -81,7 +91,7 @@ export class ColorPicker {
 			this.lastColor = this.color;
 		}
 	}
-	updateColor() {
+	updateColor(commit = false) {
 		const color = colorToHexRGB(colorFromHSVA(this.h, this.s, this.v, 1));
 		const changed = this.color !== color;
 		this.lastColor = this.color = color;
@@ -89,10 +99,14 @@ export class ColorPicker {
 		if (changed) {
 			this.colorChange.emit(color);
 		}
+		if (commit) {
+			this.colorChangeEnd.emit(color);
+		}
 	}
 	inputChanged(value: string) {
 		this.color = value;
 		this.colorChange.emit(this.color);
+		this.colorChangeEnd.emit(this.color);
 	}
 	stopEvent(e: Event) {
 		e.stopPropagation();

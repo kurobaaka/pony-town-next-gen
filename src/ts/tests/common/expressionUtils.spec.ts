@@ -67,6 +67,11 @@ describe('expressionUtils', () => {
 			expect(flipIris(Iris.Forward)).equal(Iris.Forward);
 			expect(flipIris(Iris.Up)).equal(Iris.Up);
 			expect(flipIris(Iris.Shocked)).equal(Iris.Shocked);
+			expect(flipIris(Iris.Down)).equal(Iris.Down);
+			expect(flipIris(Iris.Down2)).equal(Iris.Down2);
+			expect(flipIris(Iris.ShockedDown)).equal(Iris.ShockedDown);
+			expect(flipIris(Iris.ShockedDown2)).equal(Iris.ShockedDown2);
+			expect(flipIris(Iris.ShockedUp)).equal(Iris.ShockedUp);
 		});
 
 		it('returns flipped iris', () => {
@@ -74,6 +79,18 @@ describe('expressionUtils', () => {
 			expect(flipIris(Iris.Right)).equal(Iris.Left);
 			expect(flipIris(Iris.UpLeft)).equal(Iris.UpRight);
 			expect(flipIris(Iris.UpRight)).equal(Iris.UpLeft);
+			expect(flipIris(Iris.DownLeft)).equal(Iris.DownRight);
+			expect(flipIris(Iris.DownRight)).equal(Iris.DownLeft);
+			expect(flipIris(Iris.DownLeft2)).equal(Iris.DownRight2);
+			expect(flipIris(Iris.DownRight2)).equal(Iris.DownLeft2);
+			expect(flipIris(Iris.ShockedLeft)).equal(Iris.ShockedRight);
+			expect(flipIris(Iris.ShockedRight)).equal(Iris.ShockedLeft);
+			expect(flipIris(Iris.ShockedUpLeft)).equal(Iris.ShockedUpRight);
+			expect(flipIris(Iris.ShockedUpRight)).equal(Iris.ShockedUpLeft);
+			expect(flipIris(Iris.ShockedDownLeft)).equal(Iris.ShockedDownRight);
+			expect(flipIris(Iris.ShockedDownRight)).equal(Iris.ShockedDownLeft);
+			expect(flipIris(Iris.ShockedDownLeft2)).equal(Iris.ShockedDownRight2);
+			expect(flipIris(Iris.ShockedDownRight2)).equal(Iris.ShockedDownLeft2);
 		});
 	});
 

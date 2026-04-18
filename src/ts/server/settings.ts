@@ -5,6 +5,7 @@ import * as paths from './paths';
 
 const defaultSettings: Settings = {
 	canCreateAccounts: true,
+	showTestingWarning: false,
 	servers: {},
 };
 

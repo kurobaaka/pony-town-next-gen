@@ -288,7 +288,7 @@ async function clearOrphanedIgnores() {
 }
 
 async function toggleRole(give, id, roles) {
-	if (typeof id === 'string' && id.length === 24 && ['superadmin', 'admin', 'mod', 'dev'].indexOf(roles) !== -1) {
+	if (typeof id === 'string' && id.length === 24 && ['owner', 'admin', 'mod', 'dev'].indexOf(roles) !== -1) {
 		if (give) {
 			await db.Account.updateOne({ _id: id }, { $addToSet: { roles } }).exec();
 		} else {
@@ -297,7 +297,7 @@ async function toggleRole(give, id, roles) {
 		console.log('done');
 	} else {
 		console.log('error: usage: node cli.js --addrole <account_id> <role_name>');
-		console.log('  roles: superadmin, admin, mod, dev');
+		console.log('  roles: owner, admin, mod, dev');
 	}
 
 	process.exit();

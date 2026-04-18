@@ -63,13 +63,24 @@ export function createDefaultPony(): PonyInfo {
 
 export function createBasePony(): PonyInfo {
 	return syncLockedPonyInfo({
+		body: spriteSet(0, true, 'ff0000'),
+		bodyRight: spriteSet(0, true, 'ff0000'),
+		bodyExtra: spriteSet(0, true, 'ff0000'),
+		frontLegs: spriteSet(0, true, 'ff0000'),
+		frontLegsRight: spriteSet(0, true, 'ff0000'),
+		backLegs: spriteSet(0, true, 'ff0000'),
+		backLegsRight: spriteSet(0, true, 'ff0000'),
 		head: spriteSet(0, true, 'ff0000', ['800000', '32cd32', 'da70d6', 'dc143c', '7fffd4']),
 		nose: spriteSet(0, true, 'ff0000', ['800000', '32cd32', 'da70d6', 'dc143c', '7fffd4']),
 		ears: spriteSet(0, true, 'ff0000'),
+		earsRight: spriteSet(0, true, 'ff0000'),
 		horn: spriteSet(0, true, 'ff0000'),
 		wings: spriteSet(0, true, 'ff0000'),
+		wingsRight: spriteSet(0, true, 'ff0000'),
 		frontHooves: spriteSet(0, false, 'ffa500', ['ffff00', '32cd32', 'da70d6', 'dc143c', '7fffd4']),
+		frontHoovesRight: spriteSet(0, false, 'ffa500', ['ffff00', '32cd32', 'da70d6', 'dc143c', '7fffd4']),
 		backHooves: spriteSet(0, true, 'ffa500'),
+		backHoovesRight: spriteSet(0, true, 'ffa500'),
 
 		mane: spriteSet(0, false),
 		backMane: spriteSet(0),
@@ -78,7 +89,9 @@ export function createBasePony(): PonyInfo {
 
 		headAccessory: spriteSet(0, false, 'ee82ee'),
 		earAccessory: spriteSet(0, false, '808080'),
+		earAccessoryExtra: spriteSet(0, false, '808080'),
 		faceAccessory: spriteSet(0, false, '000000'),
+		faceAccessoryExtra: spriteSet(0, false, '000000'),
 		neckAccessory: spriteSet(0, false, 'ee82ee'),
 		frontLegAccessory: spriteSet(0, false, 'ee82ee'),
 		backLegAccessory: spriteSet(0, false, 'ee82ee'),
@@ -87,10 +100,25 @@ export function createBasePony(): PonyInfo {
 		lockBackLegAccessory: true,
 		unlockFrontLegAccessory: false,
 		unlockBackLegAccessory: false,
+		lockBackHooves: true,
+		unlockFrontHooves: false,
+		unlockBackHooves: false,
+		lockBackLegs: true,
+		unlockBody: false,
+		useExtraBody: false,
+		unlockFrontLegs: false,
+		unlockBackLegs: false,
+		unlockEars: false,
+		unlockWings: false,
 		backAccessory: spriteSet(0, false, 'ee82ee'),
 		waistAccessory: spriteSet(0, false, '95856f', ['674b43', '4f4f4f', '525252', 'c37850', '8a3d34']),
+		waistAccessoryRight: spriteSet(0, false, '95856f', ['674b43', '4f4f4f', '525252', 'c37850', '8a3d34']),
+		waistAccessoryExtra: spriteSet(0, false, '95856f', ['674b43', '4f4f4f', '525252', 'c37850', '8a3d34']),
 		chestAccessory: spriteSet(0, false, 'ee82ee'),
 		sleeveAccessory: spriteSet(0, true, 'ee82ee'),
+		sleeveAccessoryRight: spriteSet(0, true, 'ee82ee'),
+		neckAccessoryExtra: spriteSet(0, false, 'ee82ee'),
+		facePatternExtra: spriteSet(0, true, 'ff0000', ['800000', '32cd32', 'da70d6', 'dc143c', '7fffd4']),
 		extraAccessory: {
 			...spriteSet(0, true, 'ff0000', ['daa520', 'ffd700', 'ffd700', 'ffd700', 'ffd700']),
 			lockFills: array(5, true),
@@ -108,10 +136,13 @@ export function createBasePony(): PonyInfo {
 		eyeOpennessLeft: 1,
 		eyeOpennessRight: 1,
 		eyeshadow: false,
+		eyeshadowLeft: false,
 		eyeshadowColor: '000000',
+		eyeshadowColorLeft: '000000',
 		lockEyes: true,
 		lockEyeColor: true,
 		unlockEyeWhites: false,
+		unlockEyeshadowColor: false,
 		unlockEyelashColor: false,
 		eyelashColor: '000000',
 		eyelashColorLeft: '000000',
@@ -130,6 +161,7 @@ export function createBasePony(): PonyInfo {
 
 		// effect flags
 		blush: false,
+		blushColor: 'ff89ae',
 		sleeping: false,
 		tears: false,
 		crying: false,
@@ -141,6 +173,11 @@ export function createBasePony(): PonyInfo {
 		customOutlines: false,
 		freeOutlines: false,
 		darkenLockedOutlines: false,
+		unlockWaistAccessory: false,
+		unlockSleeveAccessory: false,
+		useExtraWaistAccessory: false,
+		useExtraNeckAccessory: false,
+		useExtraFacePattern: false,
 	});
 }
 
@@ -231,6 +268,36 @@ function getOutlineOf2<T>(set: SpriteSet<T> | undefined, defaultColor: T): T | u
 	return set && set.type && set.outlines && set.outlines[0] || defaultColor;
 }
 
+function copySpriteSet<T>(target: SpriteSet<T> | undefined, source: SpriteSet<T> | undefined): SpriteSet<T> | undefined {
+	if (!source) {
+		return undefined;
+	}
+
+	const next = target || {};
+	next.type = source.type;
+	next.pattern = source.pattern;
+	next.fills = source.fills ? source.fills.slice() : undefined;
+	next.outlines = source.outlines ? source.outlines.slice() : undefined;
+	next.lockFills = source.lockFills ? source.lockFills.slice() : undefined;
+	next.lockOutlines = source.lockOutlines ? source.lockOutlines.slice() : undefined;
+	return next;
+}
+
+function createDefaultMarkingSet<T>(fill: T | undefined, outline: T | undefined): SpriteSet<T> {
+	return {
+		type: 0,
+		pattern: 0,
+		fills: [fill, fill, fill, fill, fill, fill],
+		outlines: [outline, outline, outline, outline, outline, outline],
+		lockFills: [true, true, true, true, true, true],
+		lockOutlines: [true, true, true, true, true, true],
+	};
+}
+
+function ensureMarkingSet<T>(set: SpriteSet<T> | undefined, fill: T | undefined, outline: T | undefined): SpriteSet<T> {
+	return set || createDefaultMarkingSet(fill, outline);
+}
+
 function syncLockedBasePonyInfo<T>(
 	info: PonyInfoGeneric<T>, fillToOutline: FillToOutline<T>, defaultColor: T
 ): PonyInfoGeneric<T> {
@@ -238,6 +305,36 @@ function syncLockedBasePonyInfo<T>(
 
 	if (!customOutlines || info.lockCoatOutline) {
 		info.coatOutline = fillToOutline(info.coatFill);
+	}
+
+	info.body = ensureMarkingSet(info.body, info.coatFill, info.coatOutline);
+
+	if (!info.unlockBody) {
+		info.bodyRight = copySpriteSet(info.bodyRight, info.body);
+	} else {
+		info.bodyRight = ensureMarkingSet(info.bodyRight, info.coatFill, info.coatOutline);
+	}
+
+	info.frontLegs = ensureMarkingSet(info.frontLegs, info.coatFill, info.coatOutline);
+
+	if (!info.unlockFrontLegs) {
+		info.frontLegsRight = copySpriteSet(info.frontLegsRight, info.frontLegs);
+	} else {
+		info.frontLegsRight = ensureMarkingSet(info.frontLegsRight, info.coatFill, info.coatOutline);
+	}
+
+	if (info.lockBackLegs !== false) {
+		info.backLegs = copySpriteSet(info.backLegs, info.frontLegs);
+		const sourceRight = info.unlockFrontLegs ? info.frontLegsRight : info.frontLegs;
+		info.backLegsRight = copySpriteSet(info.backLegsRight, sourceRight);
+	} else {
+		info.backLegs = ensureMarkingSet(info.backLegs, info.coatFill, info.coatOutline);
+
+		if (!info.unlockBackLegs) {
+			info.backLegsRight = copySpriteSet(info.backLegsRight, info.backLegs);
+		} else {
+			info.backLegsRight = ensureMarkingSet(info.backLegsRight, info.coatFill, info.coatOutline);
+		}
 	}
 
 	if (info.lockEyes) {
@@ -252,18 +349,104 @@ function syncLockedBasePonyInfo<T>(
 		info.eyeWhitesLeft = info.eyeWhites;
 	}
 
+	if (!info.unlockEyeshadowColor) {
+		info.eyeshadowLeft = info.eyeshadow;
+		info.eyeshadowColorLeft = info.eyeshadowColor;
+	} else if (info.eyeshadowLeft === undefined) {
+		// Backward compatibility for ponies saved before per-side eyeshadow toggle existed.
+		info.eyeshadowLeft = info.eyeshadow;
+	}
+
 	if (!info.unlockEyelashColor) {
 		info.eyelashColorLeft = info.eyelashColor;
 	}
 
+	if (!info.unlockFrontHooves) {
+		info.frontHoovesRight = copySpriteSet(info.frontHoovesRight, info.frontHooves);
+	} else if (info.frontHoovesRight === info.frontHooves) {
+		info.frontHoovesRight = copySpriteSet(undefined, info.frontHooves);
+	}
+
+	if (info.lockBackHooves) {
+		info.backHooves = copySpriteSet(info.backHooves, info.frontHooves);
+		const sourceRight = info.unlockFrontHooves ? info.frontHoovesRight : info.frontHooves;
+		info.backHoovesRight = copySpriteSet(info.backHoovesRight, sourceRight);
+	} else {
+		if (!info.unlockBackHooves) {
+			info.backHoovesRight = copySpriteSet(info.backHoovesRight, info.backHooves);
+		} else if (info.backHoovesRight === info.backHooves) {
+			info.backHoovesRight = copySpriteSet(undefined, info.backHooves);
+		}
+	}
+
+	if (!info.unlockEars) {
+		info.earsRight = copySpriteSet(info.earsRight, info.ears);
+	} else if (info.earsRight === info.ears) {
+		info.earsRight = copySpriteSet(undefined, info.ears);
+	}
+
+	if (!info.unlockWings) {
+		info.wingsRight = copySpriteSet(info.wingsRight, info.wings);
+	} else if (info.wingsRight === info.wings) {
+		info.wingsRight = copySpriteSet(undefined, info.wings);
+	}
+
+	if (!info.unlockWaistAccessory) {
+		info.waistAccessoryRight = copySpriteSet(info.waistAccessoryRight, info.waistAccessory);
+	} else if (info.waistAccessoryRight === info.waistAccessory) {
+		info.waistAccessoryRight = copySpriteSet(undefined, info.waistAccessory);
+	}
+
+	if (!info.unlockSleeveAccessory) {
+		info.sleeveAccessoryRight = copySpriteSet(info.sleeveAccessoryRight, info.sleeveAccessory);
+	} else if (info.sleeveAccessoryRight === info.sleeveAccessory) {
+		info.sleeveAccessoryRight = copySpriteSet(undefined, info.sleeveAccessory);
+	}
+
 	syncLockedSpriteSet<T>(info.head, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
+	syncLockedSpriteSet<T>(info.body, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
+	syncLockedSpriteSet<T>(
+		info.bodyRight,
+		customOutlines,
+		fillToOutline,
+		getBaseFill(info.unlockBody ? info.bodyRight : info.body),
+		getBaseOutline(info.unlockBody ? info.bodyRight : info.body));
+	syncLockedSpriteSet<T>(info.bodyExtra, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
+	syncLockedSpriteSet<T>(info.frontLegs, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
+	syncLockedSpriteSet<T>(
+		info.frontLegsRight,
+		customOutlines,
+		fillToOutline,
+		getBaseFill(info.unlockFrontLegs ? info.frontLegsRight : info.frontLegs),
+		getBaseOutline(info.unlockFrontLegs ? info.frontLegsRight : info.frontLegs));
+	syncLockedSpriteSet<T>(
+		info.backLegs,
+		customOutlines,
+		fillToOutline,
+		getBaseFill(info.lockBackLegs !== false ? info.frontLegs : info.backLegs),
+		getBaseOutline(info.lockBackLegs !== false ? info.frontLegs : info.backLegs));
+	syncLockedSpriteSet<T>(
+		info.backLegsRight,
+		customOutlines,
+		fillToOutline,
+		getBaseFill(info.lockBackLegs !== false ? (info.unlockFrontLegs ? info.frontLegsRight : info.frontLegs) : (info.unlockBackLegs ? info.backLegsRight : info.backLegs)),
+		getBaseOutline(info.lockBackLegs !== false ? (info.unlockFrontLegs ? info.frontLegsRight : info.frontLegs) : (info.unlockBackLegs ? info.backLegsRight : info.backLegs)));
 	syncLockedSpriteSet<T>(info.nose, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
 	syncLockedSpriteSet<T>(info.ears, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
+	syncLockedSpriteSet<T>(info.earsRight, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
 	syncLockedSpriteSet<T>(info.horn, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
 	syncLockedSpriteSet<T>(info.wings, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
+	syncLockedSpriteSet<T>(info.wingsRight, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
 	syncLockedSpriteSet<T>(info.frontHooves, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
+	syncLockedSpriteSet<T>(info.frontHoovesRight, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
 	syncLockedSpriteSet<T>(
-		info.backHooves, customOutlines, fillToOutline, getBaseFill(info.frontHooves), getBaseOutline(info.frontHooves));
+		info.backHooves, customOutlines, fillToOutline,
+		getBaseFill(info.lockBackHooves ? info.frontHooves : info.backHooves),
+		getBaseOutline(info.lockBackHooves ? info.frontHooves : info.backHooves));
+	syncLockedSpriteSet<T>(
+		info.backHoovesRight, customOutlines, fillToOutline,
+		getBaseFill(info.lockBackHooves ? (info.unlockFrontHooves ? info.frontHoovesRight : info.frontHooves) : info.backHoovesRight),
+		getBaseOutline(info.lockBackHooves ? (info.unlockFrontHooves ? info.frontHoovesRight : info.frontHooves) : info.backHoovesRight));
 
 	syncLockedSpriteSet<T>(info.mane, customOutlines, fillToOutline);
 
@@ -276,7 +459,9 @@ function syncLockedBasePonyInfo<T>(
 
 	syncLockedSpriteSet<T>(info.headAccessory, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.earAccessory, customOutlines, fillToOutline);
+	syncLockedSpriteSet<T>(info.earAccessoryExtra, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.faceAccessory, customOutlines, fillToOutline);
+	syncLockedSpriteSet<T>(info.faceAccessoryExtra, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.neckAccessory, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.frontLegAccessory, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.backLegAccessory, customOutlines, fillToOutline);
@@ -284,7 +469,11 @@ function syncLockedBasePonyInfo<T>(
 	syncLockedSpriteSet<T>(info.backLegAccessoryRight, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.backAccessory, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.waistAccessory, customOutlines, fillToOutline);
+	syncLockedSpriteSet<T>(info.waistAccessoryRight, customOutlines, fillToOutline);
+	syncLockedSpriteSet<T>(info.waistAccessoryExtra, customOutlines, fillToOutline);
 	syncLockedSpriteSet<T>(info.chestAccessory, customOutlines, fillToOutline);
+ 	syncLockedSpriteSet<T>(info.neckAccessoryExtra, customOutlines, fillToOutline);
+ 	syncLockedSpriteSet<T>(info.facePatternExtra, customOutlines, fillToOutline, info.coatFill, info.coatOutline);
 
 	if (info.chestAccessory && !info.sleeveAccessory && includes(SLEEVED_ACCESSORIES, info.chestAccessory.type)) {
 		info.sleeveAccessory = {
@@ -299,6 +488,8 @@ function syncLockedBasePonyInfo<T>(
 
 	syncLockedSpriteSet<T>(
 		info.sleeveAccessory, customOutlines, fillToOutline, getBaseFill(info.chestAccessory), getBaseOutline(info.chestAccessory));
+	syncLockedSpriteSet<T>(
+		info.sleeveAccessoryRight, customOutlines, fillToOutline, getBaseFill(info.chestAccessory), getBaseOutline(info.chestAccessory));
 
 	syncLockedSpritesSet2<T>(info.extraAccessory, fillToOutline, [
 		info.coatFill,
@@ -483,19 +674,38 @@ export function toPaletteGeneric<T>(
 	const toSetExtra = createToPaletteSet(manager, getColorsForSet, true, darken);
 
 	const defaultSet = { type: 0, pattern: 0, fills: [info.coatFill], outlines: [info.coatOutline] };
+	const bodySet = info.body || defaultSet;
+	const bodyRightSet = info.unlockBody ? (info.bodyRight || bodySet) : bodySet;
+	const frontLegsSet = info.frontLegs || defaultSet;
+	const frontLegsRightSet = info.unlockFrontLegs ? (info.frontLegsRight || frontLegsSet) : frontLegsSet;
+	const backLegsSet = (info.lockBackLegs !== false) ? frontLegsSet : (info.backLegs || frontLegsSet);
+	const backLegsRightSet = info.lockBackLegs !== false ?
+		frontLegsRightSet :
+		(info.unlockBackLegs ? (info.backLegsRight || backLegsSet) : backLegsSet);
 	// const defaultSet = { type: 0, pattern: 1, fills: [info.coatFill, whiteColor], outlines: [info.coatOutline, blackColor] };
 
 	return ({
-		body: toSet(defaultSet, sprites.body[1]),
+		body: toSet(bodySet, sprites.body[1]),
+		bodyRight: toSet(bodyRightSet, sprites.body[1]),
+		bodyExtra: toSet(info.useExtraBody ? info.bodyExtra : undefined, sprites.body[1]),
 		head: toSet(info.head || defaultSet, sprites.head0[1]),
 		nose: toSet(info.nose, sprites.noses[0]),
 		ears: toSet(info.ears || defaultSet, sprites.ears),
+		earsRight: toSet((info.unlockEars ? info.earsRight : info.ears) || defaultSet, sprites.ears),
 		horn: toSet(info.horn, sprites.horns),
 		wings: toSet(info.wings, sprites.wings[0]),
-		frontLegs: toSet(defaultSet, sprites.frontLegs[1]),
-		backLegs: toSet(defaultSet, sprites.backLegs[1]),
+		wingsRight: toSet(info.unlockWings ? info.wingsRight : info.wings, sprites.wings[0]),
+		frontLegs: toSet(frontLegsSet, sprites.frontLegs[1]),
+		frontLegsRight: toSet(frontLegsRightSet, sprites.frontLegs[1]),
+		backLegs: toSet(backLegsSet, sprites.backLegs[1]),
+		backLegsRight: toSet(backLegsRightSet, sprites.backLegs[1]),
 		frontHooves: toSet(info.frontHooves, frontHooves),
-		backHooves: toSet(info.backHooves, backHooves),
+		frontHoovesRight: toSet(info.unlockFrontHooves ? info.frontHoovesRight : info.frontHooves, frontHooves),
+		backHooves: toSet(info.lockBackHooves ? info.frontHooves : info.backHooves, backHooves),
+		backHoovesRight: toSet(
+			info.lockBackHooves ?
+				(info.unlockFrontHooves ? info.frontHoovesRight : info.frontHooves) :
+				(info.unlockBackHooves ? info.backHoovesRight : info.backHooves), backHooves),
 
 		mane: toSet(info.mane, mergedManes),
 		backMane: toSet(info.backMane, mergedBackManes),
@@ -504,9 +714,12 @@ export function toPaletteGeneric<T>(
 
 		headAccessory: toSet(info.headAccessory, mergedHeadAccessories),
 		earAccessory: toSet(info.earAccessory, mergedEarAccessories),
+		earAccessoryExtra: toSet(info.earAccessoryExtra, mergedEarAccessories),
 		faceAccessory: toSetExtra(info.faceAccessory, sprites.faceAccessories),
+		faceAccessoryExtra: toSetExtra(info.faceAccessoryExtra, sprites.faceAccessories),
 		// faceAccessoryExtraPalette: getExtraPartPalette(info.faceAccessory, sprites.faceAccessoriesExtra, manager),
 		neckAccessory: toSet(info.neckAccessory, sprites.neckAccessories[1]),
+		neckAccessoryExtra: toSet(info.useExtraNeckAccessory ? info.neckAccessoryExtra : undefined, sprites.neckAccessories[1]),
 		frontLegAccessory: toSet(
 			info.frontLegAccessory, frontLegAccessories),
 		backLegAccessory: toSet(
@@ -520,11 +733,33 @@ export function toPaletteGeneric<T>(
 		lockBackLegAccessory: info.lockBackLegAccessory,
 		unlockFrontLegAccessory: info.unlockFrontLegAccessory,
 		unlockBackLegAccessory: info.unlockBackLegAccessory,
+		lockBackHooves: info.lockBackHooves,
+		unlockFrontHooves: info.unlockFrontHooves,
+		unlockBackHooves: info.unlockBackHooves,
+		lockBackLegs: info.lockBackLegs,
+		unlockBody: info.unlockBody,
+		useExtraBody: info.useExtraBody,
+		unlockFrontLegs: info.unlockFrontLegs,
+		unlockBackLegs: info.unlockBackLegs,
+		unlockEars: info.unlockEars,
+		unlockWings: info.unlockWings,
 		backAccessory: toSet(info.backAccessory, mergedBackAccessories),
 		waistAccessory: toSet(info.waistAccessory, sprites.waistAccessories[1]),
+		waistAccessoryExtra: toSet(
+			info.useExtraWaistAccessory ? info.waistAccessoryExtra : undefined, sprites.waistAccessories[1]),
+		waistAccessoryRight: toSet(
+			info.unlockWaistAccessory ? info.waistAccessoryRight : info.waistAccessory, sprites.waistAccessories[1]),
 		chestAccessory: toSet(info.chestAccessory, mergedChestAccessories),
 		sleeveAccessory: toSet(info.sleeveAccessory, frontLegSleeves),
+		sleeveAccessoryRight: toSet(
+			info.unlockSleeveAccessory ? info.sleeveAccessoryRight : info.sleeveAccessory, frontLegSleeves),
 		extraAccessory: toSet(info.extraAccessory, mergedExtraAccessories),
+		facePatternExtra: toSet(info.useExtraFacePattern ? info.facePatternExtra : undefined, sprites.head0[1]),
+		unlockWaistAccessory: info.unlockWaistAccessory,
+		unlockSleeveAccessory: info.unlockSleeveAccessory,
+		useExtraWaistAccessory: info.useExtraWaistAccessory,
+		useExtraNeckAccessory: info.useExtraNeckAccessory,
+		useExtraFacePattern: info.useExtraFacePattern,
 
 		coatPalette: manager.addArray(toColorList([info.coatFill, info.coatOutline])),
 		coatFill: undefined,
@@ -547,13 +782,18 @@ export function toPaletteGeneric<T>(
 		eyeOpennessLeft: toInt(info.eyeOpennessLeft),
 		eyeOpennessRight: toInt(info.eyeOpennessRight),
 		eyeshadow: info.eyeshadow,
+		eyeshadowLeft: info.unlockEyeshadowColor ? info.eyeshadowLeft : info.eyeshadow,
 		eyeshadowColor: manager.addArray(toColorList([info.eyeshadowColor])),
+		eyeshadowColorLeft: manager.addArray(toColorList([info.eyeshadowColorLeft])),
+		blush: !!info.blush,
 		lockEyes: !!info.lockEyes,
 		lockEyeColor: !!info.lockEyeColor,
 		unlockEyeWhites: !!info.unlockEyeWhites,
+		unlockEyeshadowColor: !!info.unlockEyeshadowColor,
 		unlockEyelashColor: !!info.unlockEyelashColor,
 		eyelashColor: undefined,
 		eyelashColorLeft: undefined,
+		blushColor: manager.addArray(toColorList([info.blushColor])),
 
 		fangs: toInt(info.fangs),
 		muzzle: toInt(info.muzzle),

@@ -125,7 +125,7 @@ export class AccountInfo implements OnInit, OnChanges {
 		return this.account && this.account.lastVisit && this.account.lastVisit.getTime() < oldTime;
 	}
 	get roles() {
-		return this.account.roles ? this.account.roles.filter(r => r !== 'superadmin') : EMPTY_ROLES;
+		return this.account.roles ? this.account.roles.filter(r => r !== 'owner') : EMPTY_ROLES;
 	}
 	get flagClass() {
 		const counters = this.account.counters;

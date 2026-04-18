@@ -15,6 +15,7 @@ $vk: #0079fe;
 $none: #777;
 $dev: #bd3e91;
 $mod: #5f2f8f;
+$owner: #ff0000;
 $forbidden: #a131e2;
 
 $safe: #5a8f5a;
@@ -59,6 +60,7 @@ $gold: #ffcf00;
 $supporter-1: $patreon;
 $supporter-2: #ffa32b;
 $supporter-3: $gold;
+$supporter-4: #50c878;
 
 $chat-color: #ffffff;
 $chat-party: #94e3ff;
@@ -77,6 +79,7 @@ $chat-colors: (
 	supporter-1: lighten($supporter-1, 7%),
 	supporter-2: lighten($supporter-2, 7%),
 	supporter-3: lighten($supporter-3, 7%),
+	supporter-4: lighten($supporter-4, 7%),
 	whisper: $chat-whisper,
 	whisper-announcement: $chat-whisper
 );

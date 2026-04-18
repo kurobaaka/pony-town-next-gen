@@ -1,6 +1,7 @@
 import {
 	BASE_CHARACTER_LIMIT, ADDITIONAL_CHARACTERS_SUPPORTER1, ADDITIONAL_CHARACTERS_SUPPORTER2,
-	ADDITIONAL_CHARACTERS_SUPPORTER3, ADDITIONAL_CHARACTERS_PAST_SUPPORTER
+	ADDITIONAL_CHARACTERS_SUPPORTER3, ADDITIONAL_CHARACTERS_SUPPORTER4, ADDITIONAL_CHARACTERS_PAST_SUPPORTER,
+	SUPPORTER_FRIENDS_LIMITS, FRIENDS_LIMIT
 } from './constants';
 import { AccountDataFlags } from './interfaces';
 import { hasFlag } from './utils';
@@ -47,6 +48,8 @@ function meetsSupporterRequirement(account: AccountSupporter, require: string): 
 		return modOrDev || level >= 2;
 	} else if (require === 'sup3') {
 		return modOrDev || level >= 3;
+	} else if (require === 'sup4') {
+		return modOrDev || level >= 4;
 	} else {
 		return false;
 	}
@@ -57,6 +60,7 @@ export function getCharacterLimit(account: AccountSupporter) {
 		case 1: return BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER1;
 		case 2: return BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER2;
 		case 3: return BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER3;
+		case 4: return BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_SUPPORTER4;
 		default:
 			if (hasFlag(account.flags, AccountDataFlags.PastSupporter)) {
 				return BASE_CHARACTER_LIMIT + ADDITIONAL_CHARACTERS_PAST_SUPPORTER;
@@ -74,7 +78,22 @@ export function getSupporterInviteLimit(account: AccountSupporter) {
 			case 1: return 1;
 			case 2: return 5;
 			case 3: return 10;
+			case 4: return 15;
 			default: return 0;
 		}
 	}
+}
+
+export function getFriendsLimit(account: AccountSupporter | undefined) {
+	if (!account) {
+		return FRIENDS_LIMIT;
+	}
+
+	if (isMod(account) || isDev(account)) {
+		return FRIENDS_LIMIT;
+	}
+
+	const level = Math.max(0, Math.min(4, account.supporter || 0));
+	const limit = SUPPORTER_FRIENDS_LIMITS[level];
+	return typeof limit === 'number' ? limit : FRIENDS_LIMIT;
 }

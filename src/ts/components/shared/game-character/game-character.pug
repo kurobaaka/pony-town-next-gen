@@ -1,0 +1,13 @@
+.modal-header
+	h4.modal-title Edit Character
+	button.close(type="button" aria-label="Close" (click)="close()")
+		fa-icon([icon]="closeIcon")
+
+.modal-body.game-character-modal-body
+	character([inGameMode]="true").mb-6
+
+.modal-footer
+	button.btn.btn-default(type="button" (click)="close()") Close
+	button.btn.btn-success(type="button" (click)="onPlay()")
+		fa-icon.mr-1([icon]="playIcon")
+		| Play

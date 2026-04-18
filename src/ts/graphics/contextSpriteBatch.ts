@@ -151,12 +151,34 @@ function drawRect(
 	dst: ImageData | undefined, transform: Matrix2D, globalAlpha: number,
 	color: number, x: number, y: number, w: number, h: number
 ) {
-	if (DEVELOPMENT && !isTranslation(transform)) {
-		console.error('Transform not supported');
-	}
-
 	if (!dst)
 		return;
+
+	if (!isTranslation(transform)) {
+		const { r, g, b, a } = colorToRGBA(color);
+		const alpha = (globalAlpha * a) | 0;
+
+		if (alpha === 0)
+			return;
+
+		const dstData = dst.data;
+		const dstWidth = dst.width | 0;
+		const dstHeight = dst.height | 0;
+
+		for (let iy = 0; iy < h; iy++) {
+			for (let ix = 0; ix < w; ix++) {
+				const tx = Math.round((x + ix) * transform[0] + (y + iy) * transform[2] + transform[4]);
+				const ty = Math.round((x + ix) * transform[1] + (y + iy) * transform[3] + transform[5]);
+
+				if (tx >= 0 && ty >= 0 && tx < dstWidth && ty < dstHeight) {
+					const dst0 = (tx + ty * dstWidth) << 2;
+					blendPrecise(dstData, dst0, r, g, b, alpha);
+				}
+			}
+		}
+
+		return;
+	}
 
 	x = Math.round(x + transform[4]);
 	y = Math.round(y + transform[5]);
@@ -200,12 +222,44 @@ function drawImageNormal(
 	if (sw !== dw || sh !== dh)
 		throw new Error('Different dimentions not supported');
 
-	if (DEVELOPMENT && !isTranslation(transform)) {
-		console.error('Transform not supported');
-	}
-
 	if (!src || !dst)
 		return;
+
+	if (!isTranslation(transform)) {
+		const { r, g, b, a } = colorToRGBA(tint);
+		const alpha = (globalAlpha * a) | 0;
+		const dstData = dst.data;
+		const srcData = src.data;
+		const dstWidth = dst.width | 0;
+		const dstHeight = dst.height | 0;
+		const srcWidth = src.width | 0;
+
+		for (let y = 0; y < sh; y++) {
+			for (let x = 0; x < sw; x++) {
+				const srcO = ((sx + x) + (sy + y) * srcWidth) << 2;
+				const sr = srcData[srcO];
+				const sg = srcData[srcO + 1];
+				const sb = srcData[srcO + 2];
+				const sa = srcData[srcO + 3];
+				const srcAlpha = blendColor(alpha, sa, 255);
+
+				if (srcAlpha !== 0) {
+					const rr = blendColor(r, sr, 255);
+					const gg = blendColor(g, sg, 255);
+					const bb = blendColor(b, sb, 255);
+					const tx = Math.round((dx + x) * transform[0] + (dy + y) * transform[2] + transform[4]);
+					const ty = Math.round((dx + x) * transform[1] + (dy + y) * transform[3] + transform[5]);
+
+					if (tx >= 0 && ty >= 0 && tx < dstWidth && ty < dstHeight) {
+						const dst0 = (tx + ty * dstWidth) << 2;
+						blendPrecise(dstData, dst0, rr, gg, bb, srcAlpha);
+					}
+				}
+			}
+		}
+
+		return;
+	}
 
 	dx = Math.round(dx + transform[4]);
 	dy = Math.round(dy + transform[5]);
@@ -265,16 +319,51 @@ function drawImagePalette(
 	if (sw !== dw || sh !== dh)
 		throw new Error('Different dimentions not supported');
 
-	if (DEVELOPMENT && !isTranslation(transform)) {
-		console.error('Transform not supported');
-	}
-
 	if (palette === undefined) {
 		palette = commonPalettes.defaultPalette;
 	}
 
 	if (!src || !dst)
 		return;
+
+	if (!isTranslation(transform)) {
+		const { r, g, b, a } = colorToRGBA(tint);
+		const alpha = (globalAlpha * a) | 0;
+		const colors = palette.colors;
+		const dstData = dst.data;
+		const srcData = src.data;
+		const dstWidth = dst.width | 0;
+		const dstHeight = dst.height | 0;
+		const srcWidth = src.width | 0;
+		const ignoreColor = ignoreColorOption >>> 0;
+		const disableShading = disableShadingOption || type > 2;
+		const offset = typeOffsets[type];
+
+		for (let y = 0; y < sh; y++) {
+			for (let x = 0; x < sw; x++) {
+				const srcO = ((sx + x) + (sy + y) * srcWidth) << 2;
+				const index = srcData[srcO + offset];
+				const color = colors[index];
+				const srcAlpha = ignoreColor === color ? 0 : blendColor(getAlpha(color), alpha, 255);
+
+				if (srcAlpha !== 0) {
+					const shade = disableShading ? 255 : srcData[srcO + 1];
+					const rr = blendColor(getR(color), r, shade);
+					const gg = blendColor(getG(color), g, shade);
+					const bb = blendColor(getB(color), b, shade);
+					const tx = Math.round((dx + x) * transform[0] + (dy + y) * transform[2] + transform[4]);
+					const ty = Math.round((dx + x) * transform[1] + (dy + y) * transform[3] + transform[5]);
+
+					if (tx >= 0 && ty >= 0 && tx < dstWidth && ty < dstHeight) {
+						const dst0 = (tx + ty * dstWidth) << 2;
+						blendPrecise(dstData, dst0, rr, gg, bb, srcAlpha);
+					}
+				}
+			}
+		}
+
+		return;
+	}
 
 	dx = Math.round(dx + transform[4]);
 	dy = Math.round(dy + transform[5]);

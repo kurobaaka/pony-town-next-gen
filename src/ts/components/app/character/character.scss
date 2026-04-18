@@ -3,6 +3,31 @@
 .character-tabs {
 	min-height: 500px;
 	margin-bottom: 80px;
+
+	.character-tabs-undo-wrap {
+		position: relative;
+		height: 0;
+
+		.character-tabs-undo-btns {
+			position: absolute;
+			top: 5px;
+			right: 0;
+			z-index: 10;
+			display: flex;
+			gap: 2px;
+
+			button.nav-link {
+				border: none;
+				padding: 0.35rem 0.55rem;
+				line-height: 1;
+
+				&[disabled] {
+					opacity: 0.3;
+					pointer-events: none;
+				}
+			}
+		}
+	}
 }
 
 .character-tab {
@@ -19,6 +44,13 @@
 
 .accessory-tab {
 	margin-top: 10px;
+}
+
+.character-col-sticky {
+	position: sticky;
+	top: 0;
+	align-self: flex-start;
+	z-index: 5;
 }
 
 .character-preview-box {
@@ -59,5 +91,52 @@
 	> label {
 		margin: 0;
 		padding-top: 6px;
+	}
+}
+
+.has-neighbour {
+	margin-right: 6px;
+}
+
+.eyeshadow-checks {
+	display: inline-flex;
+	align-items: center;
+}
+
+.blush-checks {
+	display: inline-flex;
+	align-items: center;
+}
+
+.eyeshadow-enable-box,
+.eyeshadow-lock-box {
+	flex: 0 0 auto;
+}
+
+.eyeshadow-left-row {
+	.col-lock-box {
+		justify-content: flex-start;
+		gap: 8px;
+	}
+
+	.col-lock-box > label {
+		padding-top: 6px;
+		margin: 0;
+	}
+}
+
+@include media-breakpoint-down(sm) {
+	.eyeshadow-checks {
+		display: none;
+	}
+}
+
+.character-tag-badge {
+	display: inline-flex;
+	align-items: center;
+	border-radius: 6px;
+
+	.fa-icon {
+		font-size: 0.85em;
 	}
 }

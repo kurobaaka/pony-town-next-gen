@@ -9,6 +9,8 @@
 		.chat-log-tabs
 			a.link-plain.chat-log-tab(#localTab tabindex (click)="switchTab('local')")
 				| Local
+			a.link-plain.chat-log-tab(#personalTab tabindex (click)="switchTab('personal')")
+				| Personal
 			a.link-plain.chat-log-tab(#partyTab tabindex (click)="switchTab('party')")
 				| Party
 			a.link-plain.chat-log-tab(#whisperTab tabindex (click)="switchTab('whisper')")

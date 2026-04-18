@@ -93,7 +93,7 @@ export class AdminAccountDetails implements OnInit, OnDestroy {
 	constructor(private route: ActivatedRoute, private model: AdminModel) {
 	}
 	get canRemove() {
-		return hasRole(this.model.account, 'superadmin');
+		return hasRole(this.model.account, 'owner');
 	}
 	get around() {
 		return this.aroundMap.get(this.id || '');
@@ -279,7 +279,7 @@ export class AdminAccountDetails implements OnInit, OnDestroy {
 		}
 	}
 	canToggleRole(role: string) {
-		return role !== 'superadmin' && hasRole(this.model.account, 'superadmin');
+		return role !== 'owner' && hasRole(this.model.account, 'owner');
 	}
 	hasRole(role: string) {
 		return hasRole(this.account, role);

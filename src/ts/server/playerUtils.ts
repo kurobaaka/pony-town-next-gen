@@ -131,6 +131,8 @@ export function createClient(
 	client.safeY = pony.y;
 
 	client.lastPacket = Date.now();
+	client.afk = false;
+	client.autoAfkSleeping = false;
 	client.lastBoopOrKissAction = 0;
 	client.lastExpressionAction = 0;
 	client.lastSays = [];
@@ -496,6 +498,14 @@ export function kiss(client: IClient, now: number) {
 	}
 }
 
+export function dance1(client: IClient, now: number) {
+	if (canPerformAction(client, now) && canBoopOrKiss(client.pony)) {
+		cancelEntityExpression(client.pony);
+		sendAction(client.pony, Action.Dance1);
+		client.lastBoopOrKissAction = now + 850;
+	}
+}
+
 export function sneeze(client: IClient) {
 	const now = Date.now();
 	if (canPerformAction(client, now)) {
@@ -801,6 +811,10 @@ export function getPlayerState(client: IClient, entity: ServerEntity): EntityPla
 		if (isOnlineFriend(client, entity.client)) {
 			state |= EntityPlayerState.Friend;
 		}
+
+		if (entity.client.afk) {
+			state |= EntityPlayerState.Afk;
+		}
 	}
 
 	return state;
@@ -863,6 +877,9 @@ export function execAction(client: IClient, action: Action, settings: GameServer
 			break;
 		case Action.Kiss:
 			kiss(client, Date.now());
+			break;
+		case Action.Dance1:
+			dance1(client, Date.now());
 			break;
 		case Action.SwitchTool:
 			switchTool(client, false);

@@ -4,52 +4,159 @@
 	button.game-button.dropdown-toggle.no-arrow(dropdownToggle (click)="false" title="Friends")
 		fa-icon([icon]="friendsIcon" [fixedWidth]="true")
 	.friends-dropdown-menu.dropdown-menu.dropdown-menu-right(*dropdownMenu)
-		.friends-list-header.list-unstyled
-			.dropdown-header.d-flex
-				.flex-grow-1 Friends
-				.dropdown(dropdown)
-					button.dropdown-toggle.no-arrow(dropdownToggle)
-						span.text-success(*ngIf="!hidden") online
-						span.text-muted(*ngIf="hidden") offline
-						fa-icon.ml-2([icon]="cogIcon")
-					.dropdown-menu.dropdown-menu-right(*dropdownMenu)
-						button.dropdown-item((click)="setStatus('online')")
-							fa-icon.mr-2.text-success([icon]="statusIcon" size="xs" [fixedWidth]="true")
-							| Online
-						button.dropdown-item((click)="setStatus('invisible')")
-							fa-icon.mr-2.text-muted([icon]="statusIcon" size="xs" [fixedWidth]="true")
-							| Show as Offline
-		.friends-list(*ngIf="friends && friends.length; else noFriends")
-			//- [itemSize]="42")
-			.friends-item(
-				dropdown
-				*ngFor="let f of friends"
-				[ngClass]="f.online ? 'online' : 'offline'"
-				[useOutlet]="true"
-				[hookToCanvas]="true"
-				[focusOnOpen]="false"
-				[focusOnClose]="false")
-				button.d-flex(dropdownToggle)
-					portrait-box.mr-2([pony]="f.ponyInfo" size="small" [noBorder]="true")
-					.flex-grow-1.friends-item-details
-						.friends-item-name {{f.actualName}}&#160;
-						.friends-item-more
-							.text-success.float-right.ml-2(*ngIf="f.online") online
-							.text-muted.float-right.ml-2(*ngIf="!f.online") offline
-							.text-muted.friends-item-account {{f.accountName}}
-				.friends-item-delete.d-flex.px-2.py-1(*ngIf="removing === f")
-					button.btn.btn-sm.btn-outline-success.flex-grow-1((click)="cancelRemove(); $event.stopPropagation()")
-						| Cancel
-					button.btn.btn-sm.btn-outline-danger.flex-grow-1.ml-2((click)="confirmRemove(); $event.stopPropagation()")
-						| Confirm remove
-				//- span.badge.badge-none.friends-item-server PG
-				.options-dropdown-menu.dropdown-menu(*dropdownMenu)
-					button.dropdown-item((click)="sendMessageTo(f)" [disabled]="!f.online") Send whisper
-					button.dropdown-item((click)="inviteToParty(f)" [disabled]="!f.online") Invite to party
-					.dropdown-divider
-					button.dropdown-item((click)="remove(f)") Remove
-		ng-template(#noFriends)
-			.text-center.text-muted.p-2(*ngIf="friends")
-				| select a player and use #[fa-icon([icon]="userOptionsIcon")] menu to add them to your friends
-			.text-center.text-muted.p-2(*ngIf="!friends")
-				| Loading...
+		.dropdown.character-select-search.input-group.rounded-0(
+			[class.has-supporter-icon]="getSupporterLevel() > 0"
+			(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
+			(click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()")
+			span.friend-search-supporter-icon(*ngIf="getSupporterLevel() > 0" title="Supporter Tier {{getSupporterLevel()}}")
+				fa-icon([icon]="faStar" [fixedWidth]="true" [style.color]="getSupporterStarColor()")
+			input.form-control.rounded-0(
+				#searchInput type="search" [placeholder]="placeholder" [(ngModel)]="search"
+				autocomplete="nope" (input)="updateFriends()")
+			.input-group-append
+				.dropdown(dropdown #settingsDropdown="ag-dropdown")
+					button.btn.btn-secondary.rounded-0(type="button" dropdownToggle title="Friends settings" (click)="$event.stopPropagation()")
+						fa-icon([icon]="cogIcon")
+					.dropdown-menu.dropdown-menu-right.shadow(*dropdownMenu)
+						button.dropdown-item.padded(type="button" (click)="$event.stopPropagation(); toggleHidden(); settingsDropdown.close()")
+							fa-icon([icon]="faCheck", [class]="hidden ? '' : 'text-muted'")
+							|  Show as offline
+							p.small.text-muted.friend-list-status-item
+								| Show your status as offline in the friend list,
+								br
+								| and hide your friend tag and name color.
+						div.dropdown-divider
+						button.dropdown-item.padded(type="button" (click)="$event.stopPropagation(); setSortMode('status'); settingsDropdown.close()")
+							fa-icon([icon]="faCheck", [class]="sortMode === 'status' ? '' : 'text-muted'")
+							|  Sort by status
+						button.dropdown-item.padded(type="button" (click)="$event.stopPropagation(); setSortMode('name'); settingsDropdown.close()")
+							fa-icon([icon]="faCheck", [class]="sortMode === 'name' ? '' : 'text-muted'")
+							|  Sort by account name
+						button.dropdown-item.padded(type="button" (click)="$event.stopPropagation(); setSortMode('default'); settingsDropdown.close()")
+							fa-icon([icon]="faCheck", [class]="sortMode === 'default' ? '' : 'text-muted'")
+							|  Sort by character name
+		.friends-list(*ngIf="!isUpdating && filteredFriends && filteredFriends.length; else updatingOrNoFriends")
+			button.section-button.item-list-divider.text-muted.d-flex.align-items-center.ps-2.gap-2(type="button" (click)="togglePinnedSection(); $event.stopPropagation()" *ngIf="pinnedFriends && pinnedFriends.length > 0")
+				fa-icon.me-2.pointer-none([icon]="showPinnedSection ? faChevronDown : faChevronRight")
+				span.section-label Pinned
+			ng-container(*ngIf="showPinnedSection")
+				ng-container(*ngFor="let f of pinnedFriends; trackBy: trackByFriendId")
+					ng-container(*ngTemplateOutlet="friendItem; context: { $implicit: f }")
+			button.section-button.item-list-divider.text-muted.d-flex.align-items-center.ps-2.gap-2(type="button" (click)="toggleGeneralSection(); $event.stopPropagation()" *ngIf="generalFriends && generalFriends.length > 0")
+				fa-icon.me-2.pointer-none([icon]="showGeneralSection ? faChevronDown : faChevronRight")
+				span.section-label General
+			ng-container(*ngIf="showGeneralSection")
+				ng-container(*ngFor="let f of generalFriends; trackBy: trackByFriendId")
+					ng-container(*ngTemplateOutlet="friendItem; context: { $implicit: f }")
+			ng-template(#friendItem let-f)
+				.friends-item(
+					dropdown
+					[ngClass]="f.online ? 'online' : 'offline'"
+					[useOutlet]="true"
+					[hookToCanvas]="true"
+					[focusOnOpen]="false"
+					[focusOnClose]="false")
+					button.d-flex(type="button" dropdownToggle)
+						portrait-box.mr-2([pony]="f.ponyInfo" size="small" [noBorder]="true")
+						.flex-grow-1.friends-item-details
+							.friends-item-name {{f.actualName}}&#160;
+								span.text-muted.ms-3(*ngIf="getNote(f)" [tooltip]="getNote(f)" title="Note")
+									fa-icon([icon]="faNote")
+								span.text-muted.ms-3(*ngIf="isPinned(f)" [tooltip]="'Pinned'")
+									fa-icon([icon]="faThumbtack")
+							.friends-item-more
+								.text-success.float-right.ml-2(*ngIf="f.online") online
+								.text-muted.float-right.ml-2(*ngIf="!f.online") {{formatLastSeen(f.lastSeen) || 'offline'}}
+								.text-muted.friends-item-account {{f.accountName}}
+					.options-dropdown-menu.pony-menu.dropdown-menu.shadow(*dropdownMenu)
+						div.pony-menu-name
+							div.name-text(title="{{f.actualName}}") {{f.actualName}}
+							div.name-badges.d-flex.gap-1.ms-auto
+								span.badge.badge-success([tooltip]="'Friend'" title="Friend")
+									fa-icon([icon]="faUserCheck")
+								span.badge.badge-success([tooltip]="'Pinned'" title="Pinned" *ngIf="isPinned(f)")
+									fa-icon([icon]="faThumbtack")
+								span.badge.badge-secondary([tooltip]="'Offline'" title="Offline" *ngIf="!f.online")
+									fa-icon([icon]="faPlug")
+						div.dropdown-divider
+						button.dropdown-item(type="button" (click)="showProfileFor(f)")
+							fa-icon.me-2([icon]="faCircleUser")
+							| View profile
+						ng-container(*ngIf="!getNote(f) && editingNoteFor !== f.accountId")
+							button.dropdown-item(type="button" (click)="startEditNote(f); $event.stopPropagation()")
+								fa-stack.me-2.fa-stack
+									fa-icon(stackItemSize="1x" [icon]="faNote")
+								| Add friend note
+						ng-container(*ngIf="getNote(f) && editingNoteFor !== f.accountId")
+							.d-flex.gap-2
+								button.btn.btn-sm.btn-outline-info.flex-grow-1(type="button" (click)="startEditNote(f); $event.stopPropagation()")
+									fa-stack.me-2.fa-stack
+										fa-icon(stackItemSize="1x" [icon]="faNote")
+									| Edit note
+								button.btn.btn-sm.btn-outline-danger.flex-grow-1(type="button" (click)="startRemoveNote(f); $event.stopPropagation()")
+									fa-icon.me-2.text-danger([icon]="faUserMinus")
+									| Remove
+						div.p-2(*ngIf="editingNoteFor === f.accountId && editingNoteMode === 'edit'")
+							textarea.form-control.rounded-0.mb-2(
+								(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
+								(click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()"
+								[(ngModel)]="editingNoteText"
+								[attr.placeholder]="'Note (0-100 characters)'"
+								maxlength="100"
+								rows="3")
+							.d-flex.gap-2
+								button.btn.btn-sm.btn-outline-danger.flex-grow-1(
+									(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
+									(click)="cancelEditNote(); $event.stopPropagation()")
+									| Cancel
+								button.btn.btn-sm.btn-outline-success.flex-grow-1(
+									(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
+									(click)="saveNote(f); $event.stopPropagation()")
+									| Save
+							.small.text-muted.mt-1
+								| {{editingNoteText.length}}/100
+						.d-flex.gap-2(*ngIf="editingNoteFor === f.accountId && editingNoteMode === 'remove'")
+							button.btn.btn-sm.btn-outline-success.flex-grow-1(
+								(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
+								(click)="cancelRemoveNote(); $event.stopPropagation()")
+								| Cancel
+							button.btn.btn-sm.btn-outline-danger.flex-grow-1(
+								(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
+								(click)="confirmRemoveNote(); $event.stopPropagation()")
+								| Confirm remove
+						button.dropdown-item(type="button" (click)="inviteToParty(f)" [disabled]="!f.online")
+							fa-stack.me-2.fa-stack(*ngIf="!isInParty(f)")
+								fa-icon.friend-action-icon-party(stackItemSize="1x" [icon]="addToPartyIcon")
+							fa-stack.me-2.fa-stack(*ngIf="isInParty(f)")
+								fa-icon.friend-action-icon-party(stackItemSize="1x" [icon]="addToPartyIcon")
+								fa-icon.friend-action-icon-party-remove(stackItemSize="1x" [icon]="faSlash")
+							| {{isInParty(f) ? 'Remove from party' : 'Invite to party'}}
+						button.dropdown-item(type="button" (click)="sendMessageTo(f)" [disabled]="!f.online")
+							fa-icon.me-2.friend-action-icon-whisper([icon]="faComment")
+							| Send whisper
+						button.dropdown-item(type="button" (click)="togglePin(f); $event.stopPropagation()")
+							fa-stack.me-2.fa-stack(*ngIf="!isPinned(f)")
+								fa-icon(stackItemSize="1x" [icon]="faThumbtack")
+							fa-stack.me-2.fa-stack(*ngIf="isPinned(f)")
+								fa-icon(stackItemSize="1x" [icon]="faThumbtack")
+								fa-icon(stackItemSize="1x" [icon]="faSlash")
+							| {{isPinned(f) ? 'Unpin in friend list' : 'Pin in friend list'}}
+						div.dropdown-divider
+						.d-flex.px-2.py-1(*ngIf="removing === f")
+							button.btn.btn-sm.btn-outline-success.flex-grow-1((click)="cancelRemove(); $event.stopPropagation()")
+								| Cancel
+							button.btn.btn-sm.btn-outline-danger.flex-grow-1.ms-2((click)="confirmRemove(); $event.stopPropagation()")
+								| Confirm remove
+						button.dropdown-item(type="button" (click)="remove(f); $event.stopPropagation()" *ngIf="removing !== f")
+							fa-icon.me-2.text-danger([icon]="faUserMinus")
+							| Remove from friends
+	ng-template(#updatingOrNoFriends)
+		.text-center.text-muted.p-2(*ngIf="isUpdating")
+			| Updating...
+		.text-center.text-muted.p-2(*ngIf="!friends")
+			| Loading...
+		.text-center.text-muted.p-2(*ngIf="friends && !filteredFriends.length")
+			| select a player and use #[fa-icon([icon]="userOptionsIcon")] menu to add them to your friends
+
+
+

@@ -81,6 +81,7 @@ export const BASE_CHARACTER_LIMIT = 1000;
 export const ADDITIONAL_CHARACTERS_SUPPORTER1 = 200;
 export const ADDITIONAL_CHARACTERS_SUPPORTER2 = 300;
 export const ADDITIONAL_CHARACTERS_SUPPORTER3 = 450;
+export const ADDITIONAL_CHARACTERS_SUPPORTER4 = 700;
 export const ADDITIONAL_CHARACTERS_PAST_SUPPORTER = 100;
 
 export const ACTIONS_LIMIT = 50;
@@ -156,23 +157,61 @@ const SUPPORTER_REWARDS_COMMON = [
 const SUPPORTER_REWARDS_MORE = [
 	`Access to patreon posts`,
 	`Early access to new and experimental features`,
+	`Character effects: Blush, Zzz, Tears, Cry, Hearts and Magic`,
+];
+
+export const SUPPORTER_INVITE_LIMITS = [0, 1, 5, 10, 15];
+export const SUPPORTER_FRIENDS_LIMITS = [0, FRIENDS_LIMIT, FRIENDS_LIMIT, FRIENDS_LIMIT, FRIENDS_LIMIT];
+export const SUPPORTER_AFK_LIMITS = [0, 15, 30, 45, 0];
+
+function supporterAfkLimitText(limit: number) {
+	return limit ? `AFK kick limit: up to ${limit} minutes` : `AFK kick limit: unlimited`;
+}
+
+const SUPPORTER_PROFILE_OPTIONS = [
+	`Profile options: base profile panel`,
+	`Profile options: base profile panel`,
+	`Profile options: base profile panel`,
+	`Profile options: resizable profile panel`,
+	`Profile options: resizable profile panel + up to 3 draggable profile panels`,
 ];
 
 export const SUPPORTER_REWARDS = [
 	[],
 	[
 		...SUPPORTER_REWARDS_COMMON,
+		`Friends list limit: up to ${SUPPORTER_FRIENDS_LIMITS[1]} friends`,
+		supporterAfkLimitText(SUPPORTER_AFK_LIMITS[1]),
+		`Supporter invites: up to ${SUPPORTER_INVITE_LIMITS[1]} active invite`,
+		SUPPORTER_PROFILE_OPTIONS[1],
 		`${ADDITIONAL_CHARACTERS_SUPPORTER1} additional slots for saving ponies`,
 	],
 	[
 		...SUPPORTER_REWARDS_COMMON,
 		...SUPPORTER_REWARDS_MORE,
+		`Friends list limit: up to ${SUPPORTER_FRIENDS_LIMITS[2]} friends`,
+		supporterAfkLimitText(SUPPORTER_AFK_LIMITS[2]),
+		`Supporter invites: up to ${SUPPORTER_INVITE_LIMITS[2]} active invites`,
+		SUPPORTER_PROFILE_OPTIONS[2],
 		`${ADDITIONAL_CHARACTERS_SUPPORTER2} additional slots for saving ponies`,
 	],
 	[
 		...SUPPORTER_REWARDS_COMMON,
 		...SUPPORTER_REWARDS_MORE,
+		`Friends list limit: up to ${SUPPORTER_FRIENDS_LIMITS[3]} friends`,
+		supporterAfkLimitText(SUPPORTER_AFK_LIMITS[3]),
+		`Supporter invites: up to ${SUPPORTER_INVITE_LIMITS[3]} active invites`,
+		SUPPORTER_PROFILE_OPTIONS[3],
 		`${ADDITIONAL_CHARACTERS_SUPPORTER3} additional slots for saving ponies`,
+	],
+	[
+		...SUPPORTER_REWARDS_COMMON,
+		...SUPPORTER_REWARDS_MORE,
+		`Friends list limit: up to ${SUPPORTER_FRIENDS_LIMITS[4]} friends`,
+		supporterAfkLimitText(SUPPORTER_AFK_LIMITS[4]),
+		`Supporter invites: up to ${SUPPORTER_INVITE_LIMITS[4]} active invites`,
+		SUPPORTER_PROFILE_OPTIONS[4],
+		`${ADDITIONAL_CHARACTERS_SUPPORTER4} additional slots for saving ponies`,
 	],
 ];
 
@@ -183,6 +222,7 @@ export const SUPPORTER_REWARDS_LIST = [
 ];
 
 export const PAST_SUPPORTER_REWARDS = [
+	`Friends list limit: up to ${FRIENDS_LIMIT} friends`,
 	`${ADDITIONAL_CHARACTERS_PAST_SUPPORTER} additional slots for saving ponies`,
 ];
 

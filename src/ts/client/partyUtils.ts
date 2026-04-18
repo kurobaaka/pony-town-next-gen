@@ -32,7 +32,13 @@ export function updateParty(current: PartyInfo | undefined, info: PartyMember[] 
 }
 
 export function isPonyInParty(party: PartyInfo | undefined, pony: Pony, pending: boolean) {
-	return !!party && party.members.some(m => m.pony === pony && (pending || !m.pending));
+	const ponyAny = pony as any;
+	const ponyId = ponyAny && ponyAny.id;
+
+	return !!party && party.members.some(m => {
+		const samePony = ponyId ? m.id === ponyId : m.pony === pony;
+		return samePony && (pending || !m.pending);
+	});
 }
 
 export function isPartyLeader(game: PonyTownGame): boolean {

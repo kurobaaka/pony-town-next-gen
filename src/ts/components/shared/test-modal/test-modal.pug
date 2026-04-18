@@ -1,0 +1,83 @@
+.modal-header.d-none.d-sm-block.d-none-for-low-height
+	h4.modal-title(labelledBy=".modal")
+		| Test modal
+
+.modal-body.modal-checkboxes
+	tabset(type="pills")
+		tab(title="General")
+			div(*tabContent)
+				.form-group
+					custom-checkbox(
+						[(checked)]="browser.enableTestModalHotkey"
+						help="Allow opening this modal with F5")
+						| Enable test hotkey (F5)
+				.form-group
+					button.btn.btn-outline-secondary(type="button" (click)="testAnnouncement()")
+						| Send test announcement
+				.form-group
+					button.btn.btn-outline-secondary(type="button" (click)="toggleLookClickZones()")
+						| Looking click zones: {{ lookClickZonesEnabled ? 'ON' : 'OFF' }}
+				.form-group(*ngIf="isDevelopmentMode")
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="leaveServer()") Leave server (Q)
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="playRandomTrack()") Random track (N)
+					button.btn.btn-outline-secondary(type="button" (click)="toggleDisableLighting()") Toggle lighting (T)
+					small.form-text.text-muted.mt-2
+						| Доступно через Settings Box > Test modal.
+
+		tab(title="Beta debug" *ngIf="isBetaMode")
+			div(*tabContent)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleMinimap()") Toggle minimap (M)
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="runHeadTurn()") Head turn test (G)
+					button.btn.btn-outline-secondary(type="button" (click)="runHeadTurnShift()") Head turn test shift (Shift+G)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleShowInfo()") Show info (Numpad 1)
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleWaterBounds()") Water bounds (Numpad 2)
+					button.btn.btn-outline-secondary(type="button" (click)="toggleCollisionMap()") Collision map (Numpad 3)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleHelpers()") Helpers (Numpad 4)
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleTileIndices()") Tile indices (Numpad 5)
+					button.btn.btn-outline-secondary(type="button" (click)="toggleTileGrid()") Tile grid (Numpad 6)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleGrayscale()") Grayscale (Numpad 7)
+					button.btn.btn-outline-secondary(type="button" (click)="toggleRegions()") Regions (Numpad 8)
+
+		tab(title="Editor" *ngIf="isBetaMode")
+			div(*tabContent)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="editorUndo()") Undo (Backspace)
+					button.btn.btn-outline-secondary(type="button" (click)="editorRemoveSelected()") Remove selected (Delete)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="editorMoveLeft()") Move left
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="editorMoveRight()") Move right
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="editorMoveUp()") Move up
+					button.btn.btn-outline-secondary(type="button" (click)="editorMoveDown()") Move down
+
+		tab(title="Development" *ngIf="isDevelopmentMode")
+			div(*tabContent)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleChatlogRange()") Chatlog range (Numpad 9)
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleCameraShift()") Camera shift (F6)
+					button.btn.btn-outline-secondary(type="button" (click)="togglePalette()") Palette (F7)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleWebglContextLoss()") Toggle context loss (F9)
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="toggleBrightNight()") Bright night (F10)
+					button.btn.btn-outline-secondary(type="button" (click)="toggleWalls()") Toggle walls (F8)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="runActionR()") Run action R
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="headTiltUp()") Head tilt + (J)
+					button.btn.btn-outline-secondary(type="button" (click)="headTiltDown()") Head tilt - (K)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="setNomAnimation()") Nom animation (L)
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="logPosition()") Log position (U)
+					button.btn.btn-outline-secondary(type="button" (click)="toggleCurlTail()") Toggle curl tail (I)
+				.form-group
+					button.btn.btn-outline-secondary.me-2(type="button" (click)="setDeltaSlow()") Delta 0.5 (,)
+					button.btn.btn-outline-secondary(type="button" (click)="setDeltaFast()") Delta 2 (.)
+
+.modal-footer.d-flex
+	.flex-grow-1
+	button.btn.btn-wide.btn-outline-secondary((click)="cancel()")
+		| Cancel
+	button.btn.btn-wide.btn-outline-secondary.ml-2((click)="ok()")
+		| OK

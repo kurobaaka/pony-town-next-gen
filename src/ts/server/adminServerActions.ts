@@ -400,7 +400,7 @@ export class AdminServerActions implements IAdminServerActions, SocketServer {
 	}
 	@Method({ promise: true })
 	async setRole(accountId: string, role: string, set: boolean) {
-		await setRole(accountId, role, set, hasRole(this.account, 'superadmin'));
+		await setRole(accountId, role, set, hasRole(this.account, 'owner'));
 		system(accountId, `${set ? 'Added' : 'Removed'} role (${role}) ${this.by()}`);
 	}
 	@Method({ promise: true })
@@ -424,7 +424,7 @@ export class AdminServerActions implements IAdminServerActions, SocketServer {
 	@Method({ promise: true })
 	async mergeAccounts(accountId: string, withId: string) {
 		const server = getLoginServer('login');
-		await server.api.mergeAccounts(accountId, withId, this.by(), hasRole(this.account, 'superadmin'), true);
+		await server.api.mergeAccounts(accountId, withId, this.by(), hasRole(this.account, 'owner'), true);
 	}
 	@Method({ promise: true })
 	async unmergeAccounts(accountId: string, mergeId: string | undefined, split: MergeAccountData, keep: MergeAccountData) {

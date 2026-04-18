@@ -41,6 +41,10 @@ describe('commands', () => {
 			expect(parseCommand('/s3 hello', ChatType.Say)).eql({ args: 'hello', type: ChatType.Supporter3 });
 		});
 
+		it('returns supporter 4 chat type for /s4 command', () => {
+			expect(parseCommand('/s4 hello', ChatType.Say)).eql({ args: 'hello', type: ChatType.Supporter4 });
+		});
+
 		it('returns say chat type for /s command', () => {
 			expect(parseCommand('/s hello', ChatType.Party)).eql({ args: 'hello', type: ChatType.Say });
 		});
@@ -109,6 +113,10 @@ describe('commands', () => {
 
 		it('returns "" for supporter 3 chat', () => {
 			expect(getChatPrefix(ChatType.Supporter3)).equal('');
+		});
+
+		it('returns "" for supporter 4 chat', () => {
+			expect(getChatPrefix(ChatType.Supporter4)).equal('');
 		});
 	});
 

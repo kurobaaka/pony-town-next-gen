@@ -2,6 +2,5 @@
 	button.game-button.dropdown-toggle.no-arrow(dropdownToggle title="Swap")
 		fa-icon([icon]="swapIcon" [fixedWidth]="true")
 		fa-icon.timer-icon([icon]="timerIcon" [style.display]="timeout ? 'block' : 'none'")
-	.dropdown-menu.dropdown-menu-right(*dropdownMenu)
-		portrait-box([hidden]="!previewInfo" [pony]="previewInfo" size="medium" style="position: absolute; top: 5px; left: -80px;")
-		character-list((selectCharacter)="swapPony($event)" (close)="dropdown.close()" (previewCharacter)="preview($event)" [inGame]="true")
+	.dropdown-menu.dropdown-menu-right.swap-box-menu(*dropdownMenu)
+		character-list((selectCharacter)="swapPony($event)" (close)="dropdown.close()" [inGame]="true")

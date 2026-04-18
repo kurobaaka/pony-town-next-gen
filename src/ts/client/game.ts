@@ -40,7 +40,7 @@ import { getPixelRatio } from './canvasUtils';
 import { colorToFloatArray, parseColor, colorToExistingFloatArray, makeTransparent } from '../common/color';
 import { nom } from './ponyAnimations';
 import { InputManager } from './input/inputManager';
-import { roundPositionX, roundPositionY, toScreenX, toScreenY } from '../common/positionUtils';
+import { roundPositionX, roundPositionY, toScreenX, toScreenY, toWorldX, toWorldY } from '../common/positionUtils';
 import { StorageService } from '../components/services/storageService';
 import { SettingsService } from '../components/services/settingsService';
 import {
@@ -60,7 +60,7 @@ import {
 } from './playerActions';
 import { fontSmallPal, fontSmall, font, fontMono } from './fonts';
 import { drawText, drawOutlinedText, measureText } from '../graphics/spriteFont';
-import { initializeToys } from './ponyDraw';
+import { getPonyHeadPosition, initializeToys } from './ponyDraw';
 import { ErrorReporter } from '../components/services/errorReporter';
 import { mockPaletteManager } from '../common/ponyInfo';
 import { timeStart, timeEnd, timingCollate, timeReset } from './timing';
@@ -97,19 +97,6 @@ const toggleWallsTool = saw;
 const removeEntitiesTool = broom;
 const placeEntitiesTool = hammer;
 const changeTileTool = shovel;
-
-const numpad = [
-	Key.NUMPAD_0,
-	Key.NUMPAD_1,
-	Key.NUMPAD_2,
-	Key.NUMPAD_3,
-	Key.NUMPAD_4,
-	Key.NUMPAD_5,
-	Key.NUMPAD_6,
-	Key.NUMPAD_7,
-	Key.NUMPAD_8,
-	Key.NUMPAD_9,
-];
 
 export const engines = [
 	{ name: 'Default', engine: Engine.Default },
@@ -180,6 +167,8 @@ export class PonyTownGame implements Game {
 	onToggleChat = new Subject<void>();
 	onSearch = new Subject<void>();
 	onCommand = new Subject<void>();
+	onOpenTestModal = new Subject<void>();
+	onOpenGameCharacter = new Subject<void>();
 	onCancel = () => false;
 	onClock = new BehaviorSubject<string>('');
 	onJoined = new Subject<void>();
@@ -265,6 +254,13 @@ export class PonyTownGame implements Game {
 	private debugShortcuts: string[] = [];
 	private cameraShiftOn = false;
 	private cameraShiftTarget = 0;
+	private debugShowingRange = false;
+	private loseContext: WEBGL_lose_context | null = null;
+	private showLookClickZones = false;
+	private lastEyeClickTime = 0;
+	private lastLookIris = Iris.Forward;
+	private lastLookBaseLeft?: Eye;
+	private lastLookBaseRight?: Eye;
 	private lastIsKeyboardOpen = false;
 	private element?: HTMLElement;
 	private showWallPlaceholder = false;
@@ -293,6 +289,7 @@ export class PonyTownGame implements Game {
 		this.audio.initTracks(this.season, this.holiday, this.map.type);
 		this.audio.setVolume(this.volume);
 		this.debug = storage.getJSON('debug', {});
+		this.showLookClickZones = !!this.settings.browser.showLookClickZones;
 		this.drawOptions.error = message => errorReporter.reportError(message);
 		this.onActionsUpdate.subscribe(() => this.actionsChanged = true);
 
@@ -334,9 +331,6 @@ export class PonyTownGame implements Game {
 			this.saveDebug();
 		}
 	}
-	private applied(func: () => void) {
-		return () => this.apply(func);
-	}
 	apply = (func: () => void) => {
 		return this.zone.run(func);
 	}
@@ -367,6 +361,225 @@ export class PonyTownGame implements Game {
 			}
 			this.settings.saveBrowserSettings();
 		}
+	}
+	debugEditorUndo() {
+		if (BETA && this.mod) {
+			this.send(server => server.editorAction({ type: 'undo' }));
+		}
+	}
+	debugEditorRemoveSelected() {
+		if (!BETA) return;
+
+		this.apply(() => {
+			const entities = this.editor.selectedEntities.map(e => e.id);
+			this.send(server => server.editorAction({ type: 'remove', entities }));
+			this.editor.selectedEntities.length = 0;
+		});
+	}
+	debugEditorMoveSelected(dx: number, dy: number) {
+		if (!BETA) return;
+
+		this.editor.selectedEntities.forEach(({ id, x, y }) => {
+			this.send(server => server.editorAction({
+				type: 'move',
+				entities: [{ id, x: x + dx, y: y + dy }],
+			}));
+		});
+	}
+	debugToggleMinimap() {
+		if (BETA) {
+			this.showMinimap = !this.showMinimap;
+		}
+	}
+	debugRunHeadTurnTest(useShiftMode: boolean) {
+		if (!BETA || !this.player) return;
+
+		if (useShiftMode) {
+			let faceDir = 0;
+			let dir = 1;
+			this.player.doAction = DoAction.Swing;
+			const state = this.player.ponyState;
+
+			const interval = setInterval(() => {
+				faceDir += dir;
+
+				if (faceDir < 0) {
+					clearInterval(interval);
+					return;
+				}
+
+				state.headTurn = faceDir;
+
+				if (faceDir === 3) {
+					turnHeadAction(this);
+				}
+
+				if (faceDir >= 6) {
+					dir = -1;
+				}
+			}, 1000 / 24);
+		} else {
+			let faceDir = 0;
+			const state = this.player.ponyState;
+
+			const interval = setInterval(() => {
+				faceDir++;
+				state.headTurn = faceDir;
+
+				if (faceDir === 3) {
+					turnHeadAction(this);
+				}
+
+				if (faceDir >= 7) {
+					clearInterval(interval);
+				}
+			}, 1000 / 24);
+		}
+	}
+	debugToggleShowInfo() {
+		if (!BETA) return;
+		this.debug.showInfo = !this.debug.showInfo;
+		this.saveDebug();
+	}
+	debugToggleWaterBounds() {
+		if (BETA) {
+			this.drawOptions.showHeightmap = !this.drawOptions.showHeightmap;
+		}
+	}
+	debugToggleCollisionMap() {
+		if (BETA) {
+			this.drawOptions.showColliderMap = !this.drawOptions.showColliderMap;
+		}
+	}
+	debugToggleHelpers() {
+		if (!BETA) return;
+		this.debug.showHelpers = !this.debug.showHelpers;
+		this.saveDebug();
+	}
+	debugToggleTileIndices() {
+		if (BETA) {
+			this.drawOptions.tileIndices = !this.drawOptions.tileIndices;
+		}
+	}
+	debugToggleTileGrid() {
+		if (BETA) {
+			this.drawOptions.tileGrid = !this.drawOptions.tileGrid;
+		}
+	}
+	debugToggleGrayscale() {
+		if (BETA) {
+			document.documentElement.style.filter = document.documentElement.style.filter ? '' : 'grayscale(100%)';
+		}
+	}
+	debugToggleRegions() {
+		if (!BETA) return;
+		this.debug.showRegions = !this.debug.showRegions;
+		this.saveDebug();
+	}
+	debugToggleChatlogRange() {
+		if (!DEVELOPMENT) return;
+		this.debugShowingRange = !this.debugShowingRange;
+		updateRangeIndicator(this.debugShowingRange ? this.settings.account.chatlogRange : undefined, this);
+	}
+	debugToggleCameraShift() {
+		if (!DEVELOPMENT) return;
+		this.cameraShiftOn = !this.cameraShiftOn;
+		this.cameraShiftTarget = 400;
+	}
+	debugTogglePalette() {
+		if (!DEVELOPMENT) return;
+		this.debug.showPalette = !this.debug.showPalette;
+		this.saveDebug();
+	}
+	debugToggleWebglContextLoss() {
+		if (!DEVELOPMENT || !this.webgl) return;
+
+		if (this.loseContext) {
+			this.loseContext.restoreContext();
+			this.loseContext = null;
+		} else {
+			this.loseContext = this.webgl.gl.getExtension('WEBGL_lose_context')!;
+			this.loseContext.loseContext();
+		}
+	}
+	debugToggleBrightNight() {
+		if (DEVELOPMENT) {
+			this.settings.browser.brightNight = !this.settings.browser.brightNight;
+		}
+	}
+	debugRunActionR() {
+		if (!DEVELOPMENT) return;
+
+		this.apply(() => {
+			if (!Date.now() && this.player) {
+				const bounds = getInteractBounds(this.player);
+				const entities = this.map.entities.filter(e =>
+					e !== this.player && boundsIntersect(e.x, e.y, e.bounds, 0, 0, bounds));
+
+				if (entities.length) {
+					const entity = entities[0];
+					const typeName = getEntityTypeName(entity.type);
+					this.announce(`${typeName}${entities.length > 1 ? ` (1 of ${entities.length})` : ''}`);
+				} else {
+					this.announce('nothing');
+				}
+			}
+		});
+	}
+	debugAdjustHeadTilt(delta: number) {
+		if (!DEVELOPMENT || !this.player) return;
+		this.player.ponyState.headTilt = (this.player.ponyState.headTilt || 0) + delta;
+	}
+	debugSetNomAnimation() {
+		if (DEVELOPMENT && this.player) {
+			setHeadAnimation(this.player, nom);
+		}
+	}
+	debugLeaveServer() {
+		if (DEVELOPMENT) {
+			this.send(server => server.leave());
+		}
+	}
+	debugToggleDisableLighting() {
+		if (DEVELOPMENT) {
+			this.toggleDisableLighting();
+		}
+	}
+	debugLogPlayerPosition() {
+		if (!DEVELOPMENT || !this.player) return;
+
+		console.log(
+			`position: ${this.player.x.toFixed(2)}, ${this.player.y.toFixed(2)} ` +
+			`region: ${Math.floor(this.player.x / REGION_SIZE)}, ${Math.floor(this.player.y / REGION_SIZE)}`);
+	}
+	debugToggleCurlTail() {
+		if (!DEVELOPMENT || !this.player) return;
+
+		const state = this.player.ponyState;
+		state.flags = setFlag(state.flags, PonyStateFlags.CurlTail, !hasFlag(state.flags, PonyStateFlags.CurlTail));
+	}
+	debugPlayRandomTrack() {
+		if (DEVELOPMENT) {
+			this.audio.playRandomTrack();
+		}
+	}
+	debugToggleWalls() {
+		if (DEVELOPMENT) {
+			toggleWalls();
+		}
+	}
+	debugSetDeltaMultiplier(value: number) {
+		if (DEVELOPMENT) {
+			this.deltaMultiplier = value;
+		}
+	}
+	debugToggleLookClickZones() {
+		this.showLookClickZones = !this.showLookClickZones;
+		this.settings.browser.showLookClickZones = this.showLookClickZones;
+		this.settings.saveBrowserSettings();
+	}
+	debugAreLookClickZonesEnabled() {
+		return this.showLookClickZones;
 	}
 	send<T>(action: (server: IServerActions) => T) {
 		if (this.socket && this.socket.isConnected) {
@@ -506,6 +719,12 @@ export class PonyTownGame implements Game {
 				}
 			});
 
+			this.input.onPressed(Key.F5, () => {
+				if (!this.settings.browser.disableFKeys && this.settings.browser.enableTestModalHotkey !== false) {
+					this.onOpenTestModal.next();
+				}
+			});
+
 			[
 				Key.KEY_1, Key.KEY_2, Key.KEY_3, Key.KEY_4, Key.KEY_5, Key.KEY_6,
 				Key.KEY_7, Key.KEY_8, Key.KEY_9, Key.KEY_0, Key.DASH, Key.EQUALS,
@@ -515,209 +734,7 @@ export class PonyTownGame implements Game {
 				}
 			}));
 
-			const addDebugShortcut = (num: number, name: string, action: () => void) => {
-				this.input.onPressed(numpad[num], () => {
-					if (!this.input.isPressed(Key.SHIFT)) {
-						this.apply(action);
-					}
-				});
-				this.debugShortcuts.push(`${num} - ${name}`);
-				this.debugShortcuts.sort();
-			};
-
-			// const addDebugShortcutShift = (num: number, name: string, action: () => void) => {
-			// 	this.input.onPressed(numpad[num], () => {
-			// 		if (this.input.isPressed(Key.SHIFT)) {
-			// 			this.apply(action);
-			// 		}
-			// 	});
-			// 	this.debugShortcuts.push(`${num} (shift) - ${name}`);
-			// 	this.debugShortcuts.sort();
-			// };
-
-			if (BETA) {
-				// editor
-				this.input.onPressed(Key.BACKSPACE, () => {
-					if (this.mod) {
-						this.send(server => server.editorAction({ type: 'undo' }));
-					}
-				});
-				this.input.onPressed(Key.DELETE, this.applied(() => {
-					const entities = this.editor.selectedEntities.map(e => e.id);
-					this.send(server => server.editorAction({ type: 'remove', entities }));
-					this.editor.selectedEntities.length = 0;
-				}));
-
-				[
-					{ key: Key.LEFT, dx: -1 / tileWidth, dy: 0 },
-					{ key: Key.RIGHT, dx: 1 / tileWidth, dy: 0 },
-					{ key: Key.UP, dx: 0, dy: -1 / tileHeight },
-					{ key: Key.DOWN, dx: 0, dy: 1 / tileHeight },
-				].forEach(({ key, dx, dy }) => this.input.onPressed(key, () => {
-					this.editor.selectedEntities.forEach(({ id, x, y }) => {
-						this.send(server => server.editorAction({
-							type: 'move',
-							entities: [{ id, x: x + dx, y: y + dy }],
-						}));
-					});
-				}));
-
-				// debug
-				this.input.onReleased(Key.KEY_M, () => this.showMinimap = !this.showMinimap);
-				this.input.onPressed(Key.KEY_G, () => {
-					if (this.input.isPressed(Key.SHIFT)) {
-						let faceDir = 0;
-						let dir = 1;
-						this.player!.doAction = DoAction.Swing;
-						const state = this.player!.ponyState;
-
-						const interval = setInterval(() => {
-							faceDir += dir;
-
-							if (faceDir < 0) {
-								clearInterval(interval);
-								return;
-							}
-
-							state.headTurn = faceDir;
-
-							if (faceDir === 3) {
-								turnHeadAction(this);
-							}
-
-							if (faceDir >= 6) {
-								dir = -1;
-							}
-						}, 1000 / 24);
-					} else {
-						let faceDir = 0;
-						const state = this.player!.ponyState;
-
-						const interval = setInterval(() => {
-							faceDir++;
-							state.headTurn = faceDir;
-
-							if (faceDir === 3) {
-								turnHeadAction(this);
-							}
-
-							if (faceDir >= 7) {
-								clearInterval(interval);
-							}
-						}, 1000 / 24);
-					}
-				});
-				addDebugShortcut(1, 'show info at cursor', () => {
-					this.debug.showInfo = !this.debug.showInfo;
-					this.saveDebug();
-				});
-				addDebugShortcut(2, 'show water bounds', () => {
-					this.drawOptions.showHeightmap = !this.drawOptions.showHeightmap;
-				});
-				addDebugShortcut(3, 'show collision map', () => {
-					this.drawOptions.showColliderMap = !this.drawOptions.showColliderMap;
-				});
-				addDebugShortcut(4, 'show helpers', () => {
-					this.debug.showHelpers = !this.debug.showHelpers;
-					this.saveDebug();
-				});
-				addDebugShortcut(5, 'show tile indices', () => {
-					this.drawOptions.tileIndices = !this.drawOptions.tileIndices;
-				});
-				addDebugShortcut(6, 'show tile grid', () => {
-					this.drawOptions.tileGrid = !this.drawOptions.tileGrid;
-				});
-				addDebugShortcut(7, 'grayscale', () => {
-					document.documentElement.style.filter = document.documentElement.style.filter ? '' : 'grayscale(100%)';
-				});
-				addDebugShortcut(8, 'show regions', () => {
-					this.debug.showRegions = !this.debug.showRegions;
-					this.saveDebug();
-				});
-			}
-
-			if (DEVELOPMENT) {
-				let showingRange = false;
-				addDebugShortcut(9, 'show chatlog range', () => {
-					showingRange = !showingRange;
-					updateRangeIndicator(showingRange ? this.settings.account.chatlogRange : undefined, this);
-				});
-				this.input.onPressed(Key.F6, () => {
-					this.cameraShiftOn = !this.cameraShiftOn;
-					this.cameraShiftTarget = 400;
-				});
-				this.input.onPressed(Key.F7, () => {
-					this.debug.showPalette = !this.debug.showPalette;
-					this.saveDebug();
-				});
-				this.input.onPressed(Key.F8, () => {
-				});
-
-				let loseContext: WEBGL_lose_context | null = null;
-
-				this.input.onPressed(Key.F9, () => {
-					if (loseContext) {
-						loseContext.restoreContext();
-						loseContext = null;
-					} else {
-						loseContext = this.webgl!.gl.getExtension('WEBGL_lose_context')!;
-						loseContext.loseContext();
-					}
-				});
-				this.input.onPressed(Key.F10, () => {
-					this.settings.browser.brightNight = !this.settings.browser.brightNight;
-				});
-				this.input.onPressed(Key.KEY_R, this.applied(() => {
-					if (!Date.now() && this.player) {
-						const bounds = getInteractBounds(this.player);
-						const entities = this.map.entities.filter(e =>
-							e !== this.player && boundsIntersect(e.x, e.y, e.bounds, 0, 0, bounds));
-
-						if (entities.length) {
-							const entity = entities[0];
-							const typeName = getEntityTypeName(entity.type);
-							this.announce(`${typeName}${entities.length > 1 ? ` (1 of ${entities.length})` : ''}`);
-						} else {
-							this.announce('nothing');
-						}
-					}
-
-					// if (this.player) this.player.swimming = !this.player.swimming;
-					// this.editorElevation = '';
-					// this.editorSpecial = this.editorSpecial ? '' : 'ramp-e';
-				}));
-				this.input.onPressed(Key.KEY_J, () => {
-					if (this.player) {
-						this.player.ponyState.headTilt = (this.player.ponyState.headTilt || 0) + 0.5;
-					}
-				});
-				this.input.onPressed(Key.KEY_K, () => {
-					if (this.player) {
-						this.player.ponyState.headTilt = (this.player.ponyState.headTilt || 0) - 0.5;
-					}
-				});
-				this.input.onPressed(Key.KEY_L, () => this.player && setHeadAnimation(this.player, nom));
-				this.input.onReleased(Key.KEY_Q, () => this.send(server => server.leave()));
-				this.input.onReleased(Key.KEY_T, () => this.toggleDisableLighting());
-				this.input.onReleased(Key.KEY_U, () => {
-					if (this.player) {
-						console.log(
-							`position: ${this.player.x.toFixed(2)}, ${this.player.y.toFixed(2)} ` +
-							`region: ${Math.floor(this.player.x / REGION_SIZE)}, ${Math.floor(this.player.y / REGION_SIZE)}`);
-					}
-				});
-				this.input.onReleased(Key.KEY_I, () => {
-					const state = this.player!.ponyState;
-					state.flags = setFlag(state.flags, PonyStateFlags.CurlTail, !hasFlag(state.flags, PonyStateFlags.CurlTail));
-				});
-				// this.input.onReleased(Key.KEY_N, () => this.engine = (this.engine + 1) % Engine.Total);
-				this.input.onPressed(Key.KEY_N, () => this.audio.playRandomTrack());
-				// this.input.onPressed(Key.KEY_G, () => this.wind = Math.max(0, this.wind - 1));
-				// this.input.onReleased(Key.KEY_M, () => this.send(server => server.editorAction({ type: 'party' })));
-				this.input.onPressed(Key.F8, () => toggleWalls());
-				this.input.onPressed(Key.COMMA, () => this.deltaMultiplier = 0.5);
-				this.input.onPressed(Key.PERIOD, () => this.deltaMultiplier = 2);
-			}
+			this.debugShortcuts.length = 0;
 
 			window.addEventListener('resize', () => {
 				this.resized = true;
@@ -1043,61 +1060,16 @@ export class PonyTownGame implements Game {
 					// фича, которая делает взгляд только на дабл-клик
 					} else if (distanceXY(player.x, player.y, hover.x, hover.y) < TILE_CHANGE_RANGE) {
 						const nowClick = performance.now();
-						const lastTime = (this as any)._lastEyeClickTime as number | undefined;
-						const isDouble = !!lastTime && (nowClick - lastTime) < 350;
-						const nearCenter = distanceXY(player.x, player.y, hover.x, hover.y) < 0.3;
-						if (isDouble && nearCenter) {
-							const current = player.ponyState.expression;
-							const newExpr = current ? { ...current, leftIris: Iris.Forward, rightIris: Iris.Forward } : {
-								left: 1 as Eye,
-								right: 1 as Eye,
-								leftIris: Iris.Forward,
-								rightIris: Iris.Forward,
-								muzzle: 0 as Muzzle,
-								extra: ExpressionExtra.None,
-							} as Expression;
-							player.ponyState.expression = newExpr;
-							player.expr = encodeExpression(newExpr);
-							this.onActionsUpdate.next();
-						} else if (isDouble) {
-							// начало фичи: 8 векторов / по дабл-кликам
-							const dx = hover.x - player.x;
-							const dy = hover.y - player.y;
-							if (dx !== 0 || dy !== 0) {
-								const angle = Math.atan2(dy, dx);
-								let sector = Math.round(angle / (Math.PI / 4));
-								if (sector < 0) sector += 8;
-								sector = sector % 8;
-								let iris: Iris = Iris.Forward;
-								switch (sector) {
-									case 0: iris = Iris.Left; break;    // E
-									case 1: iris = Iris.Left; break;    // SE (н.п тебе для эмуляции левого низа)
-									case 2: iris = Iris.Down; break;     // S
-									case 3: iris = Iris.Right; break;     // SW (н.п для эмуляции левого низа)
-									case 4: iris = Iris.Right; break;     // W
-									case 5: iris = Iris.UpRight; break;   // NW
-									case 6: iris = Iris.Up; break;       // N
-									case 7: iris = Iris.UpLeft; break;  // NE
-									case 8: iris = Iris.Forward; break; 
-								}
-								const current = player.ponyState.expression;
-								const newExpr = current ? { ...current, leftIris: iris, rightIris: iris } : {
-									left: 1 as Eye,
-									right: 1 as Eye,
-									leftIris: iris,
-									rightIris: iris,
-									muzzle: 0 as Muzzle,
-									extra: ExpressionExtra.None,
-								} as Expression;
-								player.ponyState.expression = newExpr;
-								player.expr = encodeExpression(newExpr);
-								this.onActionsUpdate.next();
-							}
+						const isDouble = this.lastEyeClickTime > 0 && (nowClick - this.lastEyeClickTime) < 350;
+						if (isDouble) {
+							const { x: headX, y: headY } = this.getHeadLookAnchor(player);
+							const iris = this.getLookIrisFromHeadDelta(hover.x - headX, hover.y - headY);
+							this.setIris(iris);
 						} else if (this.selected) {
 							// Close profile on any click near self if not double-clicking
 							this.select(undefined);
 						}
-						(this as any)._lastEyeClickTime = nowClick;
+						this.lastEyeClickTime = nowClick;
 					} else if (BETA && this.editor.tile !== -1) {
 						if (this.editor.brushSize > 1) {
 							const x = Math.floor((hover.x - (this.editor.brushSize / 2)));
@@ -1178,15 +1150,22 @@ export class PonyTownGame implements Game {
 				}
 
 				// взгляд по numpad
-				if (input.wasPressed(Key.NUMPAD_4)) this.setIris(Iris.Right);
-				if (input.wasPressed(Key.NUMPAD_6)) this.setIris(Iris.Left);
-				if (input.wasPressed(Key.NUMPAD_8)) this.setIris(Iris.Up);
-				if (input.wasPressed(Key.NUMPAD_2)) this.setIris(Iris.Down);
-				if (input.wasPressed(Key.NUMPAD_7)) this.setIris(Iris.UpRight);
-				if (input.wasPressed(Key.NUMPAD_9)) this.setIris(Iris.UpLeft);
-				if (input.wasPressed(Key.NUMPAD_1)) this.setIris(Iris.Right); // SW
-				if (input.wasPressed(Key.NUMPAD_3)) this.setIris(Iris.Left); // SE
-				if (input.wasPressed(Key.NUMPAD_0) || input.wasPressed(Key.NUMPAD_5)) this.setIris(Iris.Forward);
+				if (input.wasPressed(Key.NUMPAD_4)) this.setIrisFromZone(-1, 0);
+				if (input.wasPressed(Key.NUMPAD_6)) this.setIrisFromZone(1, 0);
+				if (input.wasPressed(Key.NUMPAD_8)) this.setIrisFromZone(0, -1);
+				if (input.wasPressed(Key.NUMPAD_2)) this.setIrisFromZone(0, 1);
+				if (input.wasPressed(Key.NUMPAD_7)) this.setIrisFromZone(-1, -1);
+				if (input.wasPressed(Key.NUMPAD_9)) this.setIrisFromZone(1, -1);
+				if (input.wasPressed(Key.NUMPAD_1)) this.setIrisFromZone(-1, 1);
+				if (input.wasPressed(Key.NUMPAD_3)) this.setIrisFromZone(1, 1);
+				if (input.wasPressed(Key.NUMPAD_5)) this.setIris(Iris.Forward);
+
+				// эффекты на numpad
+				if (input.wasPressed(Key.NUMPAD_0)) this.setExpressionEffect(ExpressionExtra.Zzz);
+				if (input.wasPressed(Key.DECIMAL)) this.setExpressionEffect(ExpressionExtra.Hearts);
+				if (input.wasPressed(Key.ADD)) this.setExpressionEffect(ExpressionExtra.Blush);
+				if (input.wasPressed(Key.DIVIDE)) this.setExpressionEffect(ExpressionExtra.Cry);
+				if (input.wasPressed(Key.MULTIPLY)) this.setExpressionEffect(ExpressionExtra.Tears);
 			}
 		}
 
@@ -1549,18 +1528,14 @@ export class PonyTownGame implements Game {
 			drawNames(
 				paletteBatch, this.map.entitiesWithNames, this.player, this.party, this.camera, this.hover, this.mod, palettes);
 			drawChat(
-				paletteBatch, this.map.entitiesWithChat, this.camera, this.mod, palettes, this.hidePublicChat);
-		}
-
-		if (!this.socket || !this.socket.isConnected) {
-			this.drawMessage(this.webgl, 'Connecting...');
+					paletteBatch, this.map.entitiesWithChat, this.camera, this.mod, palettes, this.hidePublicChat, this.hover);
 		} else if (!this.loaded) {
 			if (this.placeInQueue) {
 				this.drawMessage(this.webgl, `Waiting in queue (${this.placeInQueue})`);
 			} else {
 				this.drawMessage(this.webgl, 'Loading...');
 			}
-		} else if ((performance.now() - this.socket.lastPacket) > CONNECTION_ISSUE_TIMEOUT) {
+		} else if (this.socket && (performance.now() - this.socket.lastPacket) > CONNECTION_ISSUE_TIMEOUT) {
 			// this.drawMessage('Connection issues...');
 		}
 
@@ -1646,6 +1621,41 @@ export class PonyTownGame implements Game {
 			bindTexture(gl, 0, normalSpriteSheet.texture);
 			spriteBatch.begin();
 			drawDebugRegions(spriteBatch, this.map, this.player, this.camera);
+			spriteBatch.end();
+		}
+
+		if (this.showLookClickZones && this.player) {
+			gl.uniform2f(spriteShaderWithColor.uniforms.textureSize,
+				normalSpriteSheet.texture!.width, normalSpriteSheet.texture!.height);
+			bindTexture(gl, 0, normalSpriteSheet.texture);
+			spriteBatch.begin();
+
+			const anchor = this.getHeadLookAnchor(this.player);
+			const cx = toScreenX(anchor.x) - this.camera.x;
+			const cy = toScreenY(anchor.y) - this.camera.actualY;
+			const zoneSize = 12;
+			const centerZoneSize = 28;
+			const zoneStepX = 15;
+			const zoneStepY = 13;
+			const currentIris = this.getCurrentLookIris(this.player);
+
+			for (let iy = -1; iy <= 1; iy++) {
+				for (let ix = -1; ix <= 1; ix++) {
+					const zoneIris = this.getLookIrisFromZone(ix, iy);
+					const isCenter = ix === 0 && iy === 0;
+					const isActive = zoneIris === currentIris;
+					const size = isCenter ? centerZoneSize : zoneSize;
+					const color = isActive ? 0x33ff33cc : (isCenter ? 0x33aaff88 : 0xffffff55);
+					spriteBatch.drawRect(
+						color,
+						Math.round(cx + ix * zoneStepX - size * 0.5),
+						Math.round(cy + iy * zoneStepY - size * 0.5),
+						size,
+						size,
+					);
+				}
+			}
+
 			spriteBatch.end();
 		}
 
@@ -1959,17 +1969,211 @@ export class PonyTownGame implements Game {
 
 	private setIris(iris: Iris) {
 		if (!this.player) return;
+		this.applyIrisToPlayer(this.player, iris);
+	}
+
+	private setIrisFromZone(ix: number, iy: number) {
+		if (!this.player) return;
+		const iris = this.getLookIrisFromZone(ix, iy);
+		this.applyIrisToPlayer(this.player, iris);
+	}
+
+	private setExpressionEffect(extra: ExpressionExtra) {
+		if (!this.player) return;
 		const current = this.player.ponyState.expression;
-		const newExpr = current ? { ...current, leftIris: iris, rightIris: iris } : {
-			left: 1 as Eye,
-			right: 1 as Eye,
+		const next = current && current.extra === extra ? ExpressionExtra.None : extra;
+		this.applyExtraToPlayer(this.player, next);
+	}
+
+	private getHeadLookAnchor(player: Pony) {
+		const headPosition = getPonyHeadPosition(player.ponyState, 0, 0);
+		const headTurnOffsetX = [0, 1, 1, 1, 1, 1, 0][clamp(player.ponyState.headTurn, 0, 6)];
+		const headTurnOffsetY = [0, 0, 1, 1, 0, 0, 0][clamp(player.ponyState.headTurn, 0, 6)];
+		const localHeadX = headPosition.x + headTurnOffsetX + 35.5;
+		const mirroredHeadX = isFacingRight(player) ? -localHeadX : localHeadX;
+		const centerX = player.x + toWorldX(mirroredHeadX);
+		const centerY = player.y + toWorldY(headPosition.y + headTurnOffsetY + 42);
+
+		return { x: centerX, y: centerY };
+	}
+
+	private getLookIrisFromHeadDelta(dx: number, dy: number): Iris {
+		const centerZoneX = toWorldX(24);
+		const centerZoneY = toWorldY(20);
+		const ix = Math.abs(dx) <= centerZoneX ? 0 : (dx < 0 ? -1 : 1);
+		const iy = Math.abs(dy) <= centerZoneY ? 0 : (dy < 0 ? -1 : 1);
+		return this.getLookIrisFromZone(ix, iy);
+	}
+
+	private getLookIrisFromZone(ix: number, iy: number): Iris {
+		const x = ix;
+
+		if (x === 0 && iy === 0) return Iris.Forward;
+		if (x === 1 && iy === 0) return Iris.Left;
+		if (x === 1 && iy === -1) return Iris.UpLeft;
+		if (ix === 0 && iy === -1) return Iris.Up;
+		if (x === -1 && iy === -1) return Iris.UpRight;
+		if (x === -1 && iy === 0) return Iris.Right;
+		if (ix === 0 && iy === 1) return Iris.Down;
+		if (x === -1 && iy === 1) return Iris.DownLeft;
+		if (x === 1 && iy === 1) return Iris.DownRight;
+		return Iris.Forward;
+	}
+
+	private getCurrentLookIris(player: Pony): Iris {
+		const expression = player.ponyState.expression;
+		if (!expression) {
+			return this.lastLookIris;
+		}
+
+		return this.engineIrisToVisualIris(expression.leftIris);
+	}
+
+	private visualIrisToEngineIris(iris: Iris): Iris {
+		return iris;
+	}
+
+	private engineIrisToVisualIris(iris: Iris): Iris {
+		return iris;
+	}
+
+	private getBaseEyeForLook(currentEye: Eye, rememberedEye: Eye | undefined): Eye {
+		if (rememberedEye !== undefined && currentEye === adjustEyeForIris(rememberedEye, this.lastLookIris)) {
+			return rememberedEye;
+		}
+
+		return currentEye;
+	}
+
+	private createExpressionWithIris(player: Pony, iris: Iris): Expression {
+		const current = player.ponyState.expression;
+		const info = player.palettePonyInfo;
+		const currentLeft = current ? current.left :
+			((info && info.eyeOpennessLeft !== undefined) ? info.eyeOpennessLeft : Eye.Neutral);
+		const currentRight = current ? current.right :
+			((info && info.eyeOpennessRight !== undefined) ? info.eyeOpennessRight : Eye.Neutral);
+		const baseLeft = this.getBaseEyeForLook(currentLeft, this.lastLookBaseLeft);
+		const baseRight = this.getBaseEyeForLook(currentRight, this.lastLookBaseRight);
+		const left = adjustEyeForIris(baseLeft, iris);
+		const right = adjustEyeForIris(baseRight, iris);
+
+		this.lastLookBaseLeft = baseLeft;
+		this.lastLookBaseRight = baseRight;
+
+		if (current) {
+			return { ...current, left, right, leftIris: iris, rightIris: iris };
+		}
+
+		const muzzle = (info && info.muzzle !== undefined) ? info.muzzle : Muzzle.Neutral;
+
+		return {
+			left,
+			right,
 			leftIris: iris,
 			rightIris: iris,
-			muzzle: 0 as Muzzle,
+			muzzle,
 			extra: ExpressionExtra.None,
-		} as Expression;
-		this.player.ponyState.expression = newExpr;
-		this.player.expr = encodeExpression(newExpr);
+		};
+	}
+
+	private createExpressionWithExtra(player: Pony, extra: ExpressionExtra): Expression {
+		const current = player.ponyState.expression;
+
+		if (current) {
+			if (extra === ExpressionExtra.Zzz) {
+				return { ...current, left: Eye.Closed, right: Eye.Closed, extra };
+			}
+
+			if (hasFlag(current.extra, ExpressionExtra.Zzz) && !hasFlag(extra, ExpressionExtra.Zzz)) {
+				const info = player.palettePonyInfo;
+				const left = (info && info.eyeOpennessLeft) || Eye.Neutral;
+				const right = (info && info.eyeOpennessRight) || Eye.Neutral;
+				return { ...current, left, right, extra };
+			}
+
+			return { ...current, extra };
+		}
+
+		const info = player.palettePonyInfo;
+		const left = extra === ExpressionExtra.Zzz ? Eye.Closed : ((info && info.eyeOpennessLeft) || Eye.Neutral);
+		const right = extra === ExpressionExtra.Zzz ? Eye.Closed : ((info && info.eyeOpennessRight) || Eye.Neutral);
+		const muzzle = (info && info.muzzle !== undefined) ? info.muzzle : Muzzle.Neutral;
+		const iris = this.visualIrisToEngineIris(this.lastLookIris);
+
+		return {
+			left,
+			right,
+			leftIris: iris,
+			rightIris: iris,
+			muzzle,
+			extra,
+		};
+	}
+
+	private applyIrisToPlayer(player: Pony, iris: Iris) {
+		const engineIris = this.visualIrisToEngineIris(iris);
+		const newExpr = this.createExpressionWithIris(player, engineIris);
+		const encoded = encodeExpression(newExpr);
+
+		this.lastLookIris = iris;
+		player.ponyState.expression = newExpr;
+		player.expr = encoded;
+		this.send(server => server.expression(encoded));
 		this.onActionsUpdate.next();
 	}
+
+	private applyExtraToPlayer(player: Pony, extra: ExpressionExtra) {
+		const newExpr = this.createExpressionWithExtra(player, extra);
+		const encoded = encodeExpression(newExpr);
+
+		this.lastLookBaseLeft = undefined;
+		this.lastLookBaseRight = undefined;
+
+		player.ponyState.expression = newExpr;
+		player.expr = encoded;
+		this.send(server => server.expression(encoded));
+		this.onActionsUpdate.next();
+	}
+}
+
+// Iris направления с вертикальной составляющей (вверх или вниз)
+function irisHasVertical(iris: Iris): boolean {
+	return iris === Iris.Up ||
+		iris === Iris.Down ||
+		iris === Iris.Down2 ||
+		iris === Iris.UpLeft ||
+		iris === Iris.UpRight ||
+		iris === Iris.DownLeft ||
+		iris === Iris.DownRight ||
+		iris === Iris.DownLeft2 ||
+		iris === Iris.DownRight2 ||
+		iris === Iris.ShockedUp ||
+		iris === Iris.ShockedDown ||
+		iris === Iris.ShockedDown2 ||
+		iris === Iris.ShockedUpLeft ||
+		iris === Iris.ShockedUpRight ||
+		iris === Iris.ShockedDownLeft ||
+		iris === Iris.ShockedDownRight ||
+		iris === Iris.ShockedDownLeft2 ||
+		iris === Iris.ShockedDownRight2;
+}
+
+// Пары: [низкий (narrow), высокий (open)]
+const EYE_VERTICAL_PAIRS: ReadonlyArray<[Eye, Eye]> = [
+	[Eye.Neutral4, Eye.Neutral3],
+	[Eye.Frown2,   Eye.Frown],
+	[Eye.Sad4,     Eye.Sad3],
+	[Eye.Angry2,   Eye.Angry],
+];
+
+// При взгляде вверх/вниз — расширить «низкий» глаз до «высокого» варианта,
+// при взгляде в стороны/вперёд — вернуть обратно.
+function adjustEyeForIris(eye: Eye, iris: Iris): Eye {
+	const vertical = irisHasVertical(iris);
+	if (vertical) {
+		for (const [narrow, open] of EYE_VERTICAL_PAIRS) {
+			if (eye === narrow) return open;
+		}
+	}
+	return eye;
 }

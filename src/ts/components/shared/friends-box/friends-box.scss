@@ -7,16 +7,146 @@
 
 .friends-dropdown-menu {
 	@include nipple(8px);
-	min-width: 205px;
+	width: 300px;
+	min-width: 300px;
+	max-width: 300px;
+}
+
+.friends-list-header,
+.character-select-search {
+	height: 30px;
+	padding: 0 5px;
+	display: flex;
+	position: relative;
+
+	&.has-supporter-icon {
+		> .form-control {
+			padding-left: 28px;
+		}
+	}
+
+	.friend-search-supporter-icon {
+		position: absolute;
+		left: 14px;
+		top: 3px;
+		bottom: 0;
+		display: flex;
+		align-items: center;
+		z-index: 6;
+		pointer-events: none;
+		font-size: 12px;
+		line-height: 1;
+
+		&.supporter-star-1 {
+			color: $supporter-1;
+		}
+
+		&.supporter-star-2 {
+			color: $supporter-2;
+		}
+
+		&.supporter-star-3 {
+			color: $supporter-3;
+		}
+
+		&.supporter-star-4 {
+			color: $supporter-4;
+		}
+	}
+
+	> .form-control {
+		position: relative;
+		z-index: 1;
+		background: white;
+		color: #222;
+		border-color: #eee !important;
+		border-radius: 3px !important;
+		box-shadow: none !important;
+
+		&:active, &:focus {
+			border-color: #ddd !important;
+		}
+	}
 }
 
 .options-dropdown-menu {
 	@include nippleLeft(11px);
-	min-width: 200px;
+	min-width: 240px;
+	max-width: 280px;
+	width: auto;
+	padding: 0;
 	margin-left: 4px;
-	
+
 	&.dropdown-menu-up {
 		@include nippleLeftFlip();
+	}
+
+	.pony-menu-name {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+		.name-text {
+			font-weight: 600;
+			font-size: 0.95rem;
+			line-height: 1.2;
+		}
+
+		.name-icon {
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+		}
+
+		.name-badges {
+			display: flex;
+			align-items: center;
+
+			> .badge + .badge {
+				margin-left: 0.5rem;
+			}
+		}
+	}
+
+	.dropdown-item {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		width: 100%;
+		gap: 0.75rem;
+		white-space: normal;
+		padding: 0.65rem 1rem;
+		text-align: left;
+	}
+
+	.dropdown-item[disabled] {
+		opacity: 0.65;
+		pointer-events: none;
+	}
+
+	.fa-icon {
+		width: 1.2rem;
+		min-width: 1.2rem;
+	}
+
+	.fa-stack {
+		width: 1.4rem;
+		min-width: 1.4rem;
+	}
+
+	> .dropdown-divider:not(:last-of-type) {
+		display: none;
+	}
+
+	.dropdown-divider {
+		margin: 0.35rem 0;
+	}
+
+	div.position-relative {
+		margin: 0;
 	}
 }
 
@@ -25,7 +155,7 @@
 }
 
 .friends-list {
-	width: 250px;
+	width: 100%;
 	max-height: 500px;
 	overflow-y: auto;
 	margin-bottom: 0;
@@ -99,9 +229,77 @@
 	text-overflow: ellipsis;
 }
 
+.friend-list-status-item {
+	white-space: normal;
+}
 .friends-item-server {
 	position: absolute;
 	left: 24px;
 	bottom: 0;
 	font-size: 8px;
+}
+
+.friend-profile {
+	border-top: 1px solid rgba(0, 0, 0, 0.1);
+	padding: 0.5rem;
+}
+
+.note-editor {
+	textarea.form-control {
+		background: white !important;
+		color: #222 !important;
+		border-color: #eee !important;
+		border-radius: 3px !important;
+		box-shadow: none !important;
+
+		&:active, &:focus {
+			border-color: #ddd !important;
+		}
+	}
+}
+
+textarea.form-control.rounded-0.mb-2 {
+	background: white !important;
+	color: #222 !important;
+	border-color: #eee !important;
+	border-radius: 3px !important;
+	box-shadow: none !important;
+
+	&:active, &:focus {
+		border-color: #ddd !important;
+	}
+}
+
+.profile-header {
+	padding-bottom: 0.5rem;
+}
+
+.profile-status {
+	font-size: 12px;
+	margin-bottom: 0.5rem;
+}
+
+.profile-actions button {
+	min-width: 120px;
+}
+
+.friend-action-icon-party {
+	color: $party-color;
+}
+
+.friend-action-icon-party-pending {
+	color: mix($party-color, $orange, 50%);
+}
+
+.friend-action-icon-party-remove {
+	color: #dc3545;
+}
+
+.friend-action-icon-whisper {
+	color: $chat-whisper;
+}
+
+.friend-action-icon-whisper-unread {
+	color: $chat-whisper;
+	filter: brightness(1.3) drop-shadow(0 0 4px $chat-whisper);
 }

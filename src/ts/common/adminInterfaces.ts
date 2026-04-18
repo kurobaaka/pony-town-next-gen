@@ -4,7 +4,7 @@ import {
 
 export const ITEM_LIMIT = 1000;
 
-export const ROLES = ['superadmin', 'admin', 'mod', 'dev'];
+export const ROLES = ['owner', 'admin', 'mod', 'dev'];
 
 export const SERVER_LABELS: { [key: string]: string; } = {
 	'dev': 'badge-test',
@@ -39,6 +39,7 @@ export interface GeneralSettings {
 	blockWebView?: boolean;
 	reportPotentialDuplicates?: boolean;
 	autoMergeDuplicates?: boolean;
+	showTestingWarning?: boolean;
 
 	suspiciousNames?: string;
 	suspiciousPonies?: string;
@@ -57,6 +58,7 @@ export const LOGIN_SERVER_SETTINGS: { id: keyof GeneralSettings; label: string; 
 	{ id: 'blockWebView', label: 'Block web view' },
 	{ id: 'reportPotentialDuplicates', label: 'Report potential duplicates' },
 	{ id: 'autoMergeDuplicates', label: 'Auto-merge duplicates' },
+	{ id: 'showTestingWarning', label: 'Show login warning' },
 ];
 
 export interface ServerLiveSettings {
@@ -345,6 +347,7 @@ export const enum PatreonFlags {
 	Supporter1 = 1,
 	Supporter2 = 2,
 	Supporter3 = 3,
+	Supporter4 = 4,
 }
 
 export const enum SupporterFlags {
@@ -352,7 +355,8 @@ export const enum SupporterFlags {
 	Supporter1 = 1,
 	Supporter2 = 2,
 	Supporter3 = 3,
-	SupporterMask = 0x0003,
+	Supporter4 = 4,
+	SupporterMask = 0x0007,
 	IgnorePatreon = 0x0080,
 	PastSupporter = 0x0100,
 	ForcePastSupporter = 0x0200,

@@ -122,6 +122,17 @@ ng-template(#modal)
 						.mb-3
 							bitmap-box([bitmap]="pony.cm" tool="brush" [color]="color" [width]="cmSize" [height]="cmSize")
 
+					h3 Show tags
+					.mb-3
+						.form-group.d-flex.align-items-center
+							label.mb-0 Show tags
+							.dropdown.btn-group.ml-1(dropdown *ngIf="tags.length > 1")
+								button.btn.btn-default.dropdown-toggle(dropdownToggle aria-label="Show tag")
+									span.badge(*ngIf="tag.id" [ngClass]="'badge-' + tag.className") {{tag.id}}
+								.dropdown-menu(*dropdownMenu)
+									button.dropdown-item(type="button" *ngFor="let t of tags" (click)="tag = t")
+										span.badge(*ngIf="t.id" [ngClass]="'badge-' + t.className") {{t.id}} {{t.name}}
+
 						h3 Sprite set selection
 						.mb-3
 							.form-group
@@ -180,6 +191,13 @@ ng-template(#modal)
 											a.dropdown-item(*ngFor="let tag of tags" (click)="selected.tag = tag") {{tag || 'none'}}
 							.form-group
 								custom-checkbox([(checked)]="isFriend") is friend
+
+						h3 Friends list (debug)
+						.mb-3
+							.form-group
+								div(style="position: relative; width: 3px; height: 50px; border: 1px solid #dddddd00; border-radius: 8px; background: #fafafa00;")
+									div(style="position: absolute; top: 12px; left: 12px; z-index: 5;")
+										friends-box
 
 						h3 Portrait
 						.mb-3

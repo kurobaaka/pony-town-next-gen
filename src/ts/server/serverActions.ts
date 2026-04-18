@@ -23,7 +23,7 @@ import {
 import { allEntities } from './api/account';
 import { CounterService } from './services/counter';
 import { decodeExpression, isCancellableExpression } from '../common/encoders/expressionEncoder';
-import { updateEntity, pushUpdateEntityToClient, pushUpdateTileToClient } from './entityUtils';
+import { updateEntity, updateEntityOptions, pushUpdateEntityToClient, pushUpdateTileToClient } from './entityUtils';
 import { SupporterInvitesService } from './services/supporterInvites';
 import { Move } from './move';
 import { logger } from './logger';
@@ -70,6 +70,7 @@ function typingMessageTypeToChatType(type: MessageType) {
 		case MessageType.Supporter1: return ChatType.Supporter1;
 		case MessageType.Supporter2: return ChatType.Supporter2;
 		case MessageType.Supporter3: return ChatType.Supporter3;
+		case MessageType.Supporter4: return ChatType.Supporter4;
 		case MessageType.Whisper:
 		case MessageType.WhisperTo:
 		case MessageType.WhisperAnnouncement:
@@ -201,7 +202,10 @@ export class ServerActions implements IServerActions, SocketServer {
 		if (entity && entity.client && entity !== this.client.pony) {
 			if (flags) {
 				const baseOptions: Partial<EntityOrPonyOptions> = mod ? { modInfo: getModInfo(entity.client) } : {};
-				const options = { ...baseOptions, ...entity.extraOptions };
+				const modalOption = entity.options && ('modal' in entity.options)
+					? { modal: !!(entity.options as any).modal }
+					: {};
+				const options = { ...baseOptions, ...entity.extraOptions, ...modalOption };
 
 				if (hasFlag(flags, SelectFlags.FetchInfo)) {
 					const playerState = getPlayerState(this.client, entity);
@@ -265,12 +269,8 @@ export class ServerActions implements IServerActions, SocketServer {
 			case Action.SwapCharacter: {
 				validateString(param, 'param');
 				this.updateLastAction();
-
-				if (param !== this.client.characterId) {
-					swapCharacter(this.client, this.world, { account: this.client.account._id, _id: param })
-						.catch(e => this.client.reporter.error(e));
-				}
-
+				swapCharacter(this.client, this.world, { account: this.client.account._id, _id: param })
+					.catch(e => this.client.reporter.error(e));
 				break;
 			}
 			case Action.RemoveFriend: {
@@ -314,6 +314,20 @@ export class ServerActions implements IServerActions, SocketServer {
 						.catch(e => logger.error(e));
 				}
 
+				break;
+			}
+			case Action.ModalState: {
+				if (typeof param !== 'boolean') {
+					return;
+				}
+
+				updateEntityOptions(this.pony, { modal: param });
+
+				for (const c of this.world.clients) {
+					if (c !== this.client && c.selected && c.selected.id === this.pony.id) {
+						pushUpdateEntityToClient(c, { entity: this.pony, flags: UpdateFlags.Options, options: { modal: param } });
+					}
+				}
 				break;
 			}
 			case Action.RemoveEntity: {

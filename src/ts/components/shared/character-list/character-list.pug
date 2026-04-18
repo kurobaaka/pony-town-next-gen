@@ -3,20 +3,16 @@
 .character-list([class.character-list-searchable]="searchable" [class.in-game]="inGame")
 
 	.dropdown.character-select-search.input-group.rounded-0(
+		[class.has-supporter-icon]="getSupporterLevel() > 0"
 		(mousedown)="$event.stopPropagation()" (mouseup)="$event.stopPropagation()"
 		(click)="$event.stopPropagation()" (keydown)="keydown($event)")
+		span.search-supporter-icon(*ngIf="getSupporterLevel() > 0" title="Supporter Tier {{getSupporterLevel()}}")
+			fa-icon([icon]="starIcon" [fixedWidth]="true" [style.color]="getSupporterStarColor()")
 		input.form-control.rounded-0(
 			#searchInput type="search" [placeholder]="placeholder" [(ngModel)]="search" (input)="updatePonies()"
 			autocomplete="nope")
 		.input-group-append
-			.dropdown(dropdown #supporterDropdown="ag-dropdown")
-				button.btn.btn-secondary.rounded-0(type="button" dropdownToggle title="Supporter perks" (click)="$event.stopPropagation()")
-					fa-icon([icon]="starIcon" [fixedWidth]="true" [style.color]="getSupporterStarColor()")
-				.dropdown-menu.dropdown-menu-right.shadow(*dropdownMenu)
-					div.dropdown-header Supporter perks
-					div.dropdown-item(*ngIf="getSupporterLevel() === 0") No supporter perks. 1000 character base limit.
-					div.dropdown-item(*ngIf="getSupporterLevel() > 0") {{getSupporterInfo()}}
-			.dropdown(dropdown #tagsDropdown="ag-dropdown")
+			.dropdown(dropdown #tagsDropdown="ag-dropdown" *ngIf="tags.length")
 				button.btn.btn-secondary.rounded-0(type="button" dropdownToggle title="Search by tags" (click)="$event.stopPropagation()")
 					fa-icon([icon]="hashIcon")
 				.dropdown-menu.dropdown-menu-right.shadow.tag-list(*dropdownMenu)
@@ -25,27 +21,6 @@
 							| {{tag}}
 			.dropdown(dropdown #sortDropdown="ag-dropdown")
 				button.btn.btn-secondary.rounded-0(type="button" dropdownToggle title="Sort options" (click)="$event.stopPropagation()")
-					fa-icon([icon]="ellipsisIcon")
-				.dropdown-menu.dropdown-menu-right.shadow(*dropdownMenu)
-					div.dropdown-header Sort by
-					button.dropdown-item(type="button" [class.active]="sortMode==='default'" (click)="setSortMode('default'); sortDropdown.close(); $event.stopPropagation()")
-						| Default
-					button.dropdown-item(type="button" [class.active]="sortMode==='name'" (click)="setSortMode('name'); sortDropdown.close(); $event.stopPropagation()")
-						| Name
-					button.dropdown-item(type="button" [class.active]="sortMode==='creation'" (click)="setSortMode('creation'); sortDropdown.close(); $event.stopPropagation()")
-						| Creation date
-					button.dropdown-item(type="button" [class.active]="sortMode==='recent'" (click)="setSortMode('recent'); sortDropdown.close(); $event.stopPropagation()")
-						| Recently played
-	div.supporter-info-text(*ngIf="supporterInfoText") {{supporterInfoText}}
-			.dropdown(dropdown #tagsDropdown="ag-dropdown")
-				button.btn.btn-secondary.rounded-right(type="button" dropdownToggle title="Search by tags" (click)="$event.stopPropagation()")
-					fa-icon([icon]="hashIcon")
-				.dropdown-menu.dropdown-menu-right.shadow.tag-list(*dropdownMenu)
-					ng-container(*ngIf="tags.length")
-						button.dropdown-item(*ngFor="let tag of tags" (click)="search = tag; tagsDropdown.close(); updatePonies(); $event.stopPropagation()")
-							| {{tag}}
-			.dropdown.ml-1(dropdown #sortDropdown="ag-dropdown")
-				button.btn.btn-secondary(type="button" dropdownToggle title="Sort options" (click)="$event.stopPropagation()")
 					fa-icon([icon]="ellipsisIcon")
 				.dropdown-menu.dropdown-menu-right.shadow(*dropdownMenu)
 					div.dropdown-header Sort by
@@ -92,7 +67,9 @@
 						
 						//- Тег (dev/mod) на отдельной строке
 						ng-container(*ngIf="getCharacterTag(p) as tag")
-							span.badge([ngClass]="'badge-' + tag.className" [tooltip]="tag.name" placement="top") {{ tag.id }}
+							span.badge.character-tag-badge([ngClass]="'badge-' + tag.className" [tooltip]="getCharacterTagTooltip(p)" placement="top")
+								fa-icon(*ngIf="tag.icon" [icon]="tag.icon" [fixedWidth]="true")
+								span(*ngIf="!tag.icon") {{ tag.id }}
 
 		li(*ngIf="canNew")
 			a.text-center(role="option" (click)="createNew()")

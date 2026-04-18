@@ -1,3 +1,13 @@
+ng-template(#effectsTooltip)
+	.text-left
+		p Preview effects for your character: Blush, Zzz, Tears, Cry, Hearts and Magic.
+		p Magic effect requires a horn to be selected.
+		p.mb-0
+			fa-icon(style="color:#cd7f32" [icon]="starIcon")
+			|  Available exclusively for
+			strong  Supporter Tier 2
+			|  and above.
+
 ng-template(#descriptionTooltip)
 	.text-left
 		p Description and tags help you organize and search for your ponies.
@@ -10,6 +20,11 @@ ng-template(#backgroundTooltip)
 	.text-left
 		p Sets the background color used in the preview for this character. The Reset button restores the default green.
 
+ng-template(#previewTooltip)
+	.text-left
+		p Controls how your character preview is shown.
+		p You can change scale, toggle background, turn head, flip, and hide/show name or tag.
+
 page-loader(*ngIf="!playing")
 
 .row(*ngIf="!playing && !loading")
@@ -17,8 +32,7 @@ page-loader(*ngIf="!playing")
 		h1.sr-only(focusTitle) Characters
 		h2.sr-only Character selection
 		.mx-auto(style="max-width: 400px;")
-			vk-button.mb-3
-			visit-pt-button.mb-3
+			about-button.mb-3
 			character-select(
 			[(error)]="error" [newButton]="true" [removeButton]="true" [emojiButton]="true" (change)="updateMuzzles()"
 			(preview)="previewPony = $event")
@@ -26,7 +40,9 @@ page-loader(*ngIf="!playing")
 			.character-preview-box.mx-auto.my-3((fixToTop)="fixed = $event" [fixToTopOffset]="-40" [style.background]="previewInfo.previewBackground ? '#' + previewInfo.previewBackground : 'var(--grass-color)'")
 				character-preview(
 					#characterPreview [pony]="previewInfo" [state]="state" [scale]="previewScale" [noBackground]="true" [noShadow]="fixed"
-					[name]="previewName" [tag]="previewTag" [extra]="previewExtra" style="z-index: 100")
+					[name]="hidePreviewName ? '' : previewName" [tag]="hidePreviewTag ? '' : previewTag"
+					[namePlateOffsetY]="10" [tagOnlyNamePlateOffsetY]="10" [namePlateTextY]="11" [tagOnlyNamePlateTextY]="11"
+					[extra]="previewExtra" [magic]="previewMagic" style="z-index: 100")
 
 			.form-group.text-center
 				button.btn.btn-lg.btn-default([disabled]="!canDuplicate" (click)="duplicate()" aria-label="Duplicate character")
@@ -36,11 +52,17 @@ page-loader(*ngIf="!playing")
 				button.btn.btn-lg.btn-default.ml-2([disabled]="!canSave" (click)="save()" aria-label="Save character")
 					| Save
 
-			play-box(label="Save & Play" [(error)]="error")
-			play-notice
+			play-box(*ngIf="!inGameMode" label="Save & Play" [(error)]="error")
+			play-notice(*ngIf="!inGameMode")
 
 	.col-lg-6.character-tabs([setOutlineHidden]="!customOutlines" [class.character-tab-warning]="updateWarning")
 		h2.sr-only Character customization
+		.character-tabs-undo-wrap
+			.character-tabs-undo-btns
+				button.nav-link([class.disabled]="!canUndo" [disabled]="!canUndo" (click)="undo()" [tooltip]="isMobile ? 'Undo' : 'Undo (Ctrl+Z)'" aria-label="Undo")
+					fa-icon([icon]="undoIcon")
+				button.nav-link([class.disabled]="!canRedo" [disabled]="!canRedo" (click)="redo()" [tooltip]="isMobile ? 'Redo' : 'Redo (Ctrl+Y)'" aria-label="Redo")
+					fa-icon([icon]="redoIcon")
 		tabset(type="pills" *ngIf="loaded" saveActiveTab="character-active-tab" label="Character customization")
 			tab(title="body")
 				.character-tab(*tabContent)
@@ -51,6 +73,40 @@ page-loader(*ngIf="!playing")
 							.col-sm-8.text-muted.pt-2
 								custom-checkbox([(checked)]="pony.hideSupport") hide supporter tag
 						hr.my-2
+
+					
+					.row.form-group
+						label#social-site-label.col-sm-4.col-form-label Show social site
+						.col-sm-8
+							.dropdown.btn-group(dropdown)
+								button.btn.btn-default.dropdown-toggle(
+									dropdownToggle aria-labelledby="social-site-label" aria-describedby="social-site-help")
+									fa-icon.mr-1(
+										*ngIf="site?.icon" [icon]="icon(site.icon)" [fixedWidth]="true" [style.color]="site.color"
+										size="lg" [attr.aria-label]="site.icon")
+									strong {{site?.name}}
+								.dropdown-menu(*dropdownMenu)
+									a.dropdown-item(*ngFor="let s of sites" (click)="site = s")
+										fa-icon.mr-1(
+											*ngIf="s.icon" [icon]="icon(s.icon)" [fixedWidth]="true" [style.color]="s.color"
+											size="lg" [attr.aria-label]="s.icon")
+										strong {{s.name}}
+
+					.row.form-group(*ngIf="tags.length > 1")
+						label#social-site-label.col-sm-4.col-form-label Show tags
+						.col-sm-8
+							.dropdown.btn-group.ml-1(dropdown *ngIf="tags.length > 1")
+								button.btn.btn-default.dropdown-toggle(dropdownToggle aria-label="Show tag")
+									span.badge.character-tag-badge(*ngIf="tag.id" [ngClass]="'badge-' + tag.className")
+										fa-icon.mr-1(*ngIf="tag.icon" [icon]="tag.icon" [fixedWidth]="true")
+										span {{tag.id}}
+									strong(*ngIf="!tag.id") {{tag.name}}
+								.dropdown-menu(*dropdownMenu)
+									a.dropdown-item(*ngFor="let t of tags" (click)="tag = t")
+										span.badge.character-tag-badge(*ngIf="t.id" [ngClass]="'badge-' + t.className")
+											fa-icon.mr-1(*ngIf="t.icon" [icon]="t.icon" [fixedWidth]="true")
+											span {{t.id}}
+										strong(*ngIf="!t.id") {{t.name}}
 
 					.row.form-group
 						label.col-sm-4.col-form-label Advanced options
@@ -79,72 +135,88 @@ page-loader(*ngIf="!playing")
 							button.btn.btn-sm.btn-default.ml-1((click)="importFile.click()") Import ponies
 							input.d-none(#importFile type="file" (change)="importPonies(importFile.files[0])")
 
-					//-.row.form-group
-						label.col-sm-4.col-form-label Preview options
-						.col-sm-8.text-muted.pt-1
-							 custom-checkbox([(checked)]="info.flip" (checkedChange)="changed()")
-								| Flip character
-							 custom-checkbox([(checked)]="info.headTurned" (checkedChange)="changed()")
-								| Turn head by default
-					
-					.row.form-group
-						label.col-sm-4.col-form-label Preview scale
+
+					.row.form-group(*ngIf="canUseEffects")
+						.col-sm-4.col-lock-box
+							label.col-form-label
+								| Effects
+								fa-icon.text-muted.ml-2([icon]="infoIcon" [tooltip]="effectsTooltip" containerClass="tooltip-desc")
+							check-box.lock-box(
+								[icon]="eraserIcon"
+								[checked]="hasCustomEffects"
+								[disabled]="!hasCustomEffects"
+								(checkedChange)="resetEffects()"
+								label="Clear effects"
+								title="Clear effects")
 						.col-sm-8
-							.dropdown(dropdown #scaleDropdown="ag-dropdown" [focusOnOpen]="false" style="max-width: 120px;")
-								button.btn.btn-default.dropdown-toggle(dropdownToggle style="width: 100%; text-align: left;")
-									| scale: 
-									span.float-right(style="font-weight: bold;") x{{previewScale}}
-								.dropdown-menu(style="min-width: 100px;" *dropdownMenu)
-									button.dropdown-item((click)="previewScale = 1; scaleDropdown.close(); changed()" [class.active]="previewScale === 1") x1
-									button.dropdown-item((click)="previewScale = 2; scaleDropdown.close(); changed()" [class.active]="previewScale === 2") x2
-									button.dropdown-item((click)="previewScale = 3; scaleDropdown.close(); changed()" [class.active]="previewScale === 3") x3
-									button.dropdown-item((click)="previewScale = 4; scaleDropdown.close(); changed()" [class.active]="previewScale === 4") x4
-									button.dropdown-item((click)="previewScale = 5; scaleDropdown.close(); changed()" [class.active]="previewScale === 5") x5
-									button.dropdown-item((click)="previewScale = 6; scaleDropdown.close(); changed()" [class.active]="previewScale === 6") x6
-									button.dropdown-item((click)="previewScale = 7; scaleDropdown.close(); changed()" [class.active]="previewScale === 7") x7
+							.btn-toolbar
+								.btn-group
+									button([class]="info.blush ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="'Toggle blush effect'" aria-label="Blush effect" (click)="toggleBlushEffect()")
+										| BLUSH
+									button([class]="info.sleeping ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="'Toggle sleeping effect'" aria-label="Sleeping effect" (click)="toggleSleepingEffect()")
+										| ZZZ
+									button([class]="info.tears ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="'Toggle tears effect'" aria-label="Tears effect" (click)="toggleTearsEffect()")
+										| TEARS
+									button([class]="info.crying ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="'Toggle crying effect'" aria-label="Crying effect" (click)="toggleCryingEffect()")
+										| CRY
+									button([class]="info.hearts ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="'Toggle hearts effect'" aria-label="Hearts effect" (click)="toggleHeartsEffect()")
+										| HEARTS
+									button([class]="previewMagic ? 'btn btn-primary' : 'btn btn-default'" type="button" [disabled]="!canUseMagicEffect" [tooltip]="canUseMagicEffect ? 'Toggle magic effect' : 'Magic requires a horn'" aria-label="Magic effect" (click)="toggleMagicEffect()")
+										| MAGIC
 
-				.row.form-group
-					.col-sm-4.col-lock-box
-						label(for="preview-background") Background
-						check-box.lock-box(
-							[(checked)]="lockBackgroundDefault" [icon]="lockIcon" (checkedChange)="backgroundLockChanged($event)"
-							label="Lock background color" title="Lock background color")
-					.col-sm-8
-					color-picker(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChange)="changed()" [isDisabled]="lockBackgroundDefault" [style.opacity]="lockBackgroundDefault ? '0.5' : '1'")
-
-			.row.form-group
-				label.col-sm-4.col-form-label Effects (not working)
-				.col-sm-8.text-muted.pt-1
-					custom-checkbox([(checked)]="info.blush" (checkedChange)="changed()")
-						| Blush
-					custom-checkbox([(checked)]="info.sleeping" (checkedChange)="changed()")
-						| Sleeping
-					custom-checkbox([(checked)]="info.tears" (checkedChange)="changed()")
-						| Tears
-					custom-checkbox([(checked)]="info.crying" (checkedChange)="changed()")
-						| Crying
-					custom-checkbox([(checked)]="info.hearts" (checkedChange)="changed()")
-						| Hearts
-						.dropdown(dropdown)
-							button.btn.btn-default.dropdown-toggle(dropdownToggle aria-label="Select social site")
-								fa-icon.mr-1(*ngIf="site?.icon" [icon]="icon(site.icon)" [fixedWidth]="true" [style.color]="site.color" size="lg" [attr.aria-label]="site.icon")
-								strong {{site?.name}}
-							.dropdown-menu(*dropdownMenu)
-								a.dropdown-item(*ngFor="let s of sites" (click)="site = s")
-									fa-icon.mr-1(*ngIf="s.icon" [icon]="icon(s.icon)" [fixedWidth]="true" [style.color]="s.color" size="lg" [attr.aria-label]="s.icon")
-									strong {{s.name}}
-
-							.dropdown.btn-group.ml-1(dropdown *ngIf="tags.length > 1")
-								button.btn.btn-default.dropdown-toggle(dropdownToggle aria-label="Show tag")
-									span.badge(*ngIf="tag.id" [ngClass]="'badge-' + tag.className") {{tag.id}}
-									strong(*ngIf="!tag.id") {{tag.name}}
-								.dropdown-menu(*dropdownMenu)
-									a.dropdown-item(*ngFor="let t of tags" (click)="tag = t")
-										span.badge(*ngIf="t.id" [ngClass]="'badge-' + t.className") {{t.id}}
-										strong(*ngIf="!t.id") {{t.name}}
-
-							#social-site-help.text-muted.mt-1
-								| Shows social site next to your name to prove to others that it's your account.
+					.row.form-group
+						.col-sm-4.col-lock-box
+							label.col-form-label
+								| Preview
+								fa-icon.text-muted.ml-2([icon]="infoIcon" [tooltip]="previewTooltip" containerClass="tooltip-desc")
+							check-box.lock-box(
+								[icon]="resetIcon"
+								[checked]="hasCustomPreviewSettings"
+								[disabled]="!hasCustomPreviewSettings"
+								(checkedChange)="resetPreview()"
+								label="Reset preview settings"
+								title="Reset preview settings")
+						.col-sm-8
+							.btn-toolbar
+								.btn-group
+									.dropdown(dropdown #previewScaleDropdown="ag-dropdown" [focusOnOpen]="false")
+										button.btn.btn-default.dropdown-toggle(type="button" dropdownToggle [tooltip]="isMobile ? 'Preview scale' : 'Preview scale (G / F)'" aria-haspopup="true" style="border-top-right-radius: 0; border-bottom-right-radius: 0;")
+											fa-icon([icon]="searchIcon")
+											span.ml-1 x{{previewScale}}
+										.dropdown-menu(style="min-width: 120px;" *dropdownMenu)
+											button.dropdown-item((click)="previewScale = 1; previewScaleDropdown.close(); changed()") x1
+											button.dropdown-item((click)="previewScale = 2; previewScaleDropdown.close(); changed()") x2
+											button.dropdown-item((click)="previewScale = 3; previewScaleDropdown.close(); changed()") x3
+											button.dropdown-item((click)="previewScale = 4; previewScaleDropdown.close(); changed()") x4
+											button.dropdown-item((click)="previewScale = 5; previewScaleDropdown.close(); changed()") x5
+											button.dropdown-item((click)="previewScale = 6; previewScaleDropdown.close(); changed()") x6
+											button.dropdown-item((click)="previewScale = 7; previewScaleDropdown.close(); changed()") x7
+									button([class]="showBackground ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="'Toggle preview background'" aria-label="Background" (click)="toggleBackground()")
+										fa-icon([icon]="paintBrushIcon")
+									button([class]="info.headTurned ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="isMobile ? 'Turn head' : 'Turn head (H)'" aria-label="Turn head" (click)="toggleHeadTurned()")
+										fa-icon([icon]="horseHeadIcon")
+									button([class]="info.flip ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="isMobile ? 'Flip character' : 'Flip: A ← / D →'" aria-label="Flip character" (click)="toggleFlip()")
+										fa-icon([icon]="flipIcon")
+									button([class]="hidePreviewName ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="isMobile ? 'Show or hide name' : 'Show or hide name (Y)'" aria-label="Hide name" (click)="toggleHidePreviewName()")
+										span.fa-layers
+											fa-icon([icon]="nameIcon")
+											fa-icon(*ngIf="hidePreviewName" [icon]="slashIcon")
+									button(*ngIf="canTogglePreviewTag" [class]="hidePreviewTag ? 'btn btn-primary' : 'btn btn-default'" type="button" [tooltip]="isMobile ? 'Show or hide tag' : 'Show or hide tag (T)'" aria-label="Hide tag" (click)="toggleHidePreviewTag()")
+										span.fa-layers
+											fa-icon([icon]="tagIcon")
+											fa-icon(*ngIf="hidePreviewTag" [icon]="slashIcon")
+					.row.form-group(*ngIf="showBackground")
+						.col-sm-4.col-lock-box
+							label.col-form-label(for="preview-background") Background
+							check-box.lock-box(
+								[icon]="resetIcon"
+								[checked]="hasCustomPreviewBackground"
+								[disabled]="!hasCustomPreviewBackground"
+								(checkedChange)="resetBackground()"
+								label="Reset background"
+								title="Reset background")
+						.col-sm-8
+							color-picker(type="text" id="preview-background" [(color)]="info.previewBackground" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()")
 
 					.row.form-group
 						label.col-sm-4.col-form-label(for="description")
@@ -152,7 +224,7 @@ page-loader(*ngIf="!playing")
 							fa-icon.text-muted.ml-2([icon]="infoIcon" [tooltip]="descriptionTooltip" containerClass="tooltip-desc")
 						.col-sm-8
 							input.form-control#description(
-								[(ngModel)]="pony.desc" placeholder="example: with a hat #oc #winter" [maxlength]="maxDescLength")
+							[(ngModel)]="pony.desc" placeholder="example: with a hat #oc #winter" [maxlength]="maxDescLength")
 
 					.row.form-group
 						.col-sm-4.col-lock-box
@@ -189,29 +261,134 @@ page-loader(*ngIf="!playing")
 						[(outlineLocked)]="info.lockCoatOutline" [outlineHidden]="!customOutlines" (change)="changed()")
 					hr
 					set-selection(
+						[label]="lockBodyMarkings ? 'Body markings' : 'Body markings (left)'"
+						[base]="coatFill" [set]="info.body" [sets]="bodyPatterns" [compact]="true"
+						[darken]="darken" [onlyPatterns]="true" (change)="changed()")
+					div(*ngIf="!lockBodyMarkings")
+						hr
+						set-selection(
+							label="Body markings (right)" [base]="coatFill" [set]="info.bodyRight" [sets]="bodyPatterns" [compact]="true"
+							[darken]="darken" [onlyPatterns]="true" (change)="changed()")
+					hr
+					.row.form-group
+						label.col-sm-4.col-form-label Body layers
+						.col-sm-8.text-muted.pt-1
+							.mb-2
+								custom-checkbox([(checked)]="lockBodyMarkings" (checkedChange)="bodyLockChanged($event); changed()")
+									| use the same body markings for both sides
+							.mb-2
+								custom-checkbox([(checked)]="info.useExtraBody" (checkedChange)="changed()")
+									| enable extra body markings layer
+					div(*ngIf="info.useExtraBody")
+						hr
+						set-selection(
+							label="Body markings (extra)" [base]="coatFill" [set]="info.bodyExtra" [sets]="bodyPatterns" [compact]="true"
+							[darken]="darken" [onlyPatterns]="true" (change)="changed()")
+					hr
+					.row.form-group
+						label.col-sm-4.col-form-label Use the same markings
+						.col-sm-8.text-muted.pt-1
+							.mb-2
+								custom-checkbox([(checked)]="lockBackLegs" (checkedChange)="backLegsPairChanged($event); changed()")
+									| for front and back legs
+							.mb-2
+								custom-checkbox([(checked)]="lockFrontLegsMarkings" (checkedChange)="frontLegsLockChanged($event); changed()")
+									| for both front legs
+							.mb-2
+								custom-checkbox([(checked)]="lockBackLegsMarkings" [disabled]="info.lockBackLegs" (checkedChange)="backLegsLockChanged($event); changed()")
+									| for both back legs
+					set-selection(
+						[label]="lockFrontLegsMarkings ? 'Front legs markings' : 'Front legs markings (left)'"
+						[base]="coatFill" [set]="info.frontLegs" [sets]="frontLegPatterns" [compact]="true"
+						[darken]="darken" [onlyPatterns]="true" (change)="changed()")
+					div(*ngIf="!lockFrontLegsMarkings")
+						hr
+						set-selection(
+							label="Front legs markings (right)" [base]="coatFill" [set]="info.frontLegsRight" [sets]="frontLegPatterns" [compact]="true"
+							[darken]="darken" [onlyPatterns]="true" (change)="changed()")
+					div(*ngIf="!lockBackLegs")
+						hr
+						set-selection(
+							[label]="lockBackLegsMarkings ? 'Back legs markings' : 'Back legs markings (left)'"
+							[base]="coatFill" [set]="info.backLegs" [sets]="backLegPatterns" [compact]="true"
+							[darken]="darken" [onlyPatterns]="true" (change)="changed()")
+					div(*ngIf="!lockBackLegs && !lockBackLegsMarkings")
+						hr
+						set-selection(
+							label="Back legs markings (right)" [base]="coatFill" [set]="info.backLegsRight" [sets]="backLegPatterns" [compact]="true"
+							[darken]="darken" [onlyPatterns]="true" (change)="changed()")
+					hr
+					set-selection(
 						label="Horn" [base]="coatFill" [set]="info.horn" [sets]="horns" [compact]="true" (change)="changed()"
 						[darken]="darken")
 					hr
 					.row.form-group
 						label.col-sm-4.col-form-label Magic color
 						.col-sm-8
-							color-picker([(color)]="info.magicColor" label="Magic color")
+							color-picker([(color)]="info.magicColor" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" label="Magic color")
 					hr
+					.row.form-group
+						label.col-sm-4.col-form-label Wings sides
+						.col-sm-8.text-muted.pt-1
+							custom-checkbox([(checked)]="lockWings" (checkedChange)="wingsLockChanged($event); changed()")
+								| use the same wings for both sides
 					set-selection(
-						label="Wings" [base]="coatFill" [set]="info.wings" [sets]="wings" [compact]="true" (change)="changed()"
+						[label]="lockWings ? 'Wings' : 'Wings (left)'"
+						[base]="coatFill" [set]="info.wings" [sets]="wings" [compact]="true" (change)="changed()"
 						[darken]="darken")
+					div(*ngIf="!lockWings")
+						hr
+						set-selection(
+							label="Wings (right)" [base]="coatFill" [set]="info.wingsRight" [sets]="wings" [compact]="true"
+							(change)="changed()" [darken]="darken")
 					hr
+					.row.form-group
+						label.col-sm-4.col-form-label Ears sides
+						.col-sm-8.text-muted.pt-1
+							custom-checkbox([(checked)]="lockEars" (checkedChange)="earsLockChanged($event); changed()")
+								| use the same ears for both sides
 					set-selection(
-						label="Ears" [base]="coatFill" [set]="info.ears" [sets]="ears" [compact]="true" (change)="changed()"
+						[label]="lockEars ? 'Ears' : 'Ears (left)'"
+						[base]="coatFill" [set]="info.ears" [sets]="ears" [compact]="true" (change)="changed()"
 						[darken]="darken")
+					div(*ngIf="!lockEars")
+						hr
+						set-selection(
+							label="Ears (right)" [base]="coatFill" [set]="info.earsRight" [sets]="ears" [compact]="true"
+							(change)="changed()" [darken]="darken")
 					hr
+					.row.form-group
+						label.col-sm-4.col-form-label Hooves sides
+						.col-sm-8.text-muted.pt-1
+							.mb-2
+								custom-checkbox([(checked)]="info.lockBackHooves" (checkedChange)="backHoovesPairChanged($event); changed()")
+									| use the same hooves for front and back legs
+							.mb-2
+								custom-checkbox([(checked)]="lockFrontHooves" (checkedChange)="frontHoovesLockChanged($event); changed()")
+									| use the same hooves for both front legs
+							.mb-2
+								custom-checkbox([(checked)]="lockBackHooves" [disabled]="info.lockBackHooves" (checkedChange)="backHoovesLockChanged($event); changed()")
+									| use the same hooves for both back legs
 					set-selection(
-						label="Front hooves" [base]="coatFill" [set]="info.frontHooves" [sets]="frontHooves" [compact]="true"
+						[label]="lockFrontHooves ? 'Front hooves' : 'Front hooves (left)'"
+						[base]="coatFill" [set]="info.frontHooves" [sets]="frontHooves" [compact]="true"
 						[darken]="darken" (change)="changed()")
-					hr
-					set-selection(
-						label="Back hooves" [base]="hoovesFill" [set]="info.backHooves" [sets]="backHooves" [compact]="true"
-						[darken]="darken" (change)="changed()")
+					div(*ngIf="!lockFrontHooves")
+						hr
+						set-selection(
+							label="Front hooves (right)" [base]="coatFill" [set]="info.frontHoovesRight" [sets]="frontHooves" [compact]="true"
+							[darken]="darken" (change)="changed()")
+					div(*ngIf="!info.lockBackHooves")
+						hr
+						set-selection(
+							[label]="lockBackHooves ? 'Back hooves' : 'Back hooves (left)'"
+							[base]="hoovesFill" [set]="info.backHooves" [sets]="backHooves" [compact]="true"
+							[darken]="darken" (change)="changed()")
+					div(*ngIf="!info.lockBackHooves && !lockBackHooves")
+						hr
+						set-selection(
+							label="Back hooves (right)" [base]="hoovesFill" [set]="info.backHoovesRight" [sets]="backHooves" [compact]="true"
+							[darken]="darken" (change)="changed()")
 					hr
 					butt-mark-editor([info]="info" [state]="buttMarkState")
 
@@ -243,11 +420,11 @@ page-loader(*ngIf="!playing")
 								[(checked)]="info.lockEyeColor" [icon]="lockIcon" (checkedChange)="eyeColorLockChanged($event)"
 								label="Lock color for both eyes" title="Lock color for both eyes")
 						.col-sm-8
-							color-picker([(color)]="info.eyeColorRight" (colorChange)="changed()" labelledBy="eye-color")
+							color-picker([(color)]="info.eyeColorRight" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" labelledBy="eye-color")
 					.row.form-group(*ngIf="!info.lockEyeColor")
 						label#eye-color-left.col-sm-4.col-form-label Eye color (left)
 						.col-sm-8
-							color-picker([(color)]="info.eyeColorLeft" labelledBy="eye-color-left")
+							color-picker([(color)]="info.eyeColorLeft" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" labelledBy="eye-color-left")
 
 					.row.form-group
 						.col-sm-4.col-lock-box
@@ -256,11 +433,11 @@ page-loader(*ngIf="!playing")
 								[(checked)]="lockEyeWhites" [icon]="lockIcon" (checkedChange)="eyeWhiteLockChanged($event)"
 								label="Lock left eye white for both eyes" title="Lock left eye white for both eyes")
 						.col-sm-8
-							color-picker([(color)]="info.eyeWhites" (colorChange)="changed()" labelledBy="eye-whites-label")
+							color-picker([(color)]="info.eyeWhites" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" labelledBy="eye-whites-label")
 					.row.form-group(*ngIf="info.unlockEyeWhites")
 						label#eye-whites-label-left.col-sm-4.col-form-label Eye whites (left)
 						.col-sm-8
-							color-picker([(color)]="info.eyeWhitesLeft" labelledBy="eye-whites-label-left")
+							color-picker([(color)]="info.eyeWhitesLeft" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" labelledBy="eye-whites-label-left")
 
 					.row.form-group
 						.col-sm-4.col-lock-box
@@ -283,12 +460,36 @@ page-loader(*ngIf="!playing")
 
 					.row.form-group
 						.col-sm-4.col-lock-box
-							label Eyeshadow
-							check-box.lock-box(
-								[(checked)]="info.eyeshadow" (checkedChange)="characterPreview.blink()"
+							label#eyeshadow-label Eyeshadow
+							.d-none.d-sm-block.has-neighbour
+								check-box.lock-box.eyeshadow-lock-box(
+									[(checked)]="lockEyeshadowColor" [icon]="lockIcon" [disabled]="!info.eyeshadow"
+									(checkedChange)="eyeshadowLockChanged($event); changed()"
+									label="Lock both eyes" title="Lock both eyes")
+							span.eyeshadow-checks
+								check-box.lock-box.eyeshadow-enable-box(
+									[(checked)]="info.eyeshadow" (checkedChange)="characterPreview.blink(); changed()"
+									label="Use eye shadow" title="Use eye shadow")
+						.col-sm-8
+							color-picker([(color)]="info.eyeshadowColor" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" [isDisabled]="!info.eyeshadow" labelledBy="eyeshadow-label")
+					.row.form-group.d-sm-none
+						.col-lock-box
+							label.mb-0 Shadow
+							check-box.lock-box.eyeshadow-lock-box(
+								[(checked)]="lockEyeshadowColor" [icon]="lockIcon" [disabled]="!info.eyeshadow"
+								(checkedChange)="eyeshadowLockChanged($event); changed()"
+								label="Lock both eyes" title="Lock both eyes")
+							check-box.lock-box.eyeshadow-enable-box(
+								[(checked)]="info.eyeshadow" (checkedChange)="characterPreview.blink(); changed()"
+								label="Use eye shadow" title="Use eye shadow")
+					.row.form-group.eyeshadow-left-row(*ngIf="info.unlockEyeshadowColor")
+						.col-sm-4.col-lock-box
+							label#eyeshadow-label-left Eyeshadow (left)
+							check-box.lock-box.ms-0(
+								[(checked)]="info.eyeshadowLeft" (checkedChange)="characterPreview.blink(); changed()"
 								label="Use eye shadow" title="Use eye shadow")
 						.col-sm-8
-							color-picker([(color)]="info.eyeshadowColor" [isDisabled]="!info.eyeshadow" label="Eyeshadow color")
+							color-picker([(color)]="info.eyeshadowColorLeft" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" [isDisabled]="!info.eyeshadowLeft" labelledBy="eyeshadow-label-left")
 
 					.row.form-group
 						label#eyelashes.col-sm-4.col-form-label Eyelashes
@@ -304,11 +505,28 @@ page-loader(*ngIf="!playing")
 								[(checked)]="lockEyelashColor" [icon]="lockIcon" (checkedChange)="eyelashLockChanged($event)"
 								label="Lock eyelash color for both eyes" title="Lock eyelash color for both eyes")
 						.col-sm-8
-							color-picker([(color)]="info.eyelashColor" (colorChange)="changed()" labelledBy="eyelashes-label")
+							color-picker([(color)]="info.eyelashColor" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" labelledBy="eyelashes-label")
 					.row.form-group(*ngIf="!lockEyelashColor")
 						label#eyelashes-label-left.col-sm-4.col-form-label Eyelash color (left)
 						.col-sm-8
-							color-picker([(color)]="info.eyelashColorLeft" labelledBy="eyelashes-label-left")
+							color-picker([(color)]="info.eyelashColorLeft" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" labelledBy="eyelashes-label-left")
+
+					.row.form-group
+						.col-sm-4.col-lock-box
+							label#blush-label.col-form-label.has-neighbour Blush
+							span.blush-checks
+								check-box.lock-box.ms-0(
+									[(checked)]="info.blush" (checkedChange)="changed()"
+									label="Use blush" title="Use blush")
+								check-box.lock-box.ms-2(
+									[icon]="resetIcon"
+									[checked]="hasCustomBlushColor"
+									[disabled]="!hasCustomBlushColor"
+									(checkedChange)="resetBlush()"
+									label="Reset blush"
+									title="Reset blush")
+						.col-sm-8
+							color-picker([(color)]="info.blushColor" (colorChangeStart)="beginColorChange()" (colorChange)="colorChanged()" (colorChangeEnd)="colorChangeDone()" [isDisabled]="!info.blush" labelledBy="blush-label")
 
 					hr
 					set-selection(
@@ -318,6 +536,16 @@ page-loader(*ngIf="!playing")
 					set-selection(
 						label="Markings" [base]="coatFill" [set]="info.head" [sets]="heads" [darken]="darken"
 						[onlyPatterns]="true" (change)="changed()")
+					.row.form-group
+						label.col-sm-4.col-form-label Additional face pattern
+						.col-sm-8.text-muted.pt-1
+							custom-checkbox([(checked)]="info.useExtraFacePattern" (checkedChange)="changed()")
+								| enable extra face pattern layer
+					div(*ngIf="info.useExtraFacePattern")
+						hr
+						set-selection(
+							label="Markings (extra)" [base]="coatFill" [set]="info.facePatternExtra" [sets]="heads" [darken]="darken"
+							[onlyPatterns]="true" (change)="changed()")
 					hr
 					.row.form-group
 						label#fangs.col-sm-4.col-form-label Fangs
@@ -348,16 +576,46 @@ page-loader(*ngIf="!playing")
 								set-selection(
 									label="Ear accessories" [set]="info.earAccessory" [sets]="earAccessories" [darken]="darken"
 									[nonLockable]="true" (change)="changed()")
+								.row.form-group
+									label.col-sm-4.col-form-label Extra ear layer
+									.col-sm-8.text-muted.pt-1
+										custom-checkbox([(checked)]="useExtraEarAccessory" (checkedChange)="changed()")
+											| enable second ear accessory layer
+								div(*ngIf="useExtraEarAccessory")
+									hr
+									set-selection(
+										label="Ear accessories (extra)" [set]="info.earAccessoryExtra" [sets]="earAccessories" [darken]="darken"
+										[nonLockable]="true" (change)="changed()")
 								hr
 								set-selection(
 									label="Face accessories" [set]="info.faceAccessory" [sets]="faceAccessories" [darken]="darken"
 									[nonLockable]="true" (change)="changed()")
+								.row.form-group
+									label.col-sm-4.col-form-label Extra face layer
+									.col-sm-8.text-muted.pt-1
+										custom-checkbox([(checked)]="useExtraFaceAccessory" (checkedChange)="changed()")
+											| enable second face accessory layer
+								div(*ngIf="useExtraFaceAccessory")
+									hr
+									set-selection(
+										label="Face accessories (extra)" [set]="info.faceAccessoryExtra" [sets]="faceAccessories" [darken]="darken"
+										[nonLockable]="true" (change)="changed()")
 
 						tab(title="neck")
 							.accessory-tab(*tabContent)
 								set-selection(
 									label="Neck accessories" [set]="info.neckAccessory" [sets]="neckAccessories" [darken]="darken"
 									[nonLockable]="true" (change)="changed()")
+								.row.form-group
+									label.col-sm-4.col-form-label Additional neck layer
+									.col-sm-8.text-muted.pt-1
+										custom-checkbox([(checked)]="info.useExtraNeckAccessory" (checkedChange)="changed()")
+											| enable extra neck accessory layer
+								div(*ngIf="info.useExtraNeckAccessory")
+									hr
+									set-selection(
+										label="Neck accessories (extra)" [set]="info.neckAccessoryExtra" [sets]="neckAccessories" [darken]="darken"
+										[nonLockable]="true" (change)="changed()")
 
 						tab(title="legs")
 							.accessory-tab(*tabContent)
@@ -404,9 +662,21 @@ page-loader(*ngIf="!playing")
 								set-selection(
 									label="Chest accessories" [set]="info.chestAccessory" [sets]="chestAccessories" [darken]="darken"
 									[nonLockable]="true" (change)="changed()")
-								set-selection(
-									*ngIf="hasSleeves(info.chestAccessory.type)" label="Sleeves" [set]="info.sleeveAccessory" [darken]="darken"
-									[sets]="sleeveAccessories" (change)="changed()")
+								div(*ngIf="hasSleeves(info.chestAccessory.type)")
+									hr
+									.row.form-group
+										label.col-sm-4.col-form-label Sleeves sides
+										.col-sm-8.text-muted.pt-1
+											custom-checkbox([(checked)]="lockSleeveAccessory" (checkedChange)="sleeveLockChanged($event); changed()")
+												| use the same sleeves for both sides
+									set-selection(
+										[label]="lockSleeveAccessory ? 'Sleeves' : 'Sleeves (left)'"
+										[set]="info.sleeveAccessory" [darken]="darken" [sets]="sleeveAccessories" (change)="changed()")
+									div(*ngIf="!lockSleeveAccessory")
+										hr
+										set-selection(
+											label="Sleeves (right)" [set]="info.sleeveAccessoryRight" [darken]="darken"
+											[sets]="sleeveAccessories" (change)="changed()")
 
 						tab(title="back")
 							.accessory-tab(*tabContent)
@@ -416,9 +686,30 @@ page-loader(*ngIf="!playing")
 
 						tab(title="waist")
 							.accessory-tab(*tabContent)
+								.row.form-group
+									label.col-sm-4.col-form-label Waist sides
+									.col-sm-8.text-muted.pt-1
+										custom-checkbox([(checked)]="lockWaistAccessory" (checkedChange)="waistLockChanged($event); changed()")
+											| use the same waist accessory for both sides
 								set-selection(
-									label="Waist accessories" [set]="info.waistAccessory" [sets]="waistAccessories" [darken]="darken"
+									[label]="lockWaistAccessory ? 'Waist accessories' : 'Waist accessories (left)'"
+									[set]="info.waistAccessory" [sets]="waistAccessories" [darken]="darken"
 									[nonLockable]="true" (change)="changed()")
+								div(*ngIf="!lockWaistAccessory")
+									hr
+									set-selection(
+										label="Waist accessories (right)" [set]="info.waistAccessoryRight" [sets]="waistAccessories"
+										[darken]="darken" [nonLockable]="true" (change)="changed()")
+								.row.form-group
+									label.col-sm-4.col-form-label Additional waist layer
+									.col-sm-8.text-muted.pt-1
+										custom-checkbox([(checked)]="info.useExtraWaistAccessory" (checkedChange)="changed()")
+											| enable extra waist accessory layer
+								div(*ngIf="info.useExtraWaistAccessory")
+									hr
+									set-selection(
+										label="Waist accessories (extra)" [set]="info.waistAccessoryExtra" [sets]="waistAccessories"
+										[darken]="darken" [nonLockable]="true" (change)="changed()")
 
 						tab(title="other")
 							.accessory-tab(*tabContent)

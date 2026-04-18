@@ -25,7 +25,7 @@ function createTests(): [string, PonyState, DrawPonyOptions, string][] {
 	// const lying: PonyState = { ...state, animation: lie, animationFrame: 0 };
 	const trotting: PonyState = { ...state, animation: trot, animationFrame: 10 };
 	const blushing: PonyState = { ...state, expression: parseExpression('o//o') };
-	//const turned: PonyState = { ...defaultState, headTurned: true };
+	const turned: PonyState = { ...state, headTurned: true };
 	const holding: PonyState = { ...state, holding: apple(0, 0) };
 	const holdingLantern: PonyState = { ...state, holding: jackoLanternOn(0, 0) };
 	const holdingLetter: PonyState = { ...state, holding: letter(0, 0) };
@@ -82,7 +82,7 @@ function createTests(): [string, PonyState, DrawPonyOptions, string][] {
 		['face-extra-holding-letter.png', faceExtraHoldingLetter, options, whitePetal],
 		['cm-flip.png', state, flipped, 'CAeCQpnapSD/1wD////ugu7/pQD/4at2pAAmQoQBPwAMADEAOEBhAQEIBEI16y43AA3AA3A3A3A='],
 		['freckles-flip.png', state, flipped, 'CA3/AADapSAnJyf/1wCK8f/////u7u5U3OkyzTKVhW9nS0NPT09SUlI2wAIAAAbiBAAHOAJ+ABgAYgBIQGEBAJhIrEQoPExgwq80AA=='],
-		//['head-turned.png', turned, options, whitePetal],
+		['head-turned.png', turned, options, whitePetal],
 		['extra.png', state, extra, 'CAWVlZW5ubn///9SUlIvLy82QIxkI0IEcgAYAGIAsIDCA4AAFAoootFFoFA='],
 		['blush.png', blushing, options, base],
 		['hat-horns.png', state, options, 'CAfMoYvPWVnapSD/1wA8PDzj0M3uVVU2QAJkJkAQLkkADAA8AFhAYQGcAwTAHAA='],
@@ -138,8 +138,19 @@ describe('ponyUtils', () => {
 });
 
 function drawPonyCanvas(bg: number, info: PalettePonyInfo, state: PonyState, options: DrawPonyOptions) {
-	state.blushColor = blushColor(info.coatPalette.colors[1]);
-	const canvas = drawCanvas(80, 80, paletteSpriteSheet, bg, batch => drawPony(batch, info, state, 40, 70, options));
+	const finalState: PonyState = { ...state };
+	finalState.blushColor = blushColor(info.coatPalette.colors[1]);
+
+	if ((info as any).headTurned !== undefined) {
+		finalState.headTurned = !!(info as any).headTurned;
+	}
+
+	if ((info as any).headTurn !== undefined) {
+		const headTurn = (info as any).headTurn | 0;
+		finalState.headTurn = Math.max(0, Math.min(6, headTurn));
+	}
+
+	const canvas = drawCanvas(80, 80, paletteSpriteSheet, bg, batch => drawPony(batch, info, finalState, 40, 70, options));
 
 	if (options.flipped) {
 		const flipped = createCanvas(canvas.width, canvas.height);

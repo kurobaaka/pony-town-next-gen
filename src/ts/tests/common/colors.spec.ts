@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import {
 	fillToOutline, fillToOutlineColor, getMessageColor, SYSTEM_COLOR, ADMIN_COLOR, MOD_COLOR,
 	ANNOUNCEMENT_COLOR, PARTY_COLOR, WHITE, THINKING_COLOR, PARTY_THINKING_COLOR, SUPPORTER1_COLOR,
-	SUPPORTER2_COLOR, SUPPORTER3_COLOR
+	SUPPORTER2_COLOR, SUPPORTER3_COLOR, SUPPORTER4_COLOR
 } from '../../common/colors';
 import { MessageType } from '../../common/interfaces';
 
@@ -36,6 +36,7 @@ describe('colors', () => {
 			expect(getMessageColor(MessageType.Supporter1)).equals(SUPPORTER1_COLOR);
 			expect(getMessageColor(MessageType.Supporter2)).equals(SUPPORTER2_COLOR);
 			expect(getMessageColor(MessageType.Supporter3)).equals(SUPPORTER3_COLOR);
+			expect(getMessageColor(MessageType.Supporter4)).equals(SUPPORTER4_COLOR);
 		});
 
 		it('returns white color for other types', () => {

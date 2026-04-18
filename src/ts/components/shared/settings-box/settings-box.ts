@@ -43,12 +43,15 @@ export class SettingsBox implements OnInit, OnDestroy {
 	musicExpanded = false;
 	visualizerBars = [0, 0, 0, 0, 0];
 	private updateSubscription?: Subscription;
+	private modalLifecycleSubscription?: Subscription;
+	private lastModalState?: boolean;
 	
 	@ViewChild('dropdown', { static: true }) dropdown!: Dropdown;
 	@ViewChild('actionsModal', { static: true }) actionsModal!: TemplateRef<any>;
 	@ViewChild('settingsModal', { static: true }) settingsModal!: TemplateRef<any>;
 	@ViewChild('invitesModal', { static: true }) invitesModal!: TemplateRef<any>;
 	@ViewChild('toyModal', { static: true }) toyModal!: TemplateRef<any>;
+	@ViewChild('testModal', { static: true }) testModal!: TemplateRef<any>;
 	private subscription?: Subscription;
 	constructor(
 		private model: Model,
@@ -88,6 +91,9 @@ export class SettingsBox implements OnInit, OnDestroy {
 		const label = this.settings.disableUI ? 'Enable UI' : 'Disable UI';
 		return !this.isMobile ? `${label} (F6)` : label;
 	}
+	get testModalButtonText() {
+		return !this.isMobile ? 'Test modal (F5)' : 'Test modal';
+	}
 	get track() {
 		return this.game.audio.trackName;
 	}
@@ -113,6 +119,12 @@ export class SettingsBox implements OnInit, OnDestroy {
 		return this.isMod; // TEMP
 	}
 	ngOnInit() {
+		this.subscription = this.game.onOpenTestModal.subscribe(() => {
+			if (!document.body.classList.contains('modal-open')) {
+				this.zone.run(() => this.openTestModal());
+			}
+		});
+
 		this.game.onClock
 			.pipe(
 				distinctUntilChanged(),
@@ -149,11 +161,14 @@ export class SettingsBox implements OnInit, OnDestroy {
 
 		this.updateSubscription = interval(100).subscribe(() => {
 			this.updateVisualizerBars();
+			this.syncModalStateFromDom();
 		});
 	}
 	ngOnDestroy() {
 		this.subscription && this.subscription.unsubscribe();
 		this.updateSubscription && this.updateSubscription.unsubscribe();
+		this.modalLifecycleSubscription && this.modalLifecycleSubscription.unsubscribe();
+		this.setPlayerModalState(false);
 	}
 	toggleVolume() {
 		this.volume = this.volume === 0 ? 50 : 0;
@@ -223,6 +238,47 @@ export class SettingsBox implements OnInit, OnDestroy {
 	}
 	openModal(template: TemplateRef<any>) {
 		this.modalRef = this.modalService.show(template, { ignoreBackdropClick: true });
+		this.setPlayerModalState(true);
+
+		this.modalLifecycleSubscription && this.modalLifecycleSubscription.unsubscribe();
+		const onHidden: any = this.modalRef && (this.modalRef as any).onHidden;
+		if (onHidden && onHidden.subscribe) {
+			this.modalLifecycleSubscription = onHidden.subscribe(() => {
+				this.setPlayerModalState(false);
+			});
+		}
+	}
+	private setPlayerModalState(value: boolean) {
+		if (this.lastModalState === value) {
+			return;
+		}
+
+		this.lastModalState = value;
+		this.game.send(server => server.actionParam(Action.ModalState, value));
+		const player = this.game.player as any;
+
+		if (!player) {
+			return;
+		}
+
+		if (!player.options) {
+			player.options = {};
+		}
+
+		player.inModal = value;
+		player.options.modal = value;
+
+		const selected = this.game.selected as any;
+		if (selected && selected.id === player.id) {
+			if (!selected.options) {
+				selected.options = {};
+			}
+			selected.inModal = value;
+			selected.options.modal = value;
+		}
+	}
+	private syncModalStateFromDom() {
+		this.setPlayerModalState(document.body.classList.contains('modal-open'));
 	}
 	openSettings() {
 		this.openModal(this.settingsModal);
@@ -240,6 +296,14 @@ export class SettingsBox implements OnInit, OnDestroy {
 	}
 	openToys() {
 		this.openModal(this.toyModal);
+		this.dropdown.close();
+	}
+	openTestModal() {
+		this.openModal(this.testModal);
+		this.dropdown.close();
+	}
+	openGameCharacter() {
+		this.game.onOpenGameCharacter.next();
 		this.dropdown.close();
 	}
 }

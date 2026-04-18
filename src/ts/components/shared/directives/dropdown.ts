@@ -50,6 +50,7 @@ export class DropdownMenu {
 			const { renderer, root } = this;
 
 			renderer.addClass(root, 'show');
+			renderer.addClass(root, 'ag-dropdown-menu');
 			renderer.setAttribute(root, 'id', this.id);
 
 			if (useOutlet) {
@@ -105,6 +106,9 @@ export class DropdownMenu {
 			focusFirstElement(this.root);
 		}
 	}
+	getRootElement() {
+		return this.root;
+	}
 }
 
 @Directive({
@@ -125,6 +129,18 @@ export class Dropdown {
 	@Input() useOutlet = false;
 	@Input() isOpen = false;
 	@Output() isOpenChange = new EventEmitter<boolean>();
+	private menuItemClickHandler: any = (e: Event) => {
+		const root = this.menu.getRootElement();
+		if (!root) return;
+
+		const target = e.target as HTMLElement | null;
+		const item = target && target.closest('.dropdown-item') as HTMLElement | null;
+		if (!item || !root.contains(item)) return;
+		if (item.classList.contains('disabled') || item.hasAttribute('disabled')) return;
+
+		this.applySelectedMarker();
+		setTimeout(() => this.applySelectedMarker());
+	};
 	get menuId() {
 		return this.isOpen ? this.menu.id : '';
 	}
@@ -135,10 +151,16 @@ export class Dropdown {
 			this.isOpen = true;
 			this.isOpenChange.emit(true);
 			this.menu.open(this.useOutlet, this.element.nativeElement);
+			this.applySelectedMarker();
 
 			setTimeout(() => {
 				document.addEventListener('click', this.closeHandler);
 				document.addEventListener('keydown', this.closeHandler);
+
+				const root = this.menu.getRootElement();
+				if (root) {
+					root.addEventListener('click', this.menuItemClickHandler);
+				}
 
 				if (this.focusOnOpen) {
 					this.menu.focusFirstElement();
@@ -152,11 +174,18 @@ export class Dropdown {
 						canvas.addEventListener('mousedown', this.canvasCloseHandler);
 					}
 				}
+
+				this.applySelectedMarker();
 			});
 		}
 	}
 	close() {
 		if (this.isOpen) {
+			const root = this.menu.getRootElement();
+			if (root) {
+				root.removeEventListener('click', this.menuItemClickHandler);
+			}
+
 			this.isOpen = false;
 			this.isOpenChange.emit(false);
 			this.menu.close();
@@ -184,6 +213,56 @@ export class Dropdown {
 		} else {
 			this.open();
 		}
+	}
+	private getMenuItems() {
+		const root = this.menu.getRootElement();
+		return root ? Array.from(root.querySelectorAll('.dropdown-item')) as HTMLElement[] : [];
+	}
+	private normalizeText(value: string | undefined | null) {
+		return (value || '')
+			.replace(/\s+/g, ' ')
+			.replace(/\.\.\.$/, '')
+			.trim()
+			.toLowerCase();
+	}
+	private getToggleText() {
+		const toggle = this.dropdownToggle && this.dropdownToggle.getText();
+		return this.normalizeText(toggle);
+	}
+	private getItemText(item: HTMLElement) {
+		return this.normalizeText(item.innerText || item.textContent || '');
+	}
+	private findItemIndexByToggleText(items: HTMLElement[]) {
+		const toggleText = this.getToggleText();
+
+		if (!toggleText) {
+			return -1;
+		}
+
+		let index = items.findIndex(item => this.getItemText(item) === toggleText);
+
+		if (index === -1) {
+			index = items.findIndex(item => {
+				const itemText = this.getItemText(item);
+				return !!itemText && (itemText.startsWith(toggleText) || toggleText.startsWith(itemText));
+			});
+		}
+
+		if (index === -1) {
+			index = items.findIndex(item => {
+				const itemText = this.getItemText(item);
+				return !!itemText && (itemText.includes(toggleText) || toggleText.includes(itemText));
+			});
+		}
+
+		return index;
+	}
+	private applySelectedMarker() {
+		const items = this.getMenuItems();
+		if (!items.length) return;
+
+		const index = this.findItemIndexByToggleText(items);
+		items.forEach((item, i) => item.classList.toggle('ag-selected', i === index));
 	}
 	private closeHandler: any = (e: KeyboardEvent) => {
 		if (
@@ -218,6 +297,9 @@ export class DropdownToggle {
 	}
 	checkTarget(e: Event) {
 		return this.element.nativeElement.contains(e.target);
+	}
+	getText() {
+		return (this.element.nativeElement.innerText || this.element.nativeElement.textContent || '') as string;
 	}
 	focus() {
 		this.element.nativeElement.focus();

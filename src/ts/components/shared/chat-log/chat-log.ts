@@ -1,5 +1,5 @@
 import {
-	Component, ViewChild, ElementRef, NgZone, AfterViewInit, OnDestroy, HostListener, Output, EventEmitter, DoCheck
+	Component, ViewChild, ElementRef, NgZone, AfterViewInit, OnDestroy, HostListener, Output, EventEmitter, DoCheck,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { clamp, escapeRegExp } from 'lodash';
@@ -9,9 +9,13 @@ import { SettingsService } from '../../services/settingsService';
 import { AgDragEvent } from '../directives/agDrag';
 import { element, textNode, removeAllNodes, replaceNodes } from '../../../client/htmlUtils';
 import { DEFAULT_CHATLOG_OPACITY, PONY_TYPE, SECOND } from '../../../common/constants';
-import { faCaretUp, faArrowDown, faSearch } from '../../../client/icons';
+import { faCaretUp, faArrowDown, faSearch, faComment, faUsers } from '../../../client/icons';
+import { icon } from '@fortawesome/fontawesome-svg-core';
+import { getTag, getTagTooltipById } from '../../../common/tags';
+import { SUPPORTER1_COLOR, SUPPORTER2_COLOR, SUPPORTER3_COLOR, SUPPORTER4_COLOR, WHITE } from '../../../common/colors';
 import { sampleMessages } from '../../../common/debugData';
 import { findEntityById } from '../../../common/worldMap';
+import { isFriend } from '../../../common/entityUtils';
 import { colorToRGBA, rgb2hsl, HSL, hsl2CSS } from '../../../common/color';
 import * as moment from 'moment';
 import { isMobile } from '../../../client/data';
@@ -30,10 +34,12 @@ interface ChatLogLineDOM {
 	entry: ChatLogMessage;
 	root: HTMLElement;
 	label: HTMLElement;
+	labelIcon: HTMLElement;
 	time: HTMLElement;
 	timeContent: HTMLElement;
 	labelText: Text;
 	name: HTMLElement;
+	supporterIcon: HTMLElement;
 	nameContent: HTMLElement;
 	index: HTMLElement;
 	indexText: Text;
@@ -55,7 +61,7 @@ export interface ChatLogMessage {
 	dom?: ChatLogLineDOM;
 }
 
-type Tab = 'local' | 'party' | 'whisper';
+type Tab = 'local' | 'personal' | 'party' | 'whisper';
 type ClickHandler = (entry: ChatLogMessage) => void;
 
 const GENERAL_CHAT_LIMIT = 100;
@@ -71,6 +77,10 @@ LABELS[MessageType.Mod] = 'mod';
 LABELS[MessageType.Party] = 'party';
 LABELS[MessageType.PartyThinking] = 'party';
 LABELS[MessageType.PartyAnnouncement] = 'party';
+LABELS[MessageType.Whisper] = 'whisper';
+LABELS[MessageType.WhisperAnnouncement] = 'whisper';
+LABELS[MessageType.WhisperTo] = 'whisper';
+LABELS[MessageType.WhisperToAnnouncement] = 'whisper';
 
 const PREFIXES: (string | undefined)[] = [];
 PREFIXES[MessageType.WhisperTo] = 'To ';
@@ -94,6 +104,7 @@ CLASSES[MessageType.PartyAnnouncement] = 'chat-line-party-announcement';
 CLASSES[MessageType.Supporter1] = 'chat-line-supporter-1';
 CLASSES[MessageType.Supporter2] = 'chat-line-supporter-2';
 CLASSES[MessageType.Supporter3] = 'chat-line-supporter-3';
+CLASSES[MessageType.Supporter4] = 'chat-line-supporter-4';
 CLASSES[MessageType.Whisper] = 'chat-line-whisper';
 CLASSES[MessageType.WhisperTo] = 'chat-line-whisper';
 CLASSES[MessageType.WhisperAnnouncement] = 'chat-line-whisper-announcement';
@@ -110,9 +121,20 @@ export function createChatLogLineDOM(clickLabel: ClickHandler, clickName: ClickH
 			line.index = element('span', 'chat-line-time-index', [line.indexText = textNode('')]),
 		]),
 		line.label = element(
-			'span', 'chat-line-label mr-1', [line.labelText = textNode('')], undefined, { click: () => clickLabel(line.entry) }),
+			'span',
+			'chat-line-label mr-1',
+			[
+				textNode('['),
+				line.labelIcon = element('span', 'chat-line-label-icon'),
+				line.labelText = textNode(''),
+				textNode(']'),
+			],
+			undefined,
+			{ click: () => clickLabel(line.entry) },
+		),
 		line.prefixText = textNode(''),
 		line.name = element('span', 'chat-line-name', [
+			line.supporterIcon = element('span', 'chat-line-supporter-icon'),
 			textNode('['),
 			line.nameContent = element(
 				'span', 'chat-line-name-content', [textNode('')], undefined, { click: () => clickName(line.entry) }),
@@ -133,7 +155,125 @@ export function updateChatLogLine(line: ChatLogLineDOM, entry: ChatLogMessage, h
 	line.entry = entry;
 	line.root.className = `chat-line ${hasSpace ? '' : 'chat-line-break '}${classes}`.trim();
 	line.label.style.display = label ? 'inline' : 'none';
-	line.labelText.nodeValue = label ? `[${label}]` : '';
+
+	if (label) {
+		const icons: any[] = [];
+		let labelText = '';
+		let labelTooltip = '';
+
+		if (label === 'admin') {
+			const tag = getTag('dev');
+			if (tag && tag.icon) {
+				icons.push(tag.icon);
+			}
+			labelText = ' Admin';
+			labelTooltip = 'admin';
+		} else if (label === 'mod') {
+			const tag = getTag('mod');
+			if (tag && tag.icon) {
+				icons.push(tag.icon);
+			}
+			labelText = ' Mod';
+			labelTooltip = 'moderator';
+		} else if (label === 'party') {
+			icons.push(faUsers);
+			labelText = ' Party';
+			labelTooltip = 'party';
+		} else if (label === 'whisper') {
+			icons.push(faComment);
+			labelText = ' Whisper';
+			labelTooltip = 'whisper';
+		} else {
+			const tag = getTag(label);
+			if (tag && tag.icon) {
+				icons.push(tag.icon);
+			}
+			labelTooltip = getTagTooltipById(label) || label;
+		}
+
+
+
+		removeAllNodes(line.labelIcon);
+		if (icons.length > 0) {
+			let created = false;
+			for (const iconDefinition of icons) {
+				if (!iconDefinition) continue;
+				const iconElement = createChatLogLabelIcon(iconDefinition);
+				if (iconElement) {
+					line.labelIcon.appendChild(iconElement);
+					created = true;
+				}
+			}
+
+			if (created) {
+				line.labelIcon.style.display = 'inline-flex';
+				line.labelText.nodeValue = labelText;
+			} else {
+				line.labelIcon.style.display = 'none';
+				line.labelText.nodeValue = label;
+			}
+		} else {
+			line.labelIcon.style.display = 'none';
+			line.labelText.nodeValue = label;
+		}
+
+		line.label.title = labelTooltip || label;
+	} else {
+		line.labelIcon.style.display = 'none';
+		removeAllNodes(line.labelIcon);
+		line.labelText.nodeValue = '';
+		line.label.title = '';
+	}
+
+	const isSupporter = classes && (
+		classes.includes('chat-line-supporter-1') ||
+		classes.includes('chat-line-supporter-2') ||
+		classes.includes('chat-line-supporter-3') ||
+		classes.includes('chat-line-supporter-4')
+	);
+
+	if (isSupporter && classes) {
+		let supporterLevel = '';
+		if (classes.includes('chat-line-supporter-1')) supporterLevel = 'sup1';
+		else if (classes.includes('chat-line-supporter-2')) supporterLevel = 'sup2';
+		else if (classes.includes('chat-line-supporter-3')) supporterLevel = 'sup3';
+		else if (classes.includes('chat-line-supporter-4')) supporterLevel = 'sup4';
+
+		if (supporterLevel) {
+			line.supporterIcon.title = getTagTooltipById(supporterLevel) || '';
+			const tag = getTag(supporterLevel);
+			if (tag && tag.icon) {
+				removeAllNodes(line.supporterIcon);
+				const iconElement = createChatLogLabelIcon(tag.icon);
+				if (iconElement) {
+					line.supporterIcon.style.display = 'inline-flex';
+					let color: number;
+					switch (supporterLevel) {
+						case 'sup1': color = SUPPORTER1_COLOR; break;
+						case 'sup2': color = SUPPORTER2_COLOR; break;
+						case 'sup3': color = SUPPORTER3_COLOR; break;
+						case 'sup4': color = SUPPORTER4_COLOR; break;
+						default: color = WHITE; break;
+					}
+					iconElement.style.color = '#' + color.toString(16).padStart(8, '0').slice(0, 6).toUpperCase();
+					line.supporterIcon.appendChild(iconElement);
+				} else {
+					line.supporterIcon.style.display = 'none';
+				}
+			} else {
+				line.supporterIcon.style.display = 'none';
+				removeAllNodes(line.supporterIcon);
+			}
+		} else {
+			line.supporterIcon.style.display = 'none';
+			removeAllNodes(line.supporterIcon);
+			line.supporterIcon.title = '';
+		}
+	} else {
+		line.supporterIcon.style.display = 'none';
+		removeAllNodes(line.supporterIcon);
+		line.supporterIcon.title = '';
+	}
 
 	updateChatLogName(line, entry);
 	updateTime(line, hourMode);
@@ -143,13 +283,28 @@ export function updateChatLogLine(line: ChatLogLineDOM, entry: ChatLogMessage, h
 	replaceNodes(line.message, message);
 }
 
+function createChatLogLabelIcon(iconDefinition: any) {
+	try {
+		const rendered = icon(iconDefinition);
+
+		if (rendered && rendered.node && rendered.node[0]) {
+			return rendered.node[0] as HTMLElement;
+		}
+	} catch (err) {
+		// ignore icon render failures and fall back to text label
+	}
+
+	return undefined;
+}
+
 function updateTime(line: ChatLogLineDOM, hourMode?: '12' | '24') {
+	const momentFn = (moment as any).default || (moment as any);
 	line.time.style.display = 'inline';
 	if (!hourMode) return;
 	if (hourMode === '24')
-		replaceNodes(line.timeContent, `[${moment().format('HH:mm:ss')}] `);
+		replaceNodes(line.timeContent, `[${momentFn().format('HH:mm:ss')}] `);
 	if (hourMode === '12')
-		replaceNodes(line.timeContent, `[${moment().format('LTS')}] `);
+		replaceNodes(line.timeContent, `[${momentFn().format('LTS')}] `);
 }
 
 function setNameColors(line: ChatLogLineDOM | undefined, colors?: string[]) {
@@ -216,6 +371,7 @@ export class ChatLog implements AfterViewInit, OnDestroy, DoCheck {
 	@ViewChild('lines', { static: true }) lines!: ElementRef;
 	@ViewChild('localTab', { static: true }) localTab!: ElementRef;
 	@ViewChild('partyTab', { static: true }) partyTab!: ElementRef;
+	@ViewChild('personalTab', { static: true }) personalTab!: ElementRef;
 	@ViewChild('whisperTab', { static: true }) whisperTab!: ElementRef;
 	@ViewChild('filterInput', { static: true }) filterInput!: ElementRef;
 	@ViewChild('toggleButton', { static: true }) toggleButton!: ElementRef;
@@ -227,6 +383,7 @@ export class ChatLog implements AfterViewInit, OnDestroy, DoCheck {
 	// TODO: move to game ?
 	local: ChatLogMessage[] = [];
 	party: ChatLogMessage[] = [];
+	personal: ChatLogMessage[] = [];
 	whisper: ChatLogMessage[] = [];
 	filterColor = this.inactiveBg;
 	unread = 0;
@@ -388,7 +545,7 @@ export class ChatLog implements AfterViewInit, OnDestroy, DoCheck {
 	}
 	get activeTab(): Tab {
 		const tab = this.settings.chatlogTab;
-		return (tab === 'local' || tab === 'party' || tab === 'whisper') ? tab : 'local';
+		return (tab === 'local' || tab === 'party' || tab === 'personal' || tab === 'whisper') ? tab : 'local';
 	}
 	get open() {
 		if (this.settings.chatlogClosed === undefined) {
@@ -558,6 +715,7 @@ export class ChatLog implements AfterViewInit, OnDestroy, DoCheck {
 		}
 		return colors;
 	}
+
 	clearTimeOutAutoClear() {
 		if (this.autoClear) clearTimeout(this.autoClear);
 		this.autoClear = undefined;
@@ -604,6 +762,28 @@ export class ChatLog implements AfterViewInit, OnDestroy, DoCheck {
 				whisperEntry.label = undefined;
 				this.addEntryToList(this.whisper, WHISPER_CHAT_LIMIT, open && tab === 'whisper', whisperEntry);
 				setNameColors(whisperEntry.dom, colors);
+			}
+
+			if (message.id) {
+				const entity = findEntityById(this.game.map, message.id);
+				if (entity && isFriend(entity)) {
+					const personalEntry = { ...entry };
+					personalEntry.dom = undefined;
+					personalEntry.label = undefined;
+					this.addEntryToList(this.personal, GENERAL_CHAT_LIMIT, open && tab === 'personal', personalEntry);
+					setNameColors(personalEntry.dom, colors);
+				}
+			}
+
+			if (message.id) {
+				const entity = findEntityById(this.game.map, message.id);
+				if (entity && isFriend(entity)) {
+					const personalEntry = { ...entry };
+					personalEntry.dom = undefined;
+					personalEntry.label = undefined;
+					this.addEntryToList(this.personal, GENERAL_CHAT_LIMIT, open && tab === 'personal', personalEntry);
+					setNameColors(personalEntry.dom, colors);
+				}
 			}
 
 			if (message.type === MessageType.Whisper && !this.open) {
@@ -668,6 +848,7 @@ export class ChatLog implements AfterViewInit, OnDestroy, DoCheck {
 	private updateTabs() {
 		this.setActiveTab(this.localTab.nativeElement, this.activeTab === 'local');
 		this.setActiveTab(this.partyTab.nativeElement, this.activeTab === 'party');
+		this.setActiveTab(this.personalTab.nativeElement, this.activeTab === 'personal');
 		this.setActiveTab(this.whisperTab.nativeElement, this.activeTab === 'whisper');
 	}
 	private setActiveTab(tab: HTMLElement, active: boolean) {

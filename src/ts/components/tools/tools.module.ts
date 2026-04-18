@@ -1,10 +1,11 @@
-import { NgModule } from '@angular/core';
+import { NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TooltipModule } from 'ngx-bootstrap/tooltip';
 import { PopoverModule } from 'ngx-bootstrap/popover';
 import { TypeaheadModule } from 'ngx-bootstrap/typeahead';
 import { ButtonsModule } from 'ngx-bootstrap/buttons';
@@ -19,6 +20,7 @@ import { ToolsOffset } from './shared/tools-offset/tools-offset';
 import { ToolsXY } from './shared/tools-xy/tools-xy';
 
 import { ToolsExpressions } from './tools-expressions/tools-expressions';
+import { ToolsEyesMouths } from './tools-eyes-mouths/tools-eyes-mouths';
 import { ToolsAnimation } from './tools-animation/tools-animation';
 import { ToolsChat } from './tools-chat/tools-chat';
 import { ToolsVariants } from './tools-variants/tools-variants';
@@ -46,6 +48,7 @@ export const routes: Routes = [
 	{ path: 'animation', component: ToolsAnimation },
 	{ path: 'chat', component: ToolsChat },
 	{ path: 'expressions', component: ToolsExpressions },
+	{ path: 'eyes-mouths', component: ToolsEyesMouths },
 	{ path: 'entity', component: ToolsEntity },
 	{ path: 'palette', component: ToolsPalette },
 	{ path: 'perf', component: ToolsPerf },
@@ -63,6 +66,7 @@ export const routes: Routes = [
 		ReactiveFormsModule,
 		HttpClientModule,
 		SharedModule,
+		TooltipModule.forRoot(),
 		PopoverModule.forRoot(),
 		TypeaheadModule.forRoot(),
 		ButtonsModule.forRoot(),
@@ -70,12 +74,14 @@ export const routes: Routes = [
 		FontAwesomeModule,
 		NoopAnimationsModule,
 	],
+	schemas: [NO_ERRORS_SCHEMA],
 	declarations: [
 		ToolsRange,
 		ToolsFrame,
 		ToolsOffset,
 		ToolsXY,
 		ToolsExpressions,
+		ToolsEyesMouths,
 		ToolsAnimation,
 		ToolsChat,
 		ToolsVariants,

@@ -70,6 +70,10 @@ describe('graphicsUtils', () => {
 			drawBaloon(batch, { message: 'supporter 3', type: MessageType.Supporter3, created }, 50, 25, rect(0, 0, 100, 100), palettes);
 		}));
 
+		it('draws supporter4 message', test('sup4.png', batch => {
+			drawBaloon(batch, { message: 'supporter 4', type: MessageType.Supporter4, created }, 50, 25, rect(0, 0, 100, 100), palettes);
+		}));
+
 		it('draws announcement message', test('announcement.png', batch => {
 			drawBaloon(
 				batch, { message: 'announcement', type: MessageType.Announcement, created }, 50, 25, rect(0, 0, 100, 100), palettes);
@@ -174,7 +178,7 @@ describe('graphicsUtils', () => {
 			drawNamePlate(batch, 'party', 50, 25, DrawNameFlags.Party, palettes, undefined);
 		}));
 
-		const tags = ['mod', 'dev', 'sup1', 'sup2', 'sup3'];
+		const tags = ['mod', 'dev', 'sup1', 'sup2', 'sup3', 'sup4'];
 
 		tags.forEach(tag => it(`draws name with ${tag} tag`, test(`name-${tag}.png`, batch => {
 			drawNamePlate(batch, `A ${tag}`, 50, 25, DrawNameFlags.None, palettes, tag);

@@ -204,6 +204,7 @@ export const sheets: (Sheet | Spacer)[] = [
 		...frontLegsSheet,
 		name: 'front legs',
 		file: 'front-legs',
+		fieldName: 'frontLegs',
 		frame: (_pony, state, _options, _x, y) => {
 			if (y > 0) {
 				state.animation.frames.forEach(f => f.frontLeg = 0);
@@ -268,6 +269,7 @@ export const sheets: (Sheet | Spacer)[] = [
 		alert: 'Does not export mask layer',
 		name: 'back legs',
 		file: 'back-legs',
+		fieldName: 'backLegs',
 		masks: [
 			{
 				name: 'backLegs2',
@@ -363,7 +365,7 @@ export const sheets: (Sheet | Spacer)[] = [
 		...bodySheet,
 		name: 'body',
 		file: 'body',
-		// fieldName: 'body', // TODO: uncomment when body set is added
+		fieldName: 'body',
 		frame: (_pony, _state, options, _x, y) => {
 			// fix for missing body set
 			if (y > 0) {

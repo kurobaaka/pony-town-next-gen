@@ -1,7 +1,12 @@
 button.btn.btn-lg.btn-pt.btn-outline-primary.btn-block.mb-2(
-	*ngIf="enableVisitPTButton" (mouseenter)="pony.select()" (mouseout)="pony.reset()" (click)="openLeaveModal()" type="button")
+	*ngIf="enableVisitPTButton"
+	[class.nudging]="isNudging"
+	(mouseenter)="pony.select(); onInteract()"
+	(mouseout)="pony.reset()"
+	(click)="openLeaveModal(); onInteract()"
+	type="button")
 	.pt-logo
-		img.pixelart.logo(revSrc="images/logo-pt-small.png")
+		fa-icon([icon]="appleIcon")
 	| {{'Visit Pony Town main server!'}}
 	.visit-pt-pony
 		visit-pt-pony(#pony [scale]="2")

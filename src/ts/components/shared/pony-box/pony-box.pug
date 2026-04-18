@@ -1,14 +1,31 @@
-.pony-box(*ngIf="pony")
-	.pony-box-tags
-		.pony-box-tag(*ngIf="special" [ngClass]="specialClass")
-			| {{special}}
-		.pony-box-tag.tag-friend(*ngIf="isFriend(pony)")
-			| friend
-	.pony-box-rect
-		.pony-box-name
-			| {{pony.name}}
+.pony-box(*ngIf="pony" [class.pony-box-wide]="canUseWideRect" [class.pony-box-compact]="isCompactRect" [class.pony-box-resized]="isRectResized")
+	.pony-box-tags(#tagsBox)
+		.pony-box-tag(*ngIf="specialTag" [ngClass]="specialClass" [tooltip]="specialTagTooltip" placement="top" container="body")
+			fa-icon.mr-1(*ngIf="specialTag.icon" [icon]="specialTag.icon" [fixedWidth]="true" [style.color]="specialTag.color")
+			span.pony-box-tag-label {{specialTag.name}}
+		.pony-box-tag.tag-friend(*ngIf="isFriend(pony)" [tooltip]="'friend'" placement="top" container="body")
+			fa-icon.mr-1([icon]="friendTagIcon" [fixedWidth]="true")
+			span.pony-box-tag-label friend
+		.pony-box-tag.tag-party-pending(*ngIf="isPartyInvitePending" [tooltip]="'party invite pending'" placement="top" container="body")
+			fa-icon.mr-1([icon]="partyTagIcon" [fixedWidth]="true")
+			span.pony-box-tag-label sending...
+		.pony-box-tag.tag-party-member(*ngIf="isPartyMember" [tooltip]="'party member'" placement="top" container="body")
+			fa-icon.mr-1([icon]="partyTagIcon" [fixedWidth]="true")
+			span.pony-box-tag-label party
+		.pony-box-tag.tag-friend-request(*ngIf="friendRequestSent && !isFriend(pony)" [tooltip]="'Friend request sent. The player can accept it from notifications.'" placement="top" container="body")
+			fa-icon.mr-1([icon]="friendTagIcon" [fixedWidth]="true")
+			span.pony-box-tag-label sending...
+	.pony-box-rect(#rectBox [style.width.px]="currentRectWidth")
+		.pony-box-name-row
+			.pony-box-name(title="{{pony.name}}") {{pony.name}}
+			.pony-box-statuses
+				span.pony-box-status-badge(*ngIf="isAfk") AFK
+				fa-icon.pony-box-status-icon.pony-box-status-icon-afk(*ngIf="isAfk" [icon]="afkIcon")
+				fa-icon.pony-box-status-icon.pony-box-status-icon-modal(*ngIf="isInModal" [icon]="modalIcon" [tooltip]="'In modal window'" placement="top" container="body")
+				fa-icon.pony-box-status-icon.pony-box-status-icon-offline(*ngIf="isOffline" [icon]="offlineIcon" [tooltip]="'Offline'" placement="top" container="body")
 		.pony-box-buttons
 			site-info([site]="pony.site")
+		.pony-box-resizer(*ngIf="canUseWideRect" agDragRelative="self" (agDrag)="resizeRect($event)")
 
 		.pony-box-buttons-box
 			.btn-group.btn-group-shadow.dropdown(dropdown (isOpenChange)="removingFriend = false")
@@ -16,6 +33,10 @@
 					fa-icon([icon]="cogIcon")
 
 				.dropdown-menu(*dropdownMenu)
+					button.dropdown-item(*ngIf="canUseWideRect && isRectResized" (click)="resetRectWidth()")
+						fa-icon.mr-2([icon]="resetWidthIcon" [fixedWidth]="true")
+						| Reset width
+					div.dropdown-divider(*ngIf="canUseWideRect && isRectResized")
 					button.dropdown-item((click)="toggleIgnore()")
 						fa-icon.mr-2([icon]="ignoreIcon" [fixedWidth]="true")
 						| {{isIgnored(pony) ? 'Unignore player' : 'Ignore player'}}
@@ -29,8 +50,17 @@
 
 					.dropdown-divider
 					button.dropdown-item((click)="sendMessageTo()")
-						fa-icon.mr-2([icon]="messageIcon" [fixedWidth]="true")
+						fa-icon.mr-2.pony-action-icon-whisper([icon]="messageIcon" [fixedWidth]="true")
 						| Send whisper
+					button.dropdown-item(*ngIf="canInviteToParty" (click)="inviteToParty()")
+						fa-icon.mr-2.pony-action-icon-party([icon]="inviteIcon" [fixedWidth]="true")
+						| Invite to party
+					button.dropdown-item(*ngIf="canPromoteToLeader" (click)="promoteToLeader()")
+						fa-icon.mr-2.pony-action-icon-party([icon]="leaderIcon" [fixedWidth]="true")
+						| Promote to party leader
+					button.dropdown-item(*ngIf="canRemoveFromParty" (click)="removeFromParty()")
+						fa-icon.mr-2.pony-action-icon-party-remove([icon]="removeIcon" [fixedWidth]="true")
+						| Remove from party
 					button.dropdown-item(*ngIf="!isFriend(pony)" (click)="addFriend()")
 						fa-icon.mr-2.text-success([icon]="addFriendIcon" [fixedWidth]="true")
 						| Send friend request
@@ -50,14 +80,11 @@
 							fa-icon.mr-2.text-success([icon]="starIcon" [fixedWidth]="true")
 							| Invite to supporter servers
 							fa-icon.ml-1(*ngIf="isInvitedToSupporterServers" [icon]="checkIcon")
-
-			.btn-group.btn-group-shadow(*ngIf="canInviteToParty || canRemoveFromParty || canPromoteToLeader")
-				button.btn.btn-xs.btn-default(*ngIf="canInviteToParty" (click)="inviteToParty()" tooltip="Invite to party")
-					fa-icon([icon]="inviteIcon")
-				button.btn.btn-xs.btn-default(*ngIf="canRemoveFromParty" (click)="removeFromParty()" tooltip="Remove from party")
-					fa-icon([icon]="removeIcon")
-				button.btn.btn-xs.btn-default(*ngIf="canPromoteToLeader" (click)="promoteToLeader()" tooltip="Promote to leader")
-					fa-icon([icon]="leaderIcon")
 			mod-box(*ngIf="isMod" [pony]="pony")
 
-	portrait-box.pony-box-avatar([pony]="paletteInfo")
+	portrait-box.pony-box-avatar(
+		[pony]="paletteInfo"
+		[class.pony-box-avatar-draggable]="dragEnabled"
+		[class.dragging]="dragging"
+		agDragRelative="self"
+		(agDrag)="onPortraitDrag($event)")

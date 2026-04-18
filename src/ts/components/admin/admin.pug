@@ -12,8 +12,8 @@
 			menu-item(route="/accounts" name="Accounts ({{accounts}})" [icon]="accountsIcon")
 			menu-item(route="/ponies" name="Ponies ({{ponies}})" [icon]="poniesIcon")
 			menu-item(route="/origins" name="Origins ({{origins}})" [icon]="originsIcon")
-			menu-item(route="/reports" name="Reports" *ngIf="isSuperadmin" [icon]="reportsIcon")
-			menu-item(route="/other" name="Other" *ngIf="isSuperadmin" [icon]="otherIcon")
+			menu-item(route="/reports" name="Reports" *ngIf="isOwner" [icon]="reportsIcon")
+			menu-item(route="/other" name="Other" *ngIf="isOwner" [icon]="otherIcon")
 
 	.admin-view.mt-5
 		router-outlet

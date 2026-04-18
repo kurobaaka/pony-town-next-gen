@@ -118,6 +118,16 @@ export {
 	faMapMarkerAlt,
 	faChartPie,
 	faCalendar,
+	faSlash,
+	faUndo,
+	faCircleUser,
+	faHandWave,
+	faMegaphone,
+	faNote,
+	faPencil,
+	faThumbtack,
+	faUserCheck,
+	faUsersSlash,
 } from '../generated/fa-icons';
 
 import {
@@ -149,8 +159,29 @@ export {
 	faDeviantart,
 	faTwitter,
 	faTumblr,
+	faFacebook,
 	faGithub,
-	faDiscord
+	faVk,
+	faGoogle,
+	faTiktok,
+	faTelegram,
+	faChrome,
+	faInternetExplorer,
+	faEdge,
+	faAndroid,
+	faFirefox,
+	faSafari,
+	faOpera,
+	faWindows,
+	faLinux,
+	faAmilia,
+	faYandexInternational,
+	faDiscord,
+	faCrown,
+	faPlug,
+	faTablet,
+	faTv,
+	faMobile
 } from '../generated/fa-icons';
 
 export const partyLeaderIcon = faCrown;

@@ -9,6 +9,9 @@ ng-template(#actionsModal)
 ng-template(#toyModal)
 	select-toy-modal((close)="modalRef.hide()" [focusTrap]="true" (keydown)="$event.stopPropagation()")
 
+ng-template(#testModal)
+	test-modal((close)="modalRef.hide()" [focusTrap]="true" (keydown)="$event.stopPropagation()")
+
 .settings-box.unselectable
 	.dropdown(#dropdown="ag-dropdown" dropdown autoClose="outsideClick" [hookToCanvas]="true")
 		button.game-button.dropdown-toggle.no-arrow(dropdownToggle (click)="false" title="Settings")
@@ -70,6 +73,9 @@ ng-template(#toyModal)
 			a.dropdown-item((click)="toggleDisableUI()").mb-1
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| {{ disableUIButtonText }}
+			a.dropdown-item((click)="openGameCharacter()").mb-1
+				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
+				| Edit Character
 			a.dropdown-item((click)="openSettings()").mb-1
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| Settings
@@ -79,6 +85,9 @@ ng-template(#toyModal)
 			a.dropdown-item((click)="openToys()").mb-1
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| Select toys
+			a.dropdown-item((click)="openTestModal()").mb-1
+				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
+				| {{ testModalButtonText }}
 			//-a.dropdown-item((click)="openInvites()" *ngIf="hasInvites")
 				fa-icon.mr-2([icon]="emptyIcon" [fixedWidth]="true")
 				| Manage invites

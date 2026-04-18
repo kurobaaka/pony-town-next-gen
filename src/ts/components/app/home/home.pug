@@ -15,18 +15,82 @@ div(*ngIf="!playing")
 					| {{accountAlert}}
 
 			.form-group(*ngIf="!account")
-				sign-in-box((signIn)="signIn($event)")
+				sign-in-box([showLoginWarning]="showLoginWarning" (signIn)="signIn($event)")
 
 			div(*ngIf="!!account")
 				.form-group
-					vk-button
-					visit-pt-button
+					about-button
+
 				.form-group(*ngIf="canInstall")
 					install-button
+
 				.form-group
 					character-select([(error)]="error" [editButton]="true" [emojiButton]="true" (preview)="previewPony = $event")
+
 				.form-group
-					character-preview([pony]="previewInfo" [state]="state" [passive]="false" [name]="previewName" [tag]="previewTag")
+					character-preview(
+						[pony]="previewInfo" [state]="state" [passive]="false" [name]="previewName" [tag]="previewTag"
+						[namePlateOffsetY]="10" [tagOnlyNamePlateOffsetY]="10" [namePlateTextY]="11" [tagOnlyNamePlateTextY]="11")
+
+				// 👉 ВОТ ТУТ теперь правильно вставлен warning
+				.form-group(*ngIf="showLoginWarning")
+					.alert.alert-warning(role="alert")
+						fa-icon.mr-1([icon]="warningIcon" size="lg")
+						strong Важно:
+						
+						div([class.collapse]="!showFullWarning" [class.show]="showFullWarning")
+							br
+							|  Вы входите на основной рабочий билд сервера.
+
+							br
+							br
+
+							|  Сервер находится в активной разработке и тестировании, поэтому вы можете столкнуться со следующими проблемами:
+							ul.mb-2
+								li баги и ошибки в игре
+								li нестабильная работа сервера
+								li частые перезапуски
+								li проблемы со входом в аккаунт или игрой
+								li возможная потеря прогресса
+
+							|  Обратите внимание: все обновления применяются напрямую в рабочую версию, так как сервер разрабатывается одним человеком.
+
+							br
+							br
+
+							|  Продолжая вход, вы соглашаетесь с тем, что подобные проблемы могут возникать.
+
+							hr
+
+							fa-icon.mr-1([icon]="warningIcon" size="lg")
+							strong Notice:
+							|  You are entering the main development build of the server.
+
+							br
+							br
+
+							|  The server is actively being developed and tested, so you may encounter:
+							ul.mb-2
+								li bugs and glitches
+								li unstable performance
+								li frequent restarts
+								li login or account issues
+								li possible data loss
+
+							|  Please note: updates are applied directly to the live build, as the server is maintained by a single developer.
+
+							br
+							br
+
+							|  By continuing, you acknowledge and accept these conditions.
+
+					button.btn.btn-sm.btn-light.mt-2(
+							type="button"
+							(click)="toggleFullWarning()"
+							[attr.aria-expanded]="showFullWarning"
+							aria-controls="warningText")
+							| {{ showFullWarning ? 'Show Less...' : 'Show More...' }}
+
 				.form-group.text-center
 					play-box([(error)]="error")
 

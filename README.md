@@ -336,19 +336,19 @@ gulp dev --coverage # run with tests and code coverage
 ### Adding/removing roles
 
 ```bash
-node cli.js --addrole <account_id> <role>   # roles: superadmin, admin, mod, dev
+node cli.js --addrole <account_id> <role>   # roles: owner, admin, mod, dev
 node cli.js --removerole <account_id> <role>
 ```
 
-To setup superadmin role use following command
+To setup owner role use following command
 
 ```bash
-node cli.js --addrole <your_account_id> superadmin
+node cli.js --addrole <your_account_id> owner
 ```
 
 ### Additional tools
 
-Admin panel is accessible at `<base_url>/admin/` (requires admin or superadmin role to access)
+Admin panel is accessible at `<base_url>/admin/` (requires admin or owner role to access)
 Tools are accessible at `<base_url>/tools/` (only available in dev mode or when started with --tools flag)
 
 ## Customization

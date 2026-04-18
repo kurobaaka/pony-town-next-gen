@@ -62,8 +62,8 @@ export class AdminApp {
 	get origins() {
 		return this.model.counts.origins;
 	}
-	get isSuperadmin() {
-		return hasRole(this.model.account, 'superadmin');
+	get isOwner() {
+		return hasRole(this.model.account, 'owner');
 	}
 	@HostListener('window:go-to-account', ['$event'])
 	goToAccount({ detail }: CustomEvent) {

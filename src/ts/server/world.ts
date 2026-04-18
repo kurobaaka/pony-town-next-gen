@@ -6,7 +6,7 @@ import {
 import { removeItem, distance, clamp, randomPoint, includes, fromNow } from '../common/utils';
 import { HOUR_LENGTH, DAY_LENGTH } from '../common/timeUtils';
 import {
-	AFK_TIMEOUT, MAP_DISCARD_TIMEOUT, JOINS_PER_UPDATE, REMOVE_INTERVAL, REMOVE_TIMEOUT,
+	MAP_DISCARD_TIMEOUT, JOINS_PER_UPDATE, REMOVE_INTERVAL, REMOVE_TIMEOUT,
 	MAP_SWITCHES_PER_UPDATE, MINUTE, SERVER_FPS, HOUR
 } from '../common/constants';
 import {
@@ -21,7 +21,8 @@ import { AroundEntry, ServerLiveSettings, ServerConfig } from '../common/adminIn
 import { fixPosition, updateEntity, pushRemoveEntityToClient, pushUpdateEntityToClient } from './entityUtils';
 import { isBanned, isShadowed } from '../common/adminUtils';
 import {
-	createAndUpdateCharacterState, setEntityExpression, reloadFriends, updateEntityPlayerState, resetClientUpdates, isMutedOrShadowed
+	createAndUpdateCharacterState, setEntityExpression, reloadFriends, updateEntityPlayerState, resetClientUpdates,
+	isMutedOrShadowed, playerSleep
 } from './playerUtils';
 import {
 	sparseRegionUpdate, addToRegion, removeFromRegion, unsubscribeFromOutOfRangeRegions,
@@ -59,6 +60,25 @@ interface ReservedID {
 }
 
 const MAP_SOFT_LIMIT = 10000;
+const DEFAULT_AFK_STATUS_MS = 2 * MINUTE;
+const DEFAULT_AFK_SLEEP_MS = 5 * MINUTE;
+const DEFAULT_AFK_KICK_MS = 15 * MINUTE;
+
+function getClientAfkThresholds(client: IClient) {
+	const statusMinutes = client.accountSettings.afkStatusMinutes;
+	const sleepMinutes = client.accountSettings.afkSleepMinutes;
+	const kickMinutes = client.accountSettings.afkKickMinutes;
+
+	const statusMs = Math.max(1, (statusMinutes !== undefined ? statusMinutes : 2)) * MINUTE;
+	const sleepMs = Math.max(statusMs, (sleepMinutes !== undefined ? sleepMinutes : 5) * MINUTE);
+	const kickMs = kickMinutes === 0 ? 0 : Math.max(sleepMs, (kickMinutes !== undefined ? kickMinutes : 15) * MINUTE);
+
+	return {
+		statusMs: isFinite(statusMs) ? statusMs : DEFAULT_AFK_STATUS_MS,
+		sleepMs: isFinite(sleepMs) ? sleepMs : DEFAULT_AFK_SLEEP_MS,
+		kickMs: isFinite(kickMs) ? kickMs : DEFAULT_AFK_KICK_MS,
+	};
+}
 
 export class World {
 	season = Season.Summer;
@@ -526,7 +546,28 @@ timingStart('updateCamera + updateSubscriptions');
 
 		timingStart('kick afk clients');
 		for (const client of this.clients) {
-			if ((now - client.lastPacket) > AFK_TIMEOUT) {
+			const inactiveFor = now - client.lastPacket;
+			const thresholds = getClientAfkThresholds(client);
+			const afk = inactiveFor >= thresholds.statusMs;
+
+			if (!!client.afk !== afk) {
+				client.afk = afk;
+				for (const other of this.clients) {
+					updateEntityPlayerState(other, client.pony);
+				}
+			}
+
+			if (inactiveFor >= thresholds.sleepMs) {
+				if (!client.autoAfkSleeping && client.pony.vx === 0 && client.pony.vy === 0) {
+					playerSleep(client.pony);
+					client.autoAfkSleeping = true;
+				}
+			} else if (client.autoAfkSleeping) {
+				setEntityExpression(client.pony, undefined);
+				client.autoAfkSleeping = false;
+			}
+
+			if (thresholds.kickMs > 0 && inactiveFor > thresholds.kickMs) {
 				this.kick(client, 'afk');
 			}
 		}
